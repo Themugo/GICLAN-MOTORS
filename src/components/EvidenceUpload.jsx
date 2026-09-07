@@ -23,6 +23,13 @@ export default function EvidenceUpload({ disputeId, onUploaded }) {
   const handleFileChange = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    const selected = EVIDENCE_TYPES.find(t => t.value === type);
+    const maxBytes = (selected?.maxSize || 20) * 1024 * 1024;
+    if (f.size > maxBytes) {
+      toast(`${selected?.label || 'Evidence'} exceeds the ${selected?.maxSize || 20}MB limit`, 'error');
+      e.target.value = '';
+      return;
+    }
     setFile(f);
     if (f.type.startsWith('image/')) {
       setPreview(URL.createObjectURL(f));

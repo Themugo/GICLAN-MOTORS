@@ -352,6 +352,13 @@ export const getEvidenceItem = async (req, res) => {
     const { id, evidenceId } = req.params;
     if (!isValidId(id) || !isValidId(evidenceId)) return error(res, "Invalid ID", 400);
 
+    const dispute = await Dispute.findById(id).select("openedBy openedAgainst status");
+    if (!dispute) return notFound(res, "Dispute not found");
+
+    const isAdmin = ["admin", "superadmin", "escrow_officer"].includes(req.user.role);
+    const isInvolved = dispute.openedBy.toString() === req.user.id || dispute.openedAgainst.toString() === req.user.id;
+    if (!isAdmin && !isInvolved) return error(res, "Access denied", 403);
+
     const evidence = await Evidence.findOne({ _id: evidenceId, dispute: id, deletedAt: null })
       .populate("uploadedBy", "name email");
     if (!evidence) return notFound(res, "Evidence not found");
@@ -371,7 +378,7 @@ export const deleteEvidence = async (req, res) => {
     const { id, evidenceId } = req.params;
     if (!isValidId(id) || !isValidId(evidenceId)) return error(res, "Invalid ID", 400);
 
-    const evidence = await Evidence.findById(evidenceId);
+    const evidence = await Evidence.findOne({ _id: evidenceId, dispute: id, deletedAt: null });
     if (!evidence) return notFound(res, "Evidence not found");
 
     const isAdmin = ["admin", "superadmin"].includes(req.user.role);
@@ -400,7 +407,7 @@ export const verifyEvidence = async (req, res) => {
     const { id, evidenceId } = req.params;
     if (!isValidId(id) || !isValidId(evidenceId)) return error(res, "Invalid ID", 400);
 
-    const evidence = await Evidence.findByIdAndUpdate(evidenceId, {
+    const evidence = await Evidence.findOneAndUpdate({ _id: evidenceId, dispute: id, deletedAt: null }, {
       verified: true,
       verifiedBy: req.user.id,
       verifiedAt: new Date(),
@@ -540,6 +547,11 @@ export const completeMediation = async (req, res) => {
     dispute.mediation.resolvedByMediation = outcome !== "impasse";
     dispute.mediation.buyerSatisfied = buyerSatisfied || false;
     dispute.mediation.sellerSatisfied = sellerSatisfied || false;
+
+    if (outcome !== "impasse") {
+      dispute.status = STATES.RESOLVED;
+      dispute.resolvedAt = new Date();
+    }
 
     dispute.addTimelineEntry({
       action: `Mediation completed — ${outcome || "impasse"}`,
