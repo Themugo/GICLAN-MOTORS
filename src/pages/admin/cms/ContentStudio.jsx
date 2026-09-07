@@ -65,10 +65,50 @@ export default function ContentStudio() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [pages, setPages] = useState([]);
+  const [selectedPage, setSelectedPage] = useState(null);
+  const [pagesLoading, setPagesLoading] = useState(false);
+  const [pageError, setPageError] = useState('');
 
   useEffect(() => {
     loadStats();
+    loadPages();
   }, []);
+
+  const loadPages = async () => {
+    try {
+      setPagesLoading(true);
+      setPageError('');
+      const response = await cmsApi.getPages({ limit: 100 });
+      const items = response?.data?.data || [];
+      setPages(items);
+      setSelectedPage(current => current && items.some(p => p.id === current.id) ? current : items[0] || null);
+    } catch (error) {
+      setPageError(error?.response?.data?.error || error?.message || 'Failed to load pages');
+    } finally {
+      setPagesLoading(false);
+    }
+  };
+
+  const createNewPage = async () => {
+    const title = window.prompt('Page title');
+    if (!title?.trim()) return;
+    const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    try {
+      const response = await cmsApi.createPage({ title: title.trim(), slug, pageType: 'custom', content: [], status: 'draft' });
+      const created = response?.data || response;
+      await loadPages();
+      setSelectedPage(created);
+      setActiveModule('pages');
+    } catch (error) {
+      setPageError(error?.response?.data?.error || error?.message || 'Failed to create page');
+    }
+  };
+
+  const handlePageSaved = (savedPage) => {
+    setPages(current => current.map(page => page.id === savedPage.id ? savedPage : page));
+    setSelectedPage(savedPage);
+  };
 
   const loadStats = async () => {
     try {
@@ -87,9 +127,9 @@ export default function ContentStudio() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-800">Content Overview</h2>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#17244B] text-white rounded-lg hover:bg-[#1e3054] transition-colors">
+        <button onClick={createNewPage} className="flex items-center gap-2 px-4 py-2 bg-[#17244B] text-white rounded-lg hover:bg-[#1e3054] transition-colors">
           <Plus size={18} />
-          Create New
+          Create Page
         </button>
       </div>
 
@@ -165,6 +205,43 @@ export default function ContentStudio() {
 
   const renderModuleContent = () => {
     const module = modules.find(m => m.id === activeModule);
+
+    if (activeModule === 'pages' || activeModule === 'landing') {
+      const filteredPages = pages.filter((page) => {
+        const statusMatch = filterStatus === 'all' || page.status === filterStatus;
+        const query = searchQuery.trim().toLowerCase();
+        const searchMatch = !query || String(page.title || page.pageName || '').toLowerCase().includes(query) || String(page.slug || '').toLowerCase().includes(query);
+        return statusMatch && searchMatch;
+      });
+      return (
+        <div className="min-h-[calc(100vh-73px)] flex flex-col">
+          <div className="p-6 border-b border-slate-200 bg-white">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">{activeModule === 'landing' ? 'Landing Pages' : 'Pages'}</h2>
+                <p className="text-sm text-slate-500">Build and publish real site pages from persisted content.</p>
+              </div>
+              <button onClick={createNewPage} className="flex items-center gap-2 px-4 py-2 bg-[#17244B] text-white rounded-lg"><Plus size={18} /> New Page</button>
+            </div>
+            {pageError && <div className="mt-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{pageError}</div>}
+          </div>
+          <div className="flex flex-1 min-h-0">
+            <aside className="w-80 bg-white border-r border-slate-200 overflow-y-auto p-4">
+              {pagesLoading ? <div className="text-sm text-slate-400 p-4">Loading pages…</div> : filteredPages.length === 0 ? <div className="text-sm text-slate-400 p-4">No pages found.</div> : filteredPages.map((page) => (
+                <button key={page.id} onClick={() => setSelectedPage(page)} className={`w-full text-left p-4 rounded-lg mb-2 border ${selectedPage?.id === page.id ? 'border-[#17244B] bg-[#17244B]/5' : 'border-slate-200 hover:border-slate-300'}`}>
+                  <div className="font-medium text-slate-800 truncate">{page.title || page.pageName || 'Untitled page'}</div>
+                  <div className="text-xs text-slate-500 mt-1 truncate">/{page.slug}</div>
+                  <span className={`inline-flex mt-2 px-2 py-0.5 rounded-full text-xs ${statusColors[page.status] || statusColors.draft}`}>{page.status || 'draft'}</span>
+                </button>
+              ))}
+            </aside>
+            <main className="flex-1 min-w-0">
+              {selectedPage ? <VisualPageBuilder page={selectedPage} onSaved={handlePageSaved} /> : <div className="h-full flex items-center justify-center text-slate-400">Create or select a page to begin.</div>}
+            </main>
+          </div>
+        </div>
+      );
+    }
     const Icon = module?.icon || FileText;
 
     return (
@@ -215,62 +292,12 @@ export default function ContentStudio() {
           </button>
         </div>
 
-        {/* Content Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Title</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Author</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Updated</th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <tr key={i} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                        <Icon size={18} className="text-slate-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-slate-800">Sample {module?.label.replace('s', '')} {i}</div>
-                        <div className="text-sm text-slate-400">/sample-slug-{i}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[Object.keys(statusColors)[i % 4]]}`}>
-                      {React.createElement(statusIcons[Object.keys(statusColors)[i % 4]], { size: 12 })}
-                      {Object.keys(statusColors)[i % 4]}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-[#C77B58]/20 text-[#C77B58] text-xs font-medium flex items-center justify-center">A</div>
-                      <span className="text-sm text-slate-600">Admin User</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">2 hours ago</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-[#17244B] transition-colors">
-                        <Eye size={16} />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-[#17244B] transition-colors">
-                        <Edit size={16} />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-red-50 text-slate-500 hover:text-red-500 transition-colors">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
+          <div className="text-center max-w-xl mx-auto">
+            <Icon size={36} className="mx-auto text-slate-300 mb-3" />
+            <h3 className="text-lg font-semibold text-slate-800">{module?.label} is not connected to a canonical editor yet</h3>
+            <p className="text-sm text-slate-500 mt-2">No synthetic records are shown. Connect this module to its persisted CMS domain before publishing it.</p>
+          </div>
         </div>
       </div>
     );

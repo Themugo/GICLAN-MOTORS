@@ -1,4 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import * as cmsApi from '../../../../services/cmsApi';
+import { getCars } from '../../../../services/vehicleApi';
 import {
   Type, Heading1, Heading2, Paragraph, Button, Image as ImageIcon,
   Video, Gallery, Car, Users, Banner, BarChart, MessageSquare,
@@ -70,7 +72,7 @@ const blockTypes = [
 ];
 
 // Block Component Renderer
-const BlockRenderer = ({ block, isEditing, onUpdate, onDelete, onMoveUp, onMoveDown, isFirst, isLast }) => {
+const BlockRenderer = ({ block, isEditing, onUpdate, onDelete, onMoveUp, onMoveDown, isFirst, isLast, onSelect, isSelected, liveVehicles }) => {
   const [expanded, setExpanded] = useState(false);
 
   const getBlockIcon = (type) => {
@@ -129,14 +131,15 @@ const BlockRenderer = ({ block, isEditing, onUpdate, onDelete, onMoveUp, onMoveD
         return (
           <div className="bg-slate-50 rounded-lg p-6">
             <h3 className="text-xl font-semibold text-slate-800 mb-4">{block.props.title}</h3>
-            <div className="grid grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="bg-slate-200 h-24 rounded mb-2" />
-                  <div className="text-sm font-medium text-slate-700">Sample Vehicle {i}</div>
-                  <div className="text-xs text-slate-500">KSh 2,500,000</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {(liveVehicles || []).map((vehicle) => (
+                <div key={vehicle.id} className="bg-white rounded-lg p-4 shadow-sm">
+                  <img src={vehicle.image || vehicle.images?.[0] || '/placeholder.jpg'} alt={vehicle.title || `${vehicle.make || ''} ${vehicle.model || ''}`} className="w-full h-24 object-cover rounded mb-2" />
+                  <div className="text-sm font-medium text-slate-700">{vehicle.title || `${vehicle.make || ''} ${vehicle.model || ''}`.trim() || 'Vehicle'}</div>
+                  <div className="text-xs text-slate-500">{vehicle.price ? `KSh ${Number(vehicle.price).toLocaleString()}` : 'Price on request'}</div>
                 </div>
               ))}
+              {(!liveVehicles || liveVehicles.length === 0) && <div className="col-span-full text-sm text-slate-400">No live vehicles match this block yet.</div>}
             </div>
           </div>
         );
@@ -187,7 +190,7 @@ const BlockRenderer = ({ block, isEditing, onUpdate, onDelete, onMoveUp, onMoveD
   };
 
   return (
-    <div className={`group relative rounded-lg border-2 transition-all ${isEditing ? 'border-[#17244B] ring-2 ring-[#17244B]/20' : 'border-transparent hover:border-slate-200'}`}>
+    <div onClick={onSelect} className={`group relative rounded-lg border-2 transition-all cursor-pointer ${isSelected ? 'border-[#C77B58] ring-2 ring-[#C77B58]/20' : isEditing ? 'border-[#17244B] ring-2 ring-[#17244B]/20' : 'border-transparent hover:border-slate-200'}`}>
       {/* Block Controls */}
       {isEditing && (
         <div className="absolute -top-12 left-0 right-0 flex items-center justify-between bg-[#17244B] rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -233,22 +236,39 @@ const BlockRenderer = ({ block, isEditing, onUpdate, onDelete, onMoveUp, onMoveD
   );
 };
 
-export default function VisualPageBuilder() {
-  const [blocks, setBlocks] = useState([]);
+export default function VisualPageBuilder({ page = null, onSaved = null }) {
+  const initialBlocks = Array.isArray(page?.content) ? page.content : [];
+  const [blocks, setBlocks] = useState(initialBlocks);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [isEditing, setIsEditing] = useState(true);
   const [previewMode, setPreviewMode] = useState('desktop');
-  const [history, setHistory] = useState([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [draggedBlock, setDraggedBlock] = useState(null);
+  const [history, setHistory] = useState([initialBlocks]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [searchBlocks, setSearchBlocks] = useState('');
+  const [liveVehicles, setLiveVehicles] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  const addToHistory = useCallback((newBlocks) => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push([...blocks]);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  }, [history, historyIndex, blocks]);
+  useEffect(() => {
+    setBlocks(initialBlocks);
+    setHistory([initialBlocks]);
+    setHistoryIndex(0);
+    setSelectedBlock(null);
+  }, [page?.id]);
+
+  useEffect(() => {
+    let active = true;
+    getCars({ page: 1, limit: 6, status: 'active' }).then((result) => {
+      if (active) setLiveVehicles(result?.data || []);
+    }).catch(() => { if (active) setLiveVehicles([]); });
+    return () => { active = false; };
+  }, []);
+
+  const commitBlocks = useCallback((newBlocks) => {
+    setHistory(prev => [...prev.slice(0, historyIndex + 1), newBlocks]);
+    setHistoryIndex(prev => prev + 1);
+    setBlocks(newBlocks);
+  }, [historyIndex]);
 
   const addBlock = (blockType) => {
     const blockDef = blockTypes.flatMap(c => c.blocks).find(b => b.type === blockType);
@@ -260,26 +280,23 @@ export default function VisualPageBuilder() {
       props: { ...blockDef.defaultProps },
     };
 
-    const newBlocks = selectedBlock
+    const newBlocks = selectedBlock !== null
       ? [...blocks.slice(0, selectedBlock + 1), newBlock, ...blocks.slice(selectedBlock + 1)]
       : [...blocks, newBlock];
 
-    addToHistory(newBlocks);
-    setBlocks(newBlocks);
-    setSelectedBlock(selectedBlock ? selectedBlock + 1 : blocks.length);
+    commitBlocks(newBlocks);
+    setSelectedBlock(selectedBlock !== null ? selectedBlock + 1 : blocks.length);
   };
 
   const updateBlock = (index, newProps) => {
     const newBlocks = [...blocks];
     newBlocks[index] = { ...newBlocks[index], props: { ...newBlocks[index].props, ...newProps } };
-    addToHistory(newBlocks);
-    setBlocks(newBlocks);
+    commitBlocks(newBlocks);
   };
 
   const deleteBlock = (index) => {
     const newBlocks = blocks.filter((_, i) => i !== index);
-    addToHistory(newBlocks);
-    setBlocks(newBlocks);
+    commitBlocks(newBlocks);
     setSelectedBlock(null);
   };
 
@@ -289,8 +306,7 @@ export default function VisualPageBuilder() {
 
     const newBlocks = [...blocks];
     [newBlocks[index], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[index]];
-    addToHistory(newBlocks);
-    setBlocks(newBlocks);
+    commitBlocks(newBlocks);
     setSelectedBlock(newIndex);
   };
 
@@ -305,6 +321,23 @@ export default function VisualPageBuilder() {
     if (historyIndex < history.length - 1) {
       setBlocks([...history[historyIndex + 1]]);
       setHistoryIndex(historyIndex + 1);
+    }
+  };
+
+  const savePage = async () => {
+    if (!page?.id) {
+      setSaveError('Select a page before saving.');
+      return;
+    }
+    try {
+      setSaving(true);
+      setSaveError('');
+      const response = await cmsApi.updatePage(page.id, { content: blocks });
+      onSaved?.(response?.data || response);
+    } catch (error) {
+      setSaveError(error?.response?.data?.error || error?.message || 'Failed to save page');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -423,12 +456,14 @@ export default function VisualPageBuilder() {
               <Eye size={16} />
               Preview
             </button>
-            <button className="px-4 py-2 bg-[#17244B] text-white rounded-lg hover:bg-[#1e3054] flex items-center gap-2 text-sm font-medium">
+            <button onClick={savePage} disabled={saving || !page?.id} className="px-4 py-2 bg-[#17244B] text-white rounded-lg hover:bg-[#1e3054] flex items-center gap-2 text-sm font-medium disabled:opacity-40">
               <Save size={16} />
-              Save Page
+              {saving ? 'Saving…' : 'Save Page'}
             </button>
           </div>
         </div>
+
+        {saveError && <div className="px-4 py-2 text-sm text-red-600 bg-red-50 border-b border-red-100">{saveError}</div>}
 
         {/* Canvas Area */}
         <div className="flex-1 overflow-auto p-8">
@@ -453,6 +488,9 @@ export default function VisualPageBuilder() {
                       onDelete={() => deleteBlock(index)}
                       onMoveUp={() => moveBlock(index, 'up')}
                       onMoveDown={() => moveBlock(index, 'down')}
+                      onSelect={() => setSelectedBlock(index)}
+                      isSelected={selectedBlock === index}
+                      liveVehicles={liveVehicles}
                     />
                   ))}
                 </div>

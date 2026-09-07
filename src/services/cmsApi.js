@@ -76,7 +76,7 @@ export const deleteMedia = (id) => api.delete(`/cms/media/${id}`);
 // TAXONOMIES (Categories & Tags)
 // ============================================
 
-export const getTaxonomies = (type) => api.get('/cms/taxonomies', { type });
+export const getTaxonomies = (type) => api.get('/cms/taxonomies', { params: { type } });
 export const createTaxonomy = (data) => api.post('/cms/taxonomies', data);
 export const updateTaxonomy = (id, data) => api.put(`/cms/taxonomies/${id}`, data);
 export const deleteTaxonomy = (id) => api.delete(`/cms/taxonomies/${id}`);
@@ -93,7 +93,7 @@ export const getRevisionById = (id) => api.get(`/cms/revisions/${id}`);
 // A/B TESTS
 // ============================================
 
-export const getABTests = (status) => api.get('/cms/ab-tests', { status });
+export const getABTests = (status) => api.get('/cms/ab-tests', { params: { status } });
 export const createABTest = (data) => api.post('/cms/ab-tests', data);
 export const updateABTest = (id, data) => api.put(`/cms/ab-tests/${id}`, data);
 export const deleteABTest = (id) => api.delete(`/cms/ab-tests/${id}`);

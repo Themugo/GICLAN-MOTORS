@@ -25,7 +25,6 @@ COPY backend/utils ./utils
 # ("COPY failed: file not found"). Removed the stale line.
 COPY backend/identity ./identity
 COPY backend/ai ./ai
-COPY backend/cms ./cms
 COPY backend/communications ./communications
 COPY backend/countries ./countries
 COPY backend/dataExchange ./dataExchange

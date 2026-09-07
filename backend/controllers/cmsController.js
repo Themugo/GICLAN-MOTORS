@@ -27,13 +27,12 @@ export async function getPages(req, res) {
     ];
   }
 
-  const pages = await CMSPage.find({
-    ...filter,
-    _sort: "updatedAt",
-    _order: "desc",
-    _page: parseInt(page),
-    _limit: parseInt(limit)
-  });
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const pages = await CMSPage.find(filter)
+    .sort({ updatedAt: -1 })
+    .skip((pageNum - 1) * limitNum)
+    .limit(limitNum);
 
   const total = await CMSPage.countDocuments(filter);
 
@@ -285,7 +284,7 @@ export async function getContents(req, res) {
 
 export async function getContentById(req, res) {
   const { id } = req.params;
-  const content = await CMSContent.findById(id);
+  const content = await CMSContent.findOne({ id, status: "published" });
   if (!content) {
     return res.status(404).json({ error: "Content not found" });
   }
@@ -411,13 +410,12 @@ export async function getFaqs(req, res) {
     ];
   }
 
-  const faqs = await CMSFaq.find({
-    ...filter,
-    _sort: "popularity",
-    _order: "desc",
-    _page: parseInt(page),
-    _limit: parseInt(limit)
-  });
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
+  const faqs = await CMSFaq.find(filter)
+    .sort({ popularity: -1 })
+    .skip((pageNum - 1) * limitNum)
+    .limit(limitNum);
 
   res.json({ data: faqs });
 }
@@ -485,13 +483,12 @@ export async function getCampaigns(req, res) {
   if (status) filter.status = status;
   if (type) filter.campaignType = type;
 
-  const campaigns = await CMSCampaign.find({
-    ...filter,
-    _sort: "startDate",
-    _order: "desc",
-    _page: parseInt(page),
-    _limit: parseInt(limit)
-  });
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const campaigns = await CMSCampaign.find(filter)
+    .sort({ startDate: -1 })
+    .skip((pageNum - 1) * limitNum)
+    .limit(limitNum);
 
   res.json({ data: campaigns });
 }
@@ -562,13 +559,12 @@ export async function getBanners(req, res) {
   if (type) filter.bannerType = type;
   if (status) filter.status = status;
 
-  const banners = await CMSBanner.find({
-    ...filter,
-    _sort: "order",
-    _order: "asc",
-    _page: parseInt(page),
-    _limit: parseInt(limit)
-  });
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
+  const banners = await CMSBanner.find(filter)
+    .sort({ order: 1 })
+    .skip((pageNum - 1) * limitNum)
+    .limit(limitNum);
 
   res.json({ data: banners });
 }
@@ -657,13 +653,12 @@ export async function getMedia(req, res) {
     ];
   }
 
-  const media = await CMSMedia.find({
-    ...filter,
-    _sort: "uploadedAt",
-    _order: "desc",
-    _page: parseInt(page),
-    _limit: parseInt(limit)
-  });
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
+  const media = await CMSMedia.find(filter)
+    .sort({ uploadedAt: -1 })
+    .skip((pageNum - 1) * limitNum)
+    .limit(limitNum);
 
   res.json({ data: media });
 }
@@ -722,11 +717,7 @@ export async function getTaxonomies(req, res) {
   const { type } = req.query;
   const filter = type ? { taxonomyType: type } : {};
 
-  const taxonomies = await CMSTaxonomy.find({
-    ...filter,
-    _sort: "order",
-    _order: "asc"
-  });
+  const taxonomies = await CMSTaxonomy.find(filter).sort({ order: 1 });
 
   res.json({ data: taxonomies });
 }
@@ -771,12 +762,7 @@ export async function deleteTaxonomy(req, res) {
 export async function getRevisions(req, res) {
   const { contentId, contentType } = req.query;
 
-  const revisions = await CMSRevision.find({
-    contentId,
-    contentType,
-    _sort: "version",
-    _order: "desc"
-  });
+  const revisions = await CMSRevision.find({ contentId, contentType }).sort({ version: -1 });
 
   res.json({ data: revisions });
 }
@@ -798,11 +784,7 @@ export async function getABTests(req, res) {
   const { status } = req.query;
   const filter = status ? { status } : {};
 
-  const tests = await CMSABTest.find({
-    ...filter,
-    _sort: "createdAt",
-    _order: "desc"
-  });
+  const tests = await CMSABTest.find(filter).sort({ createdAt: -1 });
 
   res.json({ data: tests });
 }
@@ -872,12 +854,7 @@ export async function getAnalytics(req, res) {
     if (endDate) filter.timestamp.$lte = endDate;
   }
 
-  const analytics = await CMSAnalytics.find({
-    ...filter,
-    _sort: "timestamp",
-    _order: "desc",
-    _limit: 1000
-  });
+  const analytics = await CMSAnalytics.find(filter).sort({ timestamp: -1 }).limit(1000);
 
   res.json({ data: analytics });
 }
@@ -963,7 +940,7 @@ export async function searchContent(req, res) {
         { slug: { $ilike: searchTerm } }
       ],
       status: "published"
-    }, { _limit: parseInt(limit) });
+    }).limit(parseInt(limit, 10));
     results.push(...pages.map(p => ({ ...p, resultType: "page" })));
   }
 
@@ -974,7 +951,7 @@ export async function searchContent(req, res) {
         { body: { $ilike: searchTerm } }
       ],
       status: "published"
-    }, { _limit: parseInt(limit) });
+    }).limit(parseInt(limit, 10));
     results.push(...contents.map(c => ({ ...c, resultType: "content" })));
   }
 
@@ -984,7 +961,7 @@ export async function searchContent(req, res) {
         { question: { $ilike: searchTerm } },
         { answer: { $ilike: searchTerm } }
       ]
-    }, { _limit: parseInt(limit) });
+    }).limit(parseInt(limit, 10));
     results.push(...faqs.map(f => ({ ...f, resultType: "faq" })));
   }
 
@@ -994,7 +971,7 @@ export async function searchContent(req, res) {
         { filename: { $ilike: searchTerm } },
         { alt: { $ilike: searchTerm } }
       ]
-    }, { _limit: parseInt(limit) });
+    }).limit(parseInt(limit, 10));
     results.push(...media.map(m => ({ ...m, resultType: "media" })));
   }
 
