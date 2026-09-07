@@ -93,7 +93,7 @@ export const createBooking = asyncHandler(async (req, res) => {
 // Get booking by reference
 export const getBooking = asyncHandler(async (req, res) => {
   const booking = await bookingService.getBookingByReference(req.params.reference);
-  const details = await bookingService.getBookingDetails(booking.id, 'customer');
+  const details = await bookingService.getBookingDetails(booking.id, 'customer', req.user.id);
   response.success(res, details);
 });
 
@@ -109,7 +109,7 @@ export const getCustomerBookings = asyncHandler(async (req, res) => {
 
 // Get provider bookings
 export const getProviderBookings = asyncHandler(async (req, res) => {
-  const provider = await providerService.getProviderByUserId(req.user.id);
+  const provider = req.provider || await providerService.getProviderById(req.params.providerId);
   if (!provider) {
     response.notFound(res, 'Provider not found');
     return;
@@ -127,7 +127,8 @@ export const updateBookingStatus = asyncHandler(async (req, res) => {
     status,
     req.user.id,
     req.body.staffId,
-    notes
+    notes,
+    req.params.providerId
   );
   response.success(res, booking);
 });
@@ -138,7 +139,8 @@ export const assignInspector = asyncHandler(async (req, res) => {
   const booking = await bookingService.assignInspector(
     req.params.bookingId,
     staffId,
-    req.user.id
+    req.user.id,
+    req.params.providerId
   );
   response.success(res, booking);
 });
@@ -172,14 +174,18 @@ export const createReport = asyncHandler(async (req, res) => {
   const report = await reportService.createReport(
     req.params.bookingId,
     req.body,
-    req.user.id
+    req.user.id,
+    req.params.providerId
   );
   response.created(res, report);
 });
 
 // Get report
 export const getReport = asyncHandler(async (req, res) => {
-  const report = await reportService.getReportDetails(req.params.reportId);
+  const report = await reportService.getReportDetails(req.params.reportId, {
+    userId: req.user.id,
+    role: req.user.role,
+  });
   response.success(res, report);
 });
 
@@ -191,19 +197,19 @@ export const getReportByShareToken = asyncHandler(async (req, res) => {
 
 // Generate PDF
 export const generatePDF = asyncHandler(async (req, res) => {
-  const result = await reportService.generatePDF(req.params.reportId);
+  const result = await reportService.generatePDF(req.params.reportId, { providerId: req.params.providerId, userId: req.user.id, role: req.user.role });
   response.success(res, result);
 });
 
 // Share report
 export const shareReport = asyncHandler(async (req, res) => {
-  const result = await reportService.shareReport(req.params.reportId, req.body);
+  const result = await reportService.shareReport(req.params.reportId, req.body, { providerId: req.params.providerId, userId: req.user.id, role: req.user.role });
   response.success(res, result);
 });
 
 // Revoke share
 export const revokeReportShare = asyncHandler(async (req, res) => {
-  await reportService.revokeShare(req.params.reportId);
+  await reportService.revokeShare(req.params.reportId, { providerId: req.params.providerId, userId: req.user.id, role: req.user.role });
   response.success(res, { message: 'Share revoked' });
 });
 

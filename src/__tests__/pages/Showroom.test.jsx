@@ -37,8 +37,8 @@ describe('Showroom', () => {
     expect(screen.getByText('The Gallery')).toBeInTheDocument();
   });
 
-  it('falls back to demo cars when the API returns none', async () => {
+  it('shows the honest empty state when the real API returns no vehicles', async () => {
     render(<MemoryRouter><Showroom /></MemoryRouter>);
-    expect(await screen.findByText('C 300 AMG')).toBeInTheDocument();
+    expect(await screen.findByText(/No vehicles match this search/i)).toBeInTheDocument();
   });
 });

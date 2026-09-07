@@ -3,6 +3,9 @@
 // ============================================================
 
 import { api as apiClient } from '../../../api/api';
+const unwrapInspectionResponse = <T>(response: { data?: any }): T =>
+  (response?.data?.data ?? response?.data) as T;
+
 import type {
   InspectionProvider,
   InspectionPackage,
@@ -89,7 +92,7 @@ export const inspectionApi = {
       '/api/inspection/providers',
       { params }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -99,7 +102,7 @@ export const inspectionApi = {
     const response = await apiClient.get<InspectionProvider>(
       `/api/inspection/providers/${providerId}`
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -110,7 +113,7 @@ export const inspectionApi = {
       `/api/inspection/providers/${providerId}/reviews`,
       { params: { limit } }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -121,7 +124,7 @@ export const inspectionApi = {
       `/api/inspection/providers/${providerId}/slots`,
       { params: { date, staffId } }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -131,7 +134,7 @@ export const inspectionApi = {
     const response = await apiClient.get<ProviderDashboard>(
       `/api/inspection/provider/${providerId}/dashboard`
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -142,7 +145,7 @@ export const inspectionApi = {
       `/api/inspection/provider/${providerId}/earnings-summary`,
       { params: { period } }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   // ============================================================
@@ -154,7 +157,7 @@ export const inspectionApi = {
    */
   createBooking: async (params: CreateBookingParams) => {
     const response = await apiClient.post<Booking>('/api/inspection/bookings', params);
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -165,7 +168,7 @@ export const inspectionApi = {
       '/api/inspection/bookings',
       { params }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -175,7 +178,7 @@ export const inspectionApi = {
     const response = await apiClient.get<Booking>(
       `/api/inspection/bookings/${reference}`
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -186,7 +189,7 @@ export const inspectionApi = {
       `/api/inspection/bookings/${bookingId}/cancel`,
       { reason }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -211,7 +214,7 @@ export const inspectionApi = {
       limit: number;
       totalPages: number;
     }>(`/api/inspection/provider/${providerId}/bookings`, { params });
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -228,7 +231,7 @@ export const inspectionApi = {
       `/api/inspection/provider/${providerId}/bookings/${bookingId}/status`,
       { status, staffId, notes }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -239,7 +242,7 @@ export const inspectionApi = {
       `/api/inspection/provider/${providerId}/bookings/${bookingId}/assign`,
       { staffId }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   // ============================================================
@@ -253,7 +256,7 @@ export const inspectionApi = {
     const response = await apiClient.get<InspectionReport>(
       `/api/inspection/reports/${reportId}`
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -263,7 +266,7 @@ export const inspectionApi = {
     const response = await apiClient.get<InspectionReport>(
       `/api/inspection/reports/share/${token}`
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -273,7 +276,7 @@ export const inspectionApi = {
     const response = await apiClient.post<{ pdfUrl: string }>(
       `/api/inspection/provider/${providerId}/reports/${reportId}/pdf`
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -283,7 +286,7 @@ export const inspectionApi = {
     const response = await apiClient.post<{ shareUrl: string; expiresAt: string }>(
       `/api/inspection/provider/${providerId}/reports/${reportId}/share`
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -302,7 +305,7 @@ export const inspectionApi = {
     const response = await apiClient.get<{ categories: any }>(
       '/api/inspection/categories'
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   // ============================================================
@@ -314,7 +317,7 @@ export const inspectionApi = {
    */
   submitReview: async (params: SubmitReviewParams) => {
     const response = await apiClient.post('/api/inspection/reviews', params);
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   // ============================================================
@@ -342,7 +345,7 @@ export const inspectionApi = {
       limit: number;
       totalPages: number;
     }>(`/api/inspection/provider/${providerId}/transactions`, { params });
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -353,7 +356,7 @@ export const inspectionApi = {
       `/api/inspection/provider/${providerId}/settlements`,
       { params: { status } }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -364,7 +367,7 @@ export const inspectionApi = {
       `/api/inspection/provider/${providerId}/settlements`,
       { periodStart, periodEnd }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 
   /**
@@ -375,7 +378,7 @@ export const inspectionApi = {
       `/api/inspection/provider/${providerId}/earnings`,
       { params: { period } }
     );
-    return response.data;
+    return unwrapInspectionResponse(response);
   },
 };
 

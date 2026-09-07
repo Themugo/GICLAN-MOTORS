@@ -10,6 +10,13 @@ import { Vehicle } from '../../types';
  * of this hook into the app's single persisted CompareContext source.
  */
 
+
+const favoriteMocks = vi.hoisted(() => ({ getFavorites: vi.fn(), toggleFavorite: vi.fn() }));
+vi.mock('../../services/favoriteApi', () => ({
+  getFavorites: favoriteMocks.getFavorites,
+  toggleFavorite: favoriteMocks.toggleFavorite,
+  FavoriteApiError: class FavoriteApiError extends Error { kind: string; constructor(message: string, kind: string) { super(message); this.kind = kind; } },
+}));
 function makeVehicle(id: string): Vehicle {
   return {
     id,
@@ -75,110 +82,54 @@ describe('useVehicleCollections', () => {
  * request made or the actual resulting state, matching this program's
  * established standard (real request shapes, not just "doesn't crash").
  */
-describe('useVehicleCollections - authenticated path (real favorites API, Phase 2)', () => {
-  afterEach(() => vi.restoreAllMocks());
+describe('useVehicleCollections - authenticated path (real favorites service)', () => {
+  afterEach(() => vi.clearAllMocks());
 
   it('fetches real favorites on mount when a userId is provided', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        success: true,
-        favorites: [{ id: 'real-1' }, { id: 'real-2' }],
-        total: 2,
-        pagination: { page: 1, limit: 50, total: 2, pages: 1 },
-      }),
-    });
-
+    favoriteMocks.getFavorites.mockResolvedValue({ favorites: [{ id: 'real-1' }, { id: 'real-2' }] });
     const { result } = renderHook(() => useVehicleCollections([], 'user-123'));
-
     await waitFor(() => expect(result.current.savedVehicles).toEqual(['real-1', 'real-2']));
+    expect(favoriteMocks.getFavorites).toHaveBeenCalledWith({ limit: 50 });
   });
 
-  it('does NOT attempt any fetch when no userId is provided - confirms the anonymous path never calls the real API', () => {
-    const fetchMock = vi.fn();
-    global.fetch = fetchMock;
-
+  it('does not fetch when no userId is provided', () => {
     renderHook(() => useVehicleCollections([]));
-
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(favoriteMocks.getFavorites).not.toHaveBeenCalled();
   });
 
-  it('toggling save for an authenticated user calls the real toggle endpoint with the correct URL and method', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ success: true, favorites: [], total: 0, pagination: { page: 1, limit: 50, total: 0, pages: 0 } }),
-    });
-
+  it('toggles an authenticated favorite through the real service', async () => {
+    favoriteMocks.getFavorites.mockResolvedValue({ favorites: [] });
+    favoriteMocks.toggleFavorite.mockResolvedValue({ success: true, favorited: true });
     const { result } = renderHook(() => useVehicleCollections([], 'user-123'));
-    await waitFor(() => expect(result.current.savedVehicles).toEqual([]));
-
-    const toggleFetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ success: true, favorited: true }),
-    });
-    global.fetch = toggleFetch;
-
+    await waitFor(() => expect(favoriteMocks.getFavorites).toHaveBeenCalled());
     act(() => result.current.handleToggleSave('car-42'));
-    // Optimistic update happens synchronously
     expect(result.current.savedVehicles).toContain('car-42');
-
-    await waitFor(() => expect(toggleFetch).toHaveBeenCalled());
-    const [url, options] = toggleFetch.mock.calls[0];
-    expect(url).toContain('/api/favorites/car-42/toggle');
-    expect(options.method).toBe('POST');
-    expect(options.credentials).toBe('include');
+    await waitFor(() => expect(favoriteMocks.toggleFavorite).toHaveBeenCalledWith('car-42'));
   });
 
   it('rolls back the optimistic update if the real toggle request fails', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ success: true, favorites: [], total: 0, pagination: { page: 1, limit: 50, total: 0, pages: 0 } }),
-    });
-
+    favoriteMocks.getFavorites.mockResolvedValue({ favorites: [] });
+    favoriteMocks.toggleFavorite.mockRejectedValue(new Error('network down'));
     const { result } = renderHook(() => useVehicleCollections([], 'user-123'));
-    await waitFor(() => expect(result.current.savedVehicles).toEqual([]));
-
-    global.fetch = vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch'));
-
+    await waitFor(() => expect(favoriteMocks.getFavorites).toHaveBeenCalled());
     act(() => result.current.handleToggleSave('car-99'));
-    expect(result.current.savedVehicles).toContain('car-99'); // optimistic
-
-    await waitFor(() => expect(result.current.savedVehicles).not.toContain('car-99')); // rolled back
-    await waitFor(() => expect(result.current.favoritesError).toBeTruthy());
+    expect(result.current.savedVehicles).toContain('car-99');
+    await waitFor(() => expect(result.current.savedVehicles).not.toContain('car-99'));
+    expect(result.current.favoritesError).toBeTruthy();
   });
 
-  it('a fetch failure on mount does not invent a fabricated local saved list', async () => {
-    global.fetch = vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch'));
-
+  it('does not invent a saved list when the real favorites service fails', async () => {
+    favoriteMocks.getFavorites.mockRejectedValue(new Error('network down'));
     const { result } = renderHook(() => useVehicleCollections([], 'user-123'));
-
     await waitFor(() => expect(result.current.favoritesError).toBeTruthy());
     expect(result.current.savedVehicles).toEqual([]);
   });
 
   it('clears the authenticated collection at the logout boundary', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        success: true,
-        favorites: [{ id: 'real-1' }],
-        total: 1,
-        pagination: { page: 1, limit: 50, total: 1, pages: 1 },
-      }),
-    });
-
-    const { result, rerender } = renderHook(
-      ({ userId }) => useVehicleCollections([], userId),
-      { initialProps: { userId: 'user-123' as string | null } },
-    );
-
+    favoriteMocks.getFavorites.mockResolvedValue({ favorites: [{ id: 'real-1' }] });
+    const { result, rerender } = renderHook(({ userId }) => useVehicleCollections([], userId), { initialProps: { userId: 'user-123' } });
     await waitFor(() => expect(result.current.savedVehicles).toEqual(['real-1']));
     rerender({ userId: null });
-    expect(result.current.savedVehicles).toEqual([]);
+    await waitFor(() => expect(result.current.savedVehicles).toEqual([]));
   });
 });

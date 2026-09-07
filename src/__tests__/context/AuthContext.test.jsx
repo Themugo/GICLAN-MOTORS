@@ -3,18 +3,15 @@ import { renderHook, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../context/AuthContext';
 import { MemoryRouter } from 'react-router-dom';
 
-// Mock the real dependency: AuthContext calls authAPI.me() on mount
-// (cookie-based session probe). A 401/network failure is the normal
-// "not logged in" case and must resolve loading to false.
-vi.mock('../../api/api', () => ({
-  authAPI: {
-    me: vi.fn().mockRejectedValue(Object.assign(new Error('Unauthorized'), { response: { status: 401 } })),
-    login: vi.fn(),
-    register: vi.fn(),
-    logout: vi.fn().mockResolvedValue({}),
-    updateProfile: vi.fn(),
-  },
+const authMocks = vi.hoisted(() => ({
+  getMe: vi.fn(),
+  login: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn().mockResolvedValue(undefined),
+  updateProfile: vi.fn(),
 }));
+
+vi.mock('../../services/authApi', () => authMocks);
 
 vi.mock('../../utils/posthog', () => ({
   setPostHogUser: vi.fn(),
@@ -32,6 +29,7 @@ function wrapper({ children }) {
 describe('AuthProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authMocks.getMe.mockResolvedValue(null);
     localStorage.clear();
   });
 

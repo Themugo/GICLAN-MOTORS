@@ -26,7 +26,8 @@
     "validate:phase60": "node scripts/validate-phase60.mjs",
     "validate:marketplace-core": "node scripts/validate-marketplace-initiative.mjs",
     "validate:communications": "node scripts/validate-communications-initiative.mjs",
-    "validate:transaction-integrity": "node scripts/validate-transaction-integrity.mjs"
+    "validate:transaction-integrity": "node scripts/validate-transaction-integrity.mjs",
+    "validate:inspection-marketplace": "node scripts/validate-inspection-marketplace.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",

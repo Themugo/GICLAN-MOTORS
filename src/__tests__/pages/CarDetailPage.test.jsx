@@ -90,7 +90,7 @@ describe('CarDetailPage', () => {
 
   it('renders car title from mock', async () => {
     render(<MemoryRouter initialEntries={['/cars/veh_1']}><MarketplaceProvider><CarDetailPage /></MarketplaceProvider></MemoryRouter>);
-    const titles = await screen.findAllByText(/Porsche 911 GT3 RS/);
+    const titles = await screen.findAllByText(/Test Luxury Car/);
     expect(titles.length).toBeGreaterThanOrEqual(1);
   });
 

@@ -52,6 +52,7 @@ export interface InspectionProvider {
     acceptanceRate: number;
   };
   packages?: InspectionPackage[];
+  startingPrice?: number | null;
   branches?: Branch[];
   credentials?: Credential[];
   recentReviews?: Review[];

@@ -2,7 +2,7 @@
 // KAYAD INSPECTION MARKETPLACE - BOOKING SERVICE
 // ============================================================
 
-import db from '../../db/index.js';
+import db from './dbAdapter.js';
 import { AppError } from '../../utils/AppError.js';
 import { logInfo, logError } from '../../utils/logger.js';
 import { incrementCounter } from '../../config/metrics.js';
@@ -38,15 +38,26 @@ class BookingService {
     }
 
     // Check availability
-    const existingBooking = await db.findOne('inspection_bookings', {
-      assigned_staff_id: bookingData.staffId,
+    const slotFilters = {
+      provider_id: provider.id,
       scheduled_date: bookingData.scheduledDate,
       scheduled_time: bookingData.scheduledTime,
-      status: { $nin: ['cancelled', 'no_show'] }
-    });
+      status: { $nin: ['cancelled', 'no_show'] },
+    };
+    if (bookingData.staffId) {
+      slotFilters.assigned_staff_id = bookingData.staffId;
+    }
 
+    const existingBooking = await db.findOne('inspection_bookings', slotFilters);
     if (existingBooking) {
       throw new AppError('Time slot not available', 400);
+    }
+
+    if (bookingData.staffId) {
+      const staff = await db.findById('inspection_staff', bookingData.staffId);
+      if (!staff || staff.provider_id !== provider.id || staff.is_active === false) {
+        throw new AppError('Invalid or unavailable inspector', 400);
+      }
     }
 
     // Calculate price
@@ -98,7 +109,15 @@ class BookingService {
       updated_at: new Date(),
     };
 
-    const result = await db.create('inspection_bookings', booking);
+    let result;
+    try {
+      result = await db.create('inspection_bookings', booking);
+    } catch (error) {
+      if (error?.code === '23505') {
+        throw new AppError('Time slot not available', 409);
+      }
+      throw error;
+    }
 
     // Create status history
     await this.addStatusHistory(result.id, null, 'booked', customerId);
@@ -135,8 +154,12 @@ class BookingService {
   /**
    * Get booking details (for customer/provider view)
    */
-  async getBookingDetails(bookingId, userType = 'customer') {
+  async getBookingDetails(bookingId, userType = 'customer', actorId = null) {
     const booking = await this.getBookingById(bookingId);
+
+    if (userType === 'customer' && actorId && String(booking.customer_id) !== String(actorId)) {
+      throw new AppError('You do not have access to this booking', 403);
+    }
 
     // Get package info
     const pkg = await db.findById('inspection_packages', booking.package_id);
@@ -263,8 +286,11 @@ class BookingService {
   /**
    * Update booking status
    */
-  async updateBookingStatus(bookingId, newStatus, userId, staffId = null, notes = null) {
+  async updateBookingStatus(bookingId, newStatus, userId, staffId = null, notes = null, providerId = null) {
     const booking = await this.getBookingById(bookingId);
+    if (providerId && String(booking.provider_id) !== String(providerId)) {
+      throw new AppError('Booking does not belong to this provider', 403);
+    }
 
     const validTransitions = {
       'booked': ['confirmed', 'cancelled'],
@@ -341,8 +367,11 @@ class BookingService {
   /**
    * Assign inspector to booking
    */
-  async assignInspector(bookingId, staffId, userId) {
+  async assignInspector(bookingId, staffId, userId, providerId = null) {
     const booking = await this.getBookingById(bookingId);
+    if (providerId && String(booking.provider_id) !== String(providerId)) {
+      throw new AppError('Booking does not belong to this provider', 403);
+    }
 
     if (!['booked', 'confirmed'].includes(booking.status)) {
       throw new AppError('Cannot assign inspector at this stage', 400);
@@ -371,6 +400,9 @@ class BookingService {
    */
   async cancelBooking(bookingId, reason, userId) {
     const booking = await this.getBookingById(bookingId);
+    if (String(booking.customer_id) !== String(userId)) {
+      throw new AppError('You do not have access to this booking', 403);
+    }
 
     if (['closed', 'cancelled', 'no_show'].includes(booking.status)) {
       throw new AppError('Cannot cancel booking in current status', 400);
@@ -425,7 +457,7 @@ class BookingService {
       sort: { scheduled_date: -1, scheduled_time: -1 }
     });
 
-    return Promise.all(bookings.map(b => this.getBookingDetails(b.id, 'customer')));
+    return Promise.all(bookings.map(b => this.getBookingDetails(b.id, 'customer', customerId)));
   }
 
   /**

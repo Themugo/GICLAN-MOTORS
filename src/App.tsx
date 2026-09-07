@@ -34,6 +34,7 @@ import { BuyerPlatform } from './features/OwnershipPlatform';
 import { PrivateSellerPlatform } from './features/PrivateSellerPlatform';
 import DealerDashboard from './pages/dealer/dashboard/DealerDashboard';
 import { FinanceMarketplace } from './features/FinancePlatform';
+import InspectionMarketplacePage from './features/InspectionMarketplace/pages/InspectionMarketplacePage';
 
 // Fixed (Final Integration - real data integration): App() previously
 // held its own, disconnected local user state directly - re-applying
@@ -372,7 +373,12 @@ function AppInner() {
               user={user}
               onOpenAuth={() => setShowAuthModal(true)}
               onViewVehicleDetails={handleOpenVehicleDetails}
+              onOpenInspectionMarketplace={() => setActiveNav('inspection-marketplace')}
             />
+          )}
+
+          {activeNav === 'inspection-marketplace' && (
+            <InspectionMarketplacePage />
           )}
 
           {activeNav === 'financing' && (

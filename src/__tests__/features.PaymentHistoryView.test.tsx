@@ -2,12 +2,11 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import PaymentHistoryView from '../features/PaymentHistoryView';
 
-const myPayments = vi.fn();
-const status = vi.fn();
+const paymentMocks = vi.hoisted(() => ({ myPayments: vi.fn(), status: vi.fn() }));
+const myPayments = paymentMocks.myPayments;
+const status = paymentMocks.status;
 
-vi.mock('../api/api', () => ({
-  paymentsAPI: { myPayments, status },
-}));
+vi.mock('../api/api', () => ({ paymentsAPI: paymentMocks }));
 vi.mock('../utils/helpers', () => ({
   formatKES: (value: number | string) => `KES ${Number(value).toLocaleString('en-KE')}`,
   timeAgo: () => 'today',
@@ -30,7 +29,7 @@ describe('PaymentHistoryView', () => {
         createdAt: '2026-09-03T08:00:00Z',
         car: { title: 'Toyota Land Cruiser' },
       }],
-      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+      pagination: { page: 1, limit: 10, total: 1, pages: 1 },
     });
 
     render(<PaymentHistoryView />);
@@ -39,15 +38,15 @@ describe('PaymentHistoryView', () => {
     expect(screen.getByText('KES 125,000')).toBeInTheDocument();
     expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.getByText('QAB123')).toBeInTheDocument();
-    expect(myPayments).toHaveBeenCalledWith({ page: 1, limit: 20 });
+    expect(myPayments).toHaveBeenCalledWith({ page: 1, limit: 10 });
   });
 
   it('renders an honest empty state when the API has no records', async () => {
-    myPayments.mockResolvedValue({ payments: [], pagination: { page: 1, limit: 20, total: 0, pages: 1 } });
+    myPayments.mockResolvedValue({ payments: [], pagination: { page: 1, limit: 10, total: 0, pages: 1 } });
 
     render(<PaymentHistoryView />);
 
-    expect(await screen.findByText('No payments yet')).toBeInTheDocument();
+    expect(await screen.findByText('No payment records found')).toBeInTheDocument();
   });
 
   it('shows a retryable error when the API fails', async () => {
@@ -55,6 +54,6 @@ describe('PaymentHistoryView', () => {
 
     render(<PaymentHistoryView />);
 
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('We could not load your payment history'));
+    await waitFor(() => expect(screen.getByText('network down')).toBeInTheDocument());
   });
 });

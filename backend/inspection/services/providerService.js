@@ -2,7 +2,7 @@
 // KAYAD INSPECTION MARKETPLACE - PROVIDER SERVICE
 // ============================================================
 
-import db from '../../db/index.js';
+import db from './dbAdapter.js';
 import { AppError } from '../../utils/AppError.js';
 import { logInfo, logError } from '../../utils/logger.js';
 
@@ -111,7 +111,7 @@ class ProviderService {
    * Search providers with filters
    */
   async searchProviders(filters = {}) {
-    const query = { deleted_at: null };
+    const query = {}; // inspection_providers has no deleted_at column; lifecycle/status is authoritative.
 
     // Status filter
     if (filters.status) {
@@ -173,9 +173,9 @@ class ProviderService {
     // Sort options
     let sort = { average_rating: -1, total_completed_inspections: -1 };
     if (filters.sortBy === 'price_low') {
-      sort = { 'packages.0.price': 1 };
+      sort = { starting_price: 1 };
     } else if (filters.sortBy === 'price_high') {
-      sort = { 'packages.0.price': -1 };
+      sort = { starting_price: -1 };
     } else if (filters.sortBy === 'rating') {
       sort = { average_rating: -1 };
     } else if (filters.sortBy === 'reviews') {
@@ -189,33 +189,88 @@ class ProviderService {
     const limit = parseInt(filters.limit) || 20;
     const skip = (page - 1) * limit;
 
-    const providers = await db.findWithPagination(providersCollection, query, {
-      sort,
-      skip,
-      limit,
-      projection: {
-        company_name: 1,
-        trading_name: 1,
-        logo_url: 1,
-        country: 1,
-        county: 1,
-        town: 1,
-        years_in_business: 1,
-        average_rating: 1,
-        total_reviews: 1,
-        total_completed_inspections: 1,
-        response_time_minutes: 1,
-        languages: 1,
-        has_workshop: 1,
-        offers_mobile: 1,
-        vehicle_types: 1,
-        inspection_types: 1,
-        verification_status: 1,
-        status: 1,
-      }
-    });
+    const [providers, total] = await Promise.all([
+      db.findWithPagination(providersCollection, query, {
+        sort,
+        skip,
+        limit,
+        projection: {
+          company_name: 1,
+          trading_name: 1,
+          logo_url: 1,
+          country: 1,
+          county: 1,
+          town: 1,
+          years_in_business: 1,
+          average_rating: 1,
+          total_reviews: 1,
+          reviews_count: 1,
+          total_completed_inspections: 1,
+          response_time_minutes: 1,
+          languages: 1,
+          has_workshop: 1,
+          offers_mobile: 1,
+          mobile_inspection_fee: 1,
+          starting_price: 1,
+          weekend_available: 1,
+          same_day_available: 1,
+          vehicle_types: 1,
+          inspection_types: 1,
+          commercial_vehicles: 1,
+          electric_vehicles: 1,
+          luxury_vehicles: 1,
+          verification_status: 1,
+          status: 1,
+        }
+      }),
+      db.count(providersCollection, query),
+    ]);
 
-    return providers;
+    const items = providers.map((provider) => ({
+      id: provider.id,
+      companyName: provider.company_name,
+      tradingName: provider.trading_name,
+      logo: provider.logo_url,
+      location: {
+        country: provider.country,
+        county: provider.county,
+        town: provider.town,
+      },
+      businessHours: {},
+      operatingModel: {
+        hasWorkshop: Boolean(provider.has_workshop),
+        offersMobile: Boolean(provider.offers_mobile),
+        mobileFee: Number(provider.mobile_inspection_fee || 0),
+        weekendAvailable: Boolean(provider.weekend_available),
+        sameDayAvailable: Boolean(provider.same_day_available),
+      },
+      specializations: {
+        vehicleTypes: provider.vehicle_types || [],
+        inspectionTypes: provider.inspection_types || [],
+        commercialVehicles: Boolean(provider.commercial_vehicles),
+        electricVehicles: Boolean(provider.electric_vehicles),
+        luxuryVehicles: Boolean(provider.luxury_vehicles),
+      },
+      experience: { yearsInBusiness: Number(provider.years_in_business || 0) },
+      verification: { status: provider.verification_status === 'verified' ? 'verified' : 'unverified' },
+      stats: {
+        averageRating: Number(provider.average_rating || 0),
+        totalReviews: Number(provider.total_reviews ?? provider.reviews_count ?? 0),
+        completedInspections: Number(provider.total_completed_inspections || 0),
+        responseTimeMinutes: Number(provider.response_time_minutes || 0),
+        acceptanceRate: 0,
+      },
+      packages: [],
+      startingPrice: provider.starting_price == null ? null : Number(provider.starting_price),
+    }));
+
+    return {
+      items,
+      total: Number(total || 0),
+      page,
+      limit,
+      totalPages: Math.ceil(Number(total || 0) / limit),
+    };
   }
 
   /**

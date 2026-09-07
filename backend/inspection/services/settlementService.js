@@ -2,7 +2,7 @@
 // KAYAD INSPECTION MARKETPLACE - SETTLEMENT SERVICE
 // ============================================================
 
-import db from '../../db/index.js';
+import db from './dbAdapter.js';
 import { AppError } from '../../utils/AppError.js';
 import { logInfo, logError } from '../../utils/logger.js';
 
@@ -41,7 +41,27 @@ class SettlementService {
     }
 
     if (booking.payment_status === 'fully_paid') {
-      throw new AppError('Booking already paid', 400);
+      const existing = paymentData.reference
+        ? await db.findOne('inspection_transactions', {
+            booking_id: bookingId,
+            transaction_type: 'inspection_payment',
+            reference: paymentData.reference,
+            status: 'completed',
+          })
+        : null;
+      if (existing) {
+        return {
+          bookingId,
+          grossAmount: parseFloat(booking.total_price),
+          commissionAmount: 0,
+          commissionRate: 0,
+          taxAmount: 0,
+          netAmount: parseFloat(booking.total_price),
+          paymentStatus: 'fully_paid',
+          idempotent: true,
+        };
+      }
+      throw new AppError('Booking already paid', 409);
     }
 
     const provider = await db.findById('inspection_providers', booking.provider_id);
@@ -111,8 +131,21 @@ class SettlementService {
     }
 
     const refundAmount = parseFloat(refundData.amount);
-    if (refundAmount > parseFloat(booking.total_price)) {
-      throw new AppError('Refund amount exceeds payment', 400);
+    if (!Number.isFinite(refundAmount) || refundAmount <= 0) {
+      throw new AppError('Refund amount must be greater than zero', 400);
+    }
+    if (booking.payment_status !== 'fully_paid' && booking.payment_status !== 'deposit_paid') {
+      throw new AppError('Booking has no settled payment to refund', 400);
+    }
+
+    const priorRefunds = await db.find('inspection_transactions', {
+      booking_id: bookingId,
+      transaction_type: 'refund',
+      status: { $in: ['processing', 'completed'] },
+    });
+    const refundedSoFar = priorRefunds.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount) || 0), 0);
+    if (refundedSoFar + refundAmount > parseFloat(booking.total_price)) {
+      throw new AppError('Refund amount exceeds remaining refundable balance', 400);
     }
 
     const provider = await db.findById('inspection_providers', booking.provider_id);

@@ -698,6 +698,8 @@ app.use("/api/users", csrfProtection, userRoutes);
 app.use("/api/saved-searches", csrfProtection, savedSearchRoutes);
 app.use("/api/referral", referralRoutes);
 app.use("/api/ntsa-verification", ntsaVerificationRoutes);
+app.use("/api/inspection", inspectionRoutes);
+// Backward-compatible alias for clients using the earlier plural path.
 app.use("/api/inspections", inspectionRoutes);
 app.use("/api/security-logs", securityLogRoutes);
 app.use("/api/sms-bidding", smsBiddingRoutes);

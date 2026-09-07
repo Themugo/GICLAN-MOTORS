@@ -2,7 +2,7 @@
 // KAYAD INSPECTION MARKETPLACE - REPORT SERVICE
 // ============================================================
 
-import db from '../../db/index.js';
+import db from './dbAdapter.js';
 import { AppError } from '../../utils/AppError.js';
 import { logInfo, logError } from '../../utils/logger.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -252,8 +252,11 @@ class ReportService {
   /**
    * Create a new inspection report
    */
-  async createReport(bookingId, reportData, inspectorId) {
+  async createReport(bookingId, reportData, inspectorId, providerId = null) {
     const booking = await db.findById('inspection_bookings', bookingId);
+    if (providerId && String(booking?.provider_id) !== String(providerId)) {
+      throw new AppError('Booking does not belong to this provider', 403);
+    }
     if (!booking) {
       throw new AppError('Booking not found', 404);
     }
@@ -394,12 +397,20 @@ class ReportService {
   /**
    * Get full report details
    */
-  async getReportDetails(reportId) {
+  async getReportDetails(reportId, access = {}) {
     const report = await this.getReportById(reportId);
     const booking = await db.findById('inspection_bookings', report.booking_id);
+    if (!booking) throw new AppError('Booking for report not found', 404);
+
+    const isAdmin = ['admin', 'superadmin'].includes(access.role);
+    const isCustomer = access.userId && String(booking.customer_id) === String(access.userId);
+    const isProvider = access.providerId && String(booking.provider_id) === String(access.providerId);
+    if (!isAdmin && !isCustomer && !isProvider) {
+      throw new AppError('You do not have access to this report', 403);
+    }
     const provider = await db.findById('inspection_providers', booking.provider_id);
     const inspector = await db.findById('inspection_staff', booking.assigned_staff_id);
-    const pkg = await db.findById('inspection_packages', booking.package_id);
+    const pkg = booking.package_id ? await db.findById('inspection_packages', booking.package_id) : null;
 
     // Get checklist items
     const checklistItems = await db.find('inspection_checklist_items', { report_id: reportId });
@@ -440,11 +451,11 @@ class ReportService {
         name: `${inspector.first_name} ${inspector.last_name}`,
         role: inspector.role,
       } : null,
-      package: {
+      package: pkg ? {
         id: pkg.id,
         name: pkg.name,
         type: pkg.inspection_type,
-      },
+      } : null,
       inspectionDate: booking.scheduled_date,
       inspectionLocation: {
         county: booking.inspection_county,
@@ -543,8 +554,8 @@ class ReportService {
   /**
    * Generate PDF report
    */
-  async generatePDF(reportId) {
-    const report = await this.getReportDetails(reportId);
+  async generatePDF(reportId, access = {}) {
+    const report = await this.getReportDetails(reportId, access);
 
     // In production, this would use PDFKit or similar
     // For now, return a placeholder
@@ -562,14 +573,19 @@ class ReportService {
   /**
    * Share report
    */
-  async shareReport(reportId, shareWith) {
+  async shareReport(reportId, shareWith, access = {}) {
     const report = await this.getReportById(reportId);
+    const booking = await db.findById('inspection_bookings', report.booking_id);
+    const isAdmin = ['admin', 'superadmin'].includes(access.role);
+    const isCustomer = access.userId && String(booking?.customer_id) === String(access.userId);
+    const isProvider = access.providerId && String(booking?.provider_id) === String(access.providerId);
+    if (!isAdmin && !isCustomer && !isProvider) throw new AppError('You do not have access to this report', 403);
 
     // Extend expiry if needed
     let shareToken = report.share_token;
     let expiresAt = report.share_expires_at;
 
-    if (!shareToken || new Date(shareToken) < new Date()) {
+    if (!shareToken || !expiresAt || new Date(expiresAt) <= new Date()) {
       shareToken = uuidv4();
       expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     }
@@ -590,7 +606,14 @@ class ReportService {
   /**
    * Revoke share
    */
-  async revokeShare(reportId) {
+  async revokeShare(reportId, access = {}) {
+    const report = await this.getReportById(reportId);
+    const booking = await db.findById('inspection_bookings', report.booking_id);
+    const isAdmin = ['admin', 'superadmin'].includes(access.role);
+    const isCustomer = access.userId && String(booking?.customer_id) === String(access.userId);
+    const isProvider = access.providerId && String(booking?.provider_id) === String(access.providerId);
+    if (!isAdmin && !isCustomer && !isProvider) throw new AppError('You do not have access to this report', 403);
+
     await db.update('inspection_reports', reportId, {
       share_token: null,
       share_expires_at: null,

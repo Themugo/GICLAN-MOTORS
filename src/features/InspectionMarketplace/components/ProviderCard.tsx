@@ -17,9 +17,10 @@ const KAYAD_COLORS = {
 
 interface ProviderCardProps {
   provider: InspectionProvider;
+  onSelect?: (provider: InspectionProvider) => void;
 }
 
-export default function ProviderCard({ provider }: ProviderCardProps) {
+export default function ProviderCard({ provider, onSelect }: ProviderCardProps) {
   const {
     companyName,
     logo,
@@ -33,9 +34,9 @@ export default function ProviderCard({ provider }: ProviderCardProps) {
   } = provider;
 
   // Get lowest price from packages
-  const lowestPrice = packages?.length 
+  const lowestPrice = packages?.length
     ? Math.min(...packages.map(p => p.price))
-    : null;
+    : (provider.startingPrice ?? null);
 
   return (
     <motion.div
@@ -170,8 +171,9 @@ export default function ProviderCard({ provider }: ProviderCardProps) {
               {lowestPrice ? `KES ${lowestPrice.toLocaleString()}` : 'View packages'}
             </p>
           </div>
-          <a
-            href={`/inspection/providers/${provider.id}`}
+          <button
+            type="button"
+            onClick={() => onSelect?.(provider)}
             className="flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors"
             style={{ 
               backgroundColor: KAYAD_COLORS.emerald, 
@@ -180,7 +182,7 @@ export default function ProviderCard({ provider }: ProviderCardProps) {
           >
             View
             <ChevronRight size={16} />
-          </a>
+          </button>
         </div>
       </div>
     </motion.div>

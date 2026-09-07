@@ -111,6 +111,7 @@ interface InspectionsViewProps {
   onOpenAuth?: () => void;
   initialSelectedVehicle?: Vehicle | null;
   onViewVehicleDetails?: (vehicleId: string) => void;
+  onOpenInspectionMarketplace?: () => void;
 }
 
 export const InspectionsView: React.FC<InspectionsViewProps> = ({ 
@@ -323,6 +324,12 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
+              {onOpenInspectionMarketplace && (
+                <Button type="button" onClick={onOpenInspectionMarketplace} className="mb-3">
+                  <Search className="w-4 h-4" />
+                  Browse Inspection Providers
+                </Button>
+              )}
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold tracking-wider uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                   <Wrench className="w-3 h-3" /> Inspection Order Service

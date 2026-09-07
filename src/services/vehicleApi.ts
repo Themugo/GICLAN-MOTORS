@@ -133,7 +133,7 @@ async function vehicleFetch<T>(path: string, options: RequestInit = {}): Promise
     return await request<T>(path, { method: options.method, body: options.body, headers: options.headers as Record<string, string> });
   } catch (err) {
     const error = err instanceof HttpRequestError ? err : new HttpRequestError('Request failed.');
-    const kind: VehicleApiErrorKind = error.status === 404 ? 'not_found' : 'server';
+    const kind: VehicleApiErrorKind = error.status === 404 ? 'not_found' : error.status ? 'server' : 'network';
     throw new VehicleApiError(error.message, kind, error.status);
   }
 }

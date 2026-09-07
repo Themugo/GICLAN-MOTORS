@@ -10,6 +10,7 @@ import type { InspectionProvider, InspectionType } from '../types/inspection';
 import { INSPECTION_TYPES } from '../types/inspection';
 import ProviderCard from '../components/ProviderCard';
 import ProviderFilters from '../components/ProviderFilters';
+import BookingFlow from './BookingFlow';
 
 const KAYAD_COLORS = {
   lightNavy: '#1e3a5f',
@@ -26,6 +27,9 @@ export default function InspectionMarketplacePage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<InspectionProvider | null>(null);
+  const [selectedProviderLoading, setSelectedProviderLoading] = useState(false);
+  const [selectedProviderError, setSelectedProviderError] = useState<string | null>(null);
   const [filters, setFilters] = useState<SearchProvidersParams>({
     page: 1,
     limit: 12,
@@ -48,6 +52,38 @@ export default function InspectionMarketplacePage() {
       setLoading(false);
     }
   };
+
+  const handleSelectProvider = async (provider: InspectionProvider) => {
+    setSelectedProviderLoading(true);
+    setSelectedProviderError(null);
+    try {
+      const full = await inspectionApi.getProviderProfile(provider.id);
+      setSelectedProvider(full);
+    } catch (error) {
+      console.error('Failed to load provider profile:', error);
+      setSelectedProviderError('Could not load this provider profile. Please try again.');
+    } finally {
+      setSelectedProviderLoading(false);
+    }
+  };
+
+  if (selectedProvider) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: KAYAD_COLORS.warmBeige }}>
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <button
+            type="button"
+            onClick={() => setSelectedProvider(null)}
+            className="mb-4 font-medium"
+            style={{ color: KAYAD_COLORS.lightNavy }}
+          >
+            ← Back to providers
+          </button>
+          <BookingFlow provider={selectedProvider} onCancel={() => setSelectedProvider(null)} />
+        </div>
+      </div>
+    );
+  }
 
   const handleSearch = (query: string) => {
     setFilters(prev => ({ ...prev, county: query, page: 1 }));
@@ -87,7 +123,7 @@ export default function InspectionMarketplacePage() {
               className="text-xl mb-8 max-w-2xl mx-auto"
               style={{ color: KAYAD_COLORS.mutedTerracotta }}
             >
-              Find trusted, verified vehicle inspection companies across East Africa
+              Find active vehicle inspection providers and compare services, locations, ratings, and availability
             </p>
           </motion.div>
 
@@ -146,23 +182,23 @@ export default function InspectionMarketplacePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <QuickStatCard
             icon={<Shield className="text-emerald-500" size={24} />}
-            label="Verified Providers"
-            value={`${total}+`}
+            label="Active Providers"
+            value={String(total)}
           />
           <QuickStatCard
             icon={<Car className="text-blue-500" size={24} />}
             label="Inspection Types"
-            value="10+"
+            value={String(INSPECTION_TYPES.length)}
           />
           <QuickStatCard
             icon={<Star className="text-yellow-500" size={24} />}
-            label="Customer Reviews"
-            value="5,000+"
+            label="Verified Filter"
+            value="Available"
           />
           <QuickStatCard
             icon={<Clock className="text-purple-500" size={24} />}
-            label="Same-Day Service"
-            value="Available"
+            label="Flexible Scheduling"
+            value="Same-day / Weekend"
           />
         </div>
       </section>
@@ -196,6 +232,13 @@ export default function InspectionMarketplacePage() {
           ))}
         </div>
       </section>
+
+      {selectedProviderLoading && (
+        <div className="max-w-7xl mx-auto px-4 pb-4 text-sm" style={{ color: KAYAD_COLORS.softBlue }}>Loading provider profile…</div>
+      )}
+      {selectedProviderError && (
+        <div className="max-w-7xl mx-auto px-4 pb-4 text-sm" role="alert" style={{ color: '#b91c1c' }}>{selectedProviderError}</div>
+      )}
 
       {/* Results */}
       <section className="max-w-7xl mx-auto px-4 pb-12">
@@ -251,7 +294,7 @@ export default function InspectionMarketplacePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {providers.map((provider) => (
-              <ProviderCard key={provider.id} provider={provider} />
+              <ProviderCard key={provider.id} provider={provider} onSelect={handleSelectProvider} />
             ))}
           </div>
         )}
@@ -301,7 +344,7 @@ export default function InspectionMarketplacePage() {
             className="text-lg mb-8"
             style={{ color: KAYAD_COLORS.mutedTerracotta }}
           >
-            Join East Africa's largest vehicle inspection marketplace and grow your business
+            Join KAYAD's inspection marketplace and grow your business
           </p>
           <a
             href="/inspection/become-provider"

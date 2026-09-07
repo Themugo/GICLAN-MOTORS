@@ -6,6 +6,7 @@ import express from 'express';
 import * as controller from '../controllers/providerController.js';
 import { requireAuth, optionalAuth } from '../../middleware/auth.js';
 import { requireRole } from '../../middleware/auth.js';
+import requireProviderOwnership from '../middleware/requireProviderOwnership.js';
 
 const router = express.Router();
 
@@ -61,49 +62,49 @@ router.post('/reviews', requireAuth, controller.submitReview);
  */
 
 // Provider dashboard
-router.get('/provider/:providerId/dashboard', requireAuth, controller.getProviderDashboard);
+router.get('/provider/:providerId/dashboard', requireAuth, requireProviderOwnership, controller.getProviderDashboard);
 
 // Update provider
-router.put('/provider/:providerId', requireAuth, controller.updateProvider);
+router.put('/provider/:providerId', requireAuth, requireProviderOwnership, controller.updateProvider);
 
 // Add credential
-router.post('/provider/:providerId/credentials', requireAuth, controller.addCredential);
+router.post('/provider/:providerId/credentials', requireAuth, requireProviderOwnership, controller.addCredential);
 
 // Get provider bookings
-router.get('/provider/:providerId/bookings', requireAuth, controller.getProviderBookings);
+router.get('/provider/:providerId/bookings', requireAuth, requireProviderOwnership, controller.getProviderBookings);
 
 // Update booking status
-router.post('/provider/:providerId/bookings/:bookingId/status', requireAuth, controller.updateBookingStatus);
+router.post('/provider/:providerId/bookings/:bookingId/status', requireAuth, requireProviderOwnership, controller.updateBookingStatus);
 
 // Assign inspector
-router.post('/provider/:providerId/bookings/:bookingId/assign', requireAuth, controller.assignInspector);
+router.post('/provider/:providerId/bookings/:bookingId/assign', requireAuth, requireProviderOwnership, controller.assignInspector);
 
 // Create report
-router.post('/provider/:providerId/bookings/:bookingId/report', requireAuth, controller.createReport);
+router.post('/provider/:providerId/bookings/:bookingId/report', requireAuth, requireProviderOwnership, controller.createReport);
 
 // Generate PDF
-router.post('/provider/:providerId/reports/:reportId/pdf', requireAuth, controller.generatePDF);
+router.post('/provider/:providerId/reports/:reportId/pdf', requireAuth, requireProviderOwnership, controller.generatePDF);
 
 // Share report
-router.post('/provider/:providerId/reports/:reportId/share', requireAuth, controller.shareReport);
+router.post('/provider/:providerId/reports/:reportId/share', requireAuth, requireProviderOwnership, controller.shareReport);
 
 // Revoke share
-router.delete('/provider/:providerId/reports/:reportId/share', requireAuth, controller.revokeReportShare);
+router.delete('/provider/:providerId/reports/:reportId/share', requireAuth, requireProviderOwnership, controller.revokeReportShare);
 
 // Get transactions
-router.get('/provider/:providerId/transactions', requireAuth, controller.getTransactions);
+router.get('/provider/:providerId/transactions', requireAuth, requireProviderOwnership, controller.getTransactions);
 
 // Get settlements
-router.get('/provider/:providerId/settlements', requireAuth, controller.getSettlements);
+router.get('/provider/:providerId/settlements', requireAuth, requireProviderOwnership, controller.getSettlements);
 
 // Generate settlement
-router.post('/provider/:providerId/settlements', requireAuth, controller.generateSettlement);
+router.post('/provider/:providerId/settlements', requireAuth, requireProviderOwnership, controller.generateSettlement);
 
 // Get earnings summary
-router.get('/provider/:providerId/earnings', requireAuth, controller.getEarningsSummary);
+router.get('/provider/:providerId/earnings', requireAuth, requireProviderOwnership, controller.getEarningsSummary);
 
 // Get earnings summary (alternative endpoint)
-router.get('/provider/:providerId/earnings-summary', requireAuth, controller.getProviderEarnings);
+router.get('/provider/:providerId/earnings-summary', requireAuth, requireProviderOwnership, controller.getProviderEarnings);
 
 /**
  * ============================================================
@@ -124,6 +125,6 @@ router.post('/bookings/:bookingId/refund', requireRole(['admin']), controller.pr
  */
 
 // Get report
-router.get('/reports/:reportId', optionalAuth, controller.getReport);
+router.get('/reports/:reportId', requireAuth, controller.getReport);
 
 export default router;
