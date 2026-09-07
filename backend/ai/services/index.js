@@ -2,4 +2,4 @@
 // KAYAD AI INTELLIGENCE & DECISION ENGINE - SERVICES INDEX
 // ============================================================
 
-export { aiDecisionService } from './aiDecisionService.js';
+export { aiIntelligenceService } from './aiIntelligenceService.js';

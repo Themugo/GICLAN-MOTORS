@@ -129,7 +129,6 @@ import platformFactoryRoutes from "./routes/platformFactoryRoutes.js";
 import ghostCheckersRoutes from "./routes/ghostCheckersRoutes.js";
 import dealerPlatformRoutes from "./routes/dealerPlatformRoutes.js";
 import regionalConfigurationRoutes from "./routes/regionalConfigurationRoutes.js";
-import aiDecisionRoutes from "./routes/aiDecisionRoutes.js";
 import { startIntegrityCron } from "./services/auctionIntegrityCron.js";
 import { startVerificationDeadlineCron } from "./services/deadlineService.js";
 
@@ -721,7 +720,6 @@ app.use("/api/executive-analytics", executiveAnalyticsRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/listing-assistant", listingAssistantRoutes);
 app.use("/api/recommendations", recommendationRoutes);
-app.use("/api/ai/decision", aiDecisionRoutes);
 app.use("/api/market", marketRoutes);
 app.use("/api/verification", verificationRoutes);
 app.use("/api/duplicates", duplicateRoutes);
