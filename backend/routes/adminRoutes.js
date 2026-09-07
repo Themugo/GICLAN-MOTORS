@@ -20,9 +20,9 @@ import Escrow from "../models/Escrow.js";
 import Ad from "../models/Ad.js";
 import AdminAlert from "../models/AdminAlert.js";
 import GlobalSettings from "../models/GlobalSettings.js";
-import Review from "../models/Review.js";
 import Dispute from "../models/Dispute.js";
 import Referral from "../models/Referral.js";
+import { listAdminReviews, moderateReview, deleteReview as deleteDealerReview } from "../services/review.service.js";
 import Transaction from "../models/Transaction.js";
 import Chat from "../models/Chat.js";
 import MarketData from "../models/MarketData.js";
@@ -159,7 +159,7 @@ router.get(
       // reference is actually a generated-analytics-file table with
       // no "pending" concept, so `disputes` is the real "reports
       // needing admin action" source instead).
-      Review.countDocuments({ status: "pending" }),                                   // pendingReviews
+      listAdminReviews({ status: "pending", page: 1, limit: 1 }).then((r) => r.total), // pendingReviews
       AdminAlert.countDocuments({ read: false }),                                      // activeAlerts
       User.countDocuments({ role: "individual_seller" }),                              // individualSellers
       Car.countDocuments({ status: "sold" }),                                          // carsSold
@@ -1416,32 +1416,17 @@ router.get(
   staffRole,
   validateQuery(reviewListQuerySchema),
   asyncHandler(async (req, res) => {
-    const { status, dealerId, page = 1, limit = 20 } = req.query;
-    const filter = {};
-    if (dealerId) filter.dealer = dealerId;
+    const result = await listAdminReviews(req.query);
+    res.json({ success: true, reviews: result.reviews, pagination: { page: result.page, limit: result.limit, total: result.total, pages: result.pages } });
+  }),
+);
 
-    const skip = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 50);
-    const [reviews, total] = await Promise.all([
-      Review.find(filter)
-        .populate("user", "name email")
-        .populate("dealer", "name email")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Math.min(Number(limit), 50))
-        .lean(),
-      Review.countDocuments(filter),
-    ]);
-
-    res.json({
-      success: true,
-      reviews,
-      pagination: {
-        page: Number(page),
-        limit: Math.min(Number(limit), 50),
-        total,
-        pages: Math.ceil(total / Math.min(Number(limit), 50)),
-      },
-    });
+router.patch(
+  "/reviews/:id/status",
+  adminOrSuper,
+  asyncHandler(async (req, res) => {
+    const review = await moderateReview(req.params.id, req.body.status, req.user.id);
+    res.json({ success: true, message: `Review ${req.body.status}`, review });
   }),
 );
 
@@ -1449,8 +1434,7 @@ router.delete(
   "/reviews/:id",
   adminOrSuper,
   asyncHandler(async (req, res) => {
-    const review = await Review.findByIdAndDelete(req.params.id);
-    if (!review) return res.status(404).json({ success: false, message: "Review not found" });
+    await deleteDealerReview(req.params.id, req.user.id, true);
     res.json({ success: true, message: "Review deleted" });
   }),
 );

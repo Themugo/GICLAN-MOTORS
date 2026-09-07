@@ -208,6 +208,7 @@ export const adminAPI = {
   assignPackage:   (userId: string, body: any) => api.patch(`/admin/dealers/${userId}/package`, body).then(unwrap),
   updatePackages:  (packages: any) => api.put('/admin/config/packages', { packages }).then(unwrap),
   reviews:         (params: any)    => api.get('/admin/reviews', { params }).then(unwrap),
+  reviewStatus:    (id: string, status: string) => api.patch(`/admin/reviews/${id}/status`, { status }).then(unwrap),
   deleteReview:    (id: string)        => api.delete(`/admin/reviews/${id}`).then(unwrap),
   referrals:        (params: any)    => api.get('/admin/referrals', { params }).then(unwrap),
   referralStats:    ()          => api.get('/admin/referrals/stats').then(unwrap),

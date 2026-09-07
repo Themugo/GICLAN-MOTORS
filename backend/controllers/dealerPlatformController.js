@@ -5,13 +5,14 @@
 
 import User from "../models/User.js";
 import Dealer from "../models/Dealer.js";
-import Review from "../models/Review.js";
 import InspectionOrder from "../models/InspectionOrder.js";
 import DealerAnalytics from "../models/DealerAnalytics.js";
 import Car from "../models/Car.js";
 import Lead from "../models/Lead.js";
 import Escrow from "../models/Escrow.js";
 import MarketingCampaign from "../models/MarketingCampaign.js";
+import { listDealerReviews } from '../services/review.service.js';
+
 import { createCar, updateCar, deleteCar } from "./carController.js";
 import { logError } from "../utils/logger.js";
 
@@ -89,14 +90,12 @@ export async function getDealerProfile(req, res) {
       return res.status(404).json({ success: false, message: 'Dealer not found' });
     }
 
-    const [listings, reviews] = await Promise.all([
+    const [listings, reviewSummary] = await Promise.all([
       Car.find({ dealer: dealerId }),
-      Review.find({ dealer: dealerId }),
+      listDealerReviews(dealerId, { page: 1, limit: 1 }),
     ]);
 
-    const averageRating = reviews.length
-      ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length
-      : null;
+    const averageRating = reviewSummary.total ? reviewSummary.averageRating : null;
 
     res.json({
       success: true,
@@ -112,7 +111,7 @@ export async function getDealerProfile(req, res) {
           activeListings: listings.filter((car) => ['available', 'active'].includes(car.status)).length,
           totalListings: listings.length,
           averageRating: averageRating === null ? null : Number(averageRating.toFixed(2)),
-          totalReviews: reviews.length,
+          totalReviews: reviewSummary.total,
         },
       },
     });
@@ -683,10 +682,8 @@ export async function getInspectionOrders(req, res) {
 
 export async function getReputation(req, res) {
   try {
-    const reviews = await Review.find({ dealer: req.user.id }).populate("buyer", "name").populate("car", "title").sort({ createdAt: -1 });
-    const ratings = reviews.map((r) => Number(r.rating)).filter((n) => Number.isFinite(n));
-    const overall = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : null;
-    res.json({ success: true, data: { overall: { rating: overall, totalReviews: reviews.length }, recentReviews: reviews.slice(0, 10).map((r) => ({ id: r.id, name: r.buyer?.name || "Buyer", rating: Number(r.rating), text: r.comment || r.review || null, vehicle: r.car?.title || null, date: r.createdAt || null })) } });
+    const result = await listDealerReviews(req.user.id, { page: 1, limit: 10 });
+    res.json({ success: true, data: { overall: { rating: result.averageRating || null, totalReviews: result.total }, recentReviews: result.reviews.map((r) => ({ id: r.id, name: r.user?.name || "Buyer", rating: Number(r.rating), text: r.comment || null, vehicle: r.car?.title || null, date: r.createdAt || null, status: r.status })) } });
   } catch (err) {
     logError("Error fetching dealer reputation:", err);
     res.status(500).json({ success: false, message: "Failed to load dealer reputation" });

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { authAPI, paymentsAPI, reviewsAPI, carsAPI, formatKES } from '../api/api';
+import { authAPI, paymentsAPI, carsAPI, formatKES } from '../api/api';
+import { getMyReviews } from '../services/reviewApi';
 import { timeAgo, formatDate, initials, validatePassword } from '../utils/helpers';
 import { SkeletonRow, SkeletonText } from '../components/Skeleton';
 
@@ -36,7 +37,7 @@ export default function ProfilePage() {
     }
     if (tab === 'Reviews' && !reviews.length) {
       setLoading(true);
-      reviewsAPI.mine().then(d => setReviews(d.reviews || d.data || [])).finally(() => setLoading(false));
+      getMyReviews().then(d => setReviews(d.reviews || d.data || [])).finally(() => setLoading(false));
     }
     if (tab === 'Profile' && isDealer && !myStats) {
       carsAPI.analytics().then(d => setMyStats(d.analytics || d.data || d)).catch(() => {});

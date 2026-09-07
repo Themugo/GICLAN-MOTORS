@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createReview } from '../../../services/reviewApi';
 
 export default function CarDetailReviews({ dealerId, carId, reviews, isAuth, isOwner, onReviewSubmitted }) {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
@@ -9,8 +10,7 @@ export default function CarDetailReviews({ dealerId, carId, reviews, isAuth, isO
     if (!isAuth) return;
     setSubmittingReview(true);
     try {
-      const { reviewsAPI } = await import('../../../api/api');
-      await reviewsAPI.create({ ...reviewForm, dealer: dealerId, carId });
+      await createReview({ ...reviewForm, dealer: dealerId, carId });
       setReviewForm({ rating: 5, comment: '' });
       if (onReviewSubmitted) onReviewSubmitted();
     } catch (error) {

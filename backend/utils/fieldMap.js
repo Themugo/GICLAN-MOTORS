@@ -21,6 +21,7 @@ export const snakeToCamel = (s) => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpper
 // can't fix. Add to this as more mismatches are found in other
 // tables — do not duplicate this map elsewhere.
 export const FIELD_ALIASES = {
+  reviews: { reviewer: 'reviewer_id', user: 'reviewer_id', dealer: 'dealer_id', car: 'car_id' },
   events: { user: "user_id" },
   search_analytics: { user: "user_id" },
   // Added (Final Integration Phase 3 - real auction & bidding

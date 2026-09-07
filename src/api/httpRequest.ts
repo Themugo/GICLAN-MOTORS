@@ -15,13 +15,14 @@ export interface HttpRequestOptions {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
+  params?: Record<string, unknown>;
 }
 
 /** Fetch-shaped adapter over KAYAD's single Axios transport. Service modules
  * use this only to preserve their existing request/response contracts while
  * inheriting the canonical credentials, timeout, CSRF and auth-expiry rules. */
 export async function request<T>(path: string, options: HttpRequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, headers } = options;
+  const { method = 'GET', body, headers, params } = options;
   const configuredApiUrl = String(import.meta.env.VITE_API_URL || '');
   const requestPath = !configuredApiUrl && /^\/api(?:\/|$)/.test(path)
     ? path.slice(4) || '/'
@@ -33,6 +34,7 @@ export async function request<T>(path: string, options: HttpRequestOptions = {})
       method,
       data: body,
       headers,
+      params,
     });
     return response.data;
   } catch (error) {
