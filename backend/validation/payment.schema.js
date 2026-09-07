@@ -5,7 +5,7 @@ export const initiatePaymentSchema = z.object({
   phone: z.string().regex(/^2547\d{8}$/, "Phone must be a valid Kenyan number"),
   carId: z.string().optional(),
   escrowId: z.string().optional(),
-  type: z.enum(["bid", "purchase", "escrow", "deposit", "inspection"]).optional(),
+  type: z.enum(["bid", "purchase", "escrow", "deposit", "inspection", "subscription", "package_upgrade", "listing", "auction_win"]).optional(),
 });
 
 export const paymentCallbackSchema = z.object({

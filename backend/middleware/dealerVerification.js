@@ -18,9 +18,9 @@ import { logInfo, logWarn, logError } from "../utils/logger.js";
 // Applied to: listing creation, auction start, escrow initiation
 export const requireDealerVerification = async (req, res, next) => {
   try {
-    const userId = req.dealerId || req.user.id;
+    const userId = req.user.id;
 
-    // Check the dealer organization owner when a team member is acting on behalf of the dealer.
+    // Check if user is a dealer
     let dealer = await Dealer.findOne({ user: userId });
 
     // Fixed (re-applied - this project's own earlier hardening work,
@@ -39,7 +39,7 @@ export const requireDealerVerification = async (req, res, next) => {
     // verification required" outcome this middleware already grants
     // legacy approved dealers just below, extended to the one real
     // role it was silently blocking entirely.
-    if (!dealer && req.user.role === "individual_seller" && !req.dealerId) {
+    if (!dealer && req.user.role === "individual_seller") {
       dealer = await Dealer.create({ user: userId, approved: true, verifiedAt: new Date() });
     }
 
@@ -142,7 +142,7 @@ export const requireDealerVerification = async (req, res, next) => {
 // Used for gradual rollout and monitoring
 export const requireDealerVerificationWarn = async (req, res, next) => {
   try {
-    const userId = req.dealerId || req.user.id;
+    const userId = req.user.id;
 
     const dealer = await Dealer.findOne({ user: userId });
     if (!dealer) {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BarChart3, X, Eye } from 'lucide-react';
 import { useCompare } from '../context/CompareContext';
-import { getCarById } from '../services/vehicleApi';
+import { carsAPI } from '../api/api';
 
 
 export default function CompareDrawer() {
@@ -11,7 +11,7 @@ export default function CompareDrawer() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all(compareIds.map(id => getCarById(id).catch(() => null)))
+    Promise.all(compareIds.map(id => carsAPI.get(id).catch(() => null)))
       .then(results => { if (!cancelled) setCars(results.map((r: any) => r?.car || r?.data || r).filter(Boolean)); });
     return () => { cancelled = true; };
   }, [compareIds]);

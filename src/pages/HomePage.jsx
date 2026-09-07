@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getCars } from '../services/vehicleApi';
+import { carsAPI } from '../api/api';
 
 const DEFAULT_HERO_IMG = 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1600';
 
@@ -15,10 +15,10 @@ export default function HomePage() {
     const timeoutId = setTimeout(() => {}, 2000);
     (async () => {
       try {
-        const data = await getCars({ limit: 50 });
-        if (mounted && data.data?.length > 0) {
+        const data = await carsAPI.list({ limit: 50 });
+        if (mounted && data.cars?.length > 0) {
           clearTimeout(timeoutId);
-          setCars(data.data);
+          setCars(data.cars);
         }
       } catch { /* fallback */ }
     })();
@@ -36,7 +36,7 @@ export default function HomePage() {
     // fall back to any car in the gallery that has a real photo — so the
     // hero always has enough to shuffle from, not just a handful of
     // specially-flagged listings.
-    const withImage = (c) => Boolean(c.images?.[0]?.url || c.images?.[0] || c.image);
+    const withImage = (c) => Boolean(c.images?.[0] || c.image);
     const priority = cars.filter(c => withImage(c) && (c.featured || c.isAuction || c.auction_status === 'live'));
     const rest = cars.filter(c => withImage(c) && !priority.includes(c));
 
@@ -55,7 +55,7 @@ export default function HomePage() {
 
     return sourceCars.length >= 3 ? sourceCars.map((car, i) => ({
       id: car.id || i,
-      image: car.images?.[0]?.url || car.images?.[0] || car.image || HERO_SLIDES[i % HERO_SLIDES.length].image,
+      image: car.images?.[0] || car.image || HERO_SLIDES[i % HERO_SLIDES.length].image,
       headline: car.title || car.name,
       sub: car.year ? `${car.year} · ${car.fuel} · ${car.location}` : car.location || 'Nairobi',
       price: car.price ? `KES ${(car.price / 1000000).toFixed(1)}M` : '',
@@ -69,7 +69,7 @@ export default function HomePage() {
   }, [SLIDES.length, heroHovered]);
 
   const FEATURED_CARS = useMemo(() => {
-    const withImage = (c) => Boolean(c.images?.[0]?.url || c.images?.[0] || c.image);
+    const withImage = (c) => Boolean(c.images?.[0] || c.image);
     let eligible = cars.filter(c => withImage(c) && (c.isPromoted || c.featured));
     if (eligible.length === 0) eligible = cars.filter(withImage); // fall back to real listings, never fake ones
 
@@ -97,7 +97,7 @@ export default function HomePage() {
       location: car.location,
       price: car.price ? Number(car.price).toLocaleString() : '',
       dealer: car.dealer?.businessName || car.dealer?.name || 'Private Seller',
-      image: car.images?.[0]?.url || car.images?.[0] || car.image,
+      image: car.images?.[0] || car.image,
       // Escrow is for private-seller transactions, not dealer sales —
       // only show the badge where it actually applies.
       hasEscrow: car.dealer?.role === 'individual_seller',
@@ -105,7 +105,7 @@ export default function HomePage() {
   }, [cars]);
 
   const WHY_KAYAD_FEATURES = [
-    { icon: '💳', title: 'Bank Escrow', desc: 'Your money is protected until you safely receive your car. No scams, no risk.' },
+    { icon: '💳', title: 'M-Pesa Escrow', desc: 'Your money is protected until you safely receive your car. No scams, no risk.' },
     { icon: '🔍', title: '150-Point Inspection', desc: 'Certified mechanics inspect every vehicle before you commit to buying.' },
     { icon: '✓', title: 'Verified Dealers', desc: 'All dealers are vetted, licensed, and rated by real buyers like you.' },
     { icon: '🏷️', title: 'Live Auctions', desc: 'Bid on rare finds in real-time. Transparent pricing, no hidden fees.' },
@@ -231,7 +231,7 @@ export default function HomePage() {
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #16C4A4 0%, #0C7B68 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🚗</div>
                 <span style={{ fontSize: 22, fontWeight: 700, color: '#FDFAF5', fontFamily: 'Playfair Display, serif' }}>KAYAD</span>
               </div>
-              <p style={{ fontSize: 14, color: 'rgba(253, 250, 245, 0.55)', lineHeight: 1.7, margin: 0, maxWidth: 240 }}>Kenya's premium car marketplace. Buy, sell, and auction vehicles with bank-funded escrow protection.</p>
+              <p style={{ fontSize: 14, color: 'rgba(253, 250, 245, 0.55)', lineHeight: 1.7, margin: 0, maxWidth: 240 }}>Kenya's premium car marketplace. Buy, sell, and auction vehicles with M-Pesa escrow protection.</p>
             </div>
             <div>
               <h4 style={{ fontSize: 12, fontWeight: 700, color: '#FDFAF5', marginBottom: 16, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Marketplace</h4>

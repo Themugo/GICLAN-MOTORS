@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button, Badge, Card, Avatar, Breadcrumb, MapPlaceholder, StatCard, EmptyState, Skeleton } from '../components/ui';
 import CarCard from '../components/CarCard';
-import { getCars } from '../services/vehicleApi';
+import { carsAPI } from '../api/api';
 
 export default function DealerProfilePage() {
   const { id } = useParams();
@@ -15,9 +15,9 @@ export default function DealerProfilePage() {
 
   useEffect(() => {
     let mounted = true;
-    getCars({ dealer: id, limit: 50 }).then(d => {
+    carsAPI.list({ dealer: id, limit: 50 }).then(d => {
       if (!mounted) return;
-      const cars = d.data || [];
+      const cars = d.cars || d.data || [];
       setInventory(cars);
       // No dedicated public "dealer profile" endpoint exists yet — the
       // dealer's real info comes from the populated `dealer` field on

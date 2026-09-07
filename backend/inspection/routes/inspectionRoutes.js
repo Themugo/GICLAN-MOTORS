@@ -117,7 +117,6 @@ router.post('/bookings/:bookingId/payment', requireRole(['admin']), controller.p
 
 // Process refund (admin)
 router.post('/bookings/:bookingId/refund', requireRole(['admin']), controller.processRefund);
-router.post('/settlements/:settlementId/pay', requireRole(['admin']), controller.markSettlementPaid);
 
 /**
  * ============================================================

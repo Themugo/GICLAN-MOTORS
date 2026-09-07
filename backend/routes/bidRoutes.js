@@ -9,7 +9,6 @@ import { mpesaIpWhitelist, validateMpesaCallback } from "../middleware/mpesaSecu
 import { placeBid, getAuctionBids, confirmBidPayment, endAuction, getMyBids } from "../controllers/bidController.js";
 
 import Bid from "../models/Bid.js";
-import { closeAuction } from "../services/auctionClose.service.js";
 
 const router = express.Router();
 
@@ -143,7 +142,7 @@ router.post(
   adminOnly,
   validateObjectId,
   asyncHandler(async (req, res) => {
-    const bid = await Bid.findById(req.params.bidId);
+    const bid = await Bid.markWinner(req.params.bidId);
 
     if (!bid) {
       return res.status(404).json({
@@ -152,21 +151,9 @@ router.post(
       });
     }
 
-    const result = await closeAuction(bid.carId, {
-      req,
-      actor: req.user,
-      reason: "admin_set_winner_legacy_route",
-      winnerBidId: bid.id || bid._id,
-    });
-
-    if (!result.success && !result.alreadyClosed) {
-      return res.status(500).json({ success: false, message: result.message || "Failed to set winner" });
-    }
-
     res.json({
       success: true,
-      bid: result.winner,
-      result,
+      bid,
     });
   }),
 );

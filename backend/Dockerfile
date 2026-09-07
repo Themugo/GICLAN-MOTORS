@@ -26,6 +26,7 @@ COPY backend/utils ./utils
 COPY backend/identity ./identity
 COPY backend/ai ./ai
 COPY backend/cms ./cms
+COPY backend/communications ./communications
 COPY backend/countries ./countries
 COPY backend/dataExchange ./dataExchange
 COPY backend/digitalInspection ./digitalInspection

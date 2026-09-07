@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { fetchAuction, fetchAuctionBids } from '../services/auctionService';
-import { placeBid } from '../services/bidApi';
-import { formatKES } from '../api/api';
+import { carsAPI, bidsAPI, formatKES } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
 import { CountdownDisplay } from '../hooks/useCountdown';
+import PaymentModal from '../components/features/escrow/PaymentModal';
 
 export default function AuctionLivePage() {
   const { id } = useParams();
@@ -21,6 +20,8 @@ export default function AuctionLivePage() {
   const [bidAmount, setBidAmount] = useState('');
   const [phone, setPhone]         = useState('');
   const [placing, setPlacing]     = useState(false);
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [pendingBidId, setPendingBidId] = useState(null);
   const [currentBid, setCurrentBid] = useState(0);
   const [bidCount, setBidCount]   = useState(0);
   const bidListRef = useRef(null);
@@ -28,19 +29,18 @@ export default function AuctionLivePage() {
   // Load car + bid history
   useEffect(() => {
     Promise.all([
-      fetchAuction(id),
-      fetchAuctionBids(id).catch(() => ({ bids: [] })),
-    ]).then(([auction, bidData]) => {
-      const c = auction?.car || {};
+      carsAPI.get(id),
+      bidsAPI.getForCar(id).catch(() => ({ bids: [] })),
+    ]).then(([carData, bidData]) => {
+      const c = carData.car || carData.data || carData;
       setCar(c);
-      setCurrentBid(Number(auction?.highestBid || c.currentBid || c.price || 0));
-      setBidCount(Number(auction?.bidCount || c.bidsCount || 0));
-      setBids((bidData.bids || []).slice(0, 30));
-      const minNext = Number(auction?.highestBid || c.currentBid || c.price || 0) + Number(auction?.bidIncrement || 1000);
+      setCurrentBid(c.currentBid || c.price || 0);
+      setBidCount(c.bidsCount || 0);
+      const bs = bidData.bids || bidData.data || [];
+      setBids(bs.slice(0, 30));
+      // Pre-fill min bid
+      const minNext = (c.currentBid || c.price || 0) + 5000;
       setBidAmount(String(minNext));
-      setPhone(user?.phone || '');
-    }).catch(() => {
-      setCar(null);
     }).finally(() => setLoading(false));
   }, [id]);
 
@@ -77,8 +77,10 @@ export default function AuctionLivePage() {
     }
     setPlacing(true);
     try {
-      await placeBid(id, amount, phone.replace(/\D/g, ''));
-      toast('STK push sent. Complete M-Pesa payment to confirm your bid.', 'info');
+      const data = await bidsAPI.place(id, { amount, phone: phone.replace(/\D/g, '') });
+      setPendingBidId(data.bid?._id || data._id);
+      setShowPayModal(true);
+      toast('Bid placed! Complete M-Pesa payment to confirm.', 'info');
     } catch (err) {
       toast(err.response?.data?.message || 'Failed to place bid', 'error');
     } finally {
@@ -92,8 +94,7 @@ export default function AuctionLivePage() {
     return d.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
-  const getIncrement = (value) => value < 100000 ? 1000 : value < 500000 ? 5000 : value < 2000000 ? 10000 : 25000;
-  const minBid = currentBid + getIncrement(currentBid);
+  const minBid = currentBid + 5000;
   const isOwner = user?.id === car?.dealer?._id?.toString() || user?.id === car?.dealer?.toString();
   const auctionLive = car?.auctionStatus === 'live';
 
@@ -191,7 +192,7 @@ export default function AuctionLivePage() {
                       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1rem', color: i === 0 ? 'var(--gold-light)' : 'var(--text)' }}>
                         {formatKES(bid.amount)}
                       </div>
-                      {bid.status === 'paid' && (
+                      {bid.mpesaPaid && (
                         <span style={{ fontSize: 10, color: 'var(--green)' }}>✓ M-Pesa confirmed</span>
                       )}
                     </div>
@@ -335,6 +336,17 @@ export default function AuctionLivePage() {
         </div>
       </div>
 
+      {/* M-Pesa modal for bid commitment */}
+      {showPayModal && (
+        <PaymentModal
+          amount={Math.round(Number(bidAmount) * 0.05)} // 5% commitment
+          carId={car._id}
+          type="bid"
+          title="Bid Commitment — 5% via M-Pesa"
+          onClose={() => setShowPayModal(false)}
+          onSuccess={() => toast('Bid commitment confirmed! 🎉', 'success')}
+        />
+      )}
     </div>
   );
 }

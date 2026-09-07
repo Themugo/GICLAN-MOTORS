@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createCar } from '../../services/vehicleApi';
+import { carsAPI } from '../../api/api';
 import { useToast } from '../../context/ToastContext';
 import { calculateListingQualityScore, getQualityScoreColor, getQualityScoreGradient } from '../../utils/listingQualityScore';
 
@@ -124,7 +124,7 @@ export default function AddCarPage() {
       });
       images.forEach(img => fd.append('images', img));
 
-      await createCar({ ...Object.fromEntries(fd.entries()), images });
+      const data = await carsAPI.create(fd);
       toast('🚗 Car listed successfully!', 'success');
       navigate('/dealer');
     } catch (err) {

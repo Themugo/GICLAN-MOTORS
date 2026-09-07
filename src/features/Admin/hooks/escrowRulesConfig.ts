@@ -30,13 +30,13 @@ export interface EscrowRulesConfig {
   privateSellerRequirement: SellerEscrowRequirement;
 }
 
-// Compatibility defaults. The backend is authoritative: vehicle escrow is
-// private-seller-only. This browser config is only a presentation cache.
+// Matches the exact existing hardcoded behavior from utils/escrow.ts
+// before this config existed (private sellers always required,
+// dealers optional/eligible-based) - so introducing this config changes
+// nothing visually until an admin actually changes a setting.
 export const DEFAULT_ESCROW_RULES_CONFIG: EscrowRulesConfig = {
   liveMode: false,
-  // Legacy field retained for compatibility; vehicle escrow is server-enforced
-  // as private-seller-only and dealers can never enable it.
-  dealerRequirement: 'disabled',
+  dealerRequirement: 'optional',
   privateSellerRequirement: 'mandatory',
 };
 

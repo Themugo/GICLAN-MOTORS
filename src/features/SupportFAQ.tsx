@@ -120,7 +120,7 @@ export const FAQ_DATA: FAQItem[] = [
     categoryLabel: 'Escrow',
     categoryIcon: <Lock className="w-4 h-4 text-amber-500" />,
     question: 'What payment methods are accepted for Escrow deposits?',
-    answer: 'Vehicle escrow is funded by bank transfer into the administrator-configured KAYAD escrow account. M-Pesa is not used to collect full vehicle escrow funds.',
+    answer: 'We accept Safaricom M-Pesa Express, Real-Time Gross Settlement (RTGS), Electronic Funds Transfer (EFT), and certified Banker\u2019s Cheques directly to your escrow account.',
     keyPoints: [
       'Instant M-Pesa C2B payment integration',
       'RTGS & EFT bank transfer verification within 30 minutes',
@@ -133,7 +133,7 @@ export const FAQ_DATA: FAQItem[] = [
     categoryLabel: 'Escrow',
     categoryIcon: <Lock className="w-4 h-4 text-amber-500" />,
     question: 'How long does an escrow hold take before release or refund?',
-    answer: 'Escrow holds remain active for the duration configured by administrators. Once release conditions are satisfied, the financial operations process disburses funds from the configured custody account.',
+    answer: 'Escrow holds remain active for the duration of the deal (typically 24 to 72 hours). Once you approve the vehicle condition and logbook, funds are released to the seller within 15 minutes via RTGS/M-Pesa.',
     keyPoints: [
       'Instant release upon buyer digital authorization',
       'Instant refund processing in case of dispute or failed audit'
@@ -297,7 +297,7 @@ export const SupportFAQ: React.FC<SupportFAQProps> = ({ onContactSupport }) => {
               Frequently Asked Questions (FAQ)
             </h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Find instant answers regarding 150-Point mechanic audits, administrator-configured KAYAD escrow vault, bank auto loan pre-approval, and NTSA TIMS logbook transfers.
+              Find instant answers regarding 150-Point mechanic audits, CBK-regulated KAYAD escrow vault protection, bank auto loan pre-approval, and NTSA TIMS logbook transfers.
             </p>
           </div>
 

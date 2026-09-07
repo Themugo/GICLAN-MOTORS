@@ -40,6 +40,7 @@ import { initSupabase, isSupabaseConnected } from "./utils/supabase.js";
 // ─── Routes ───────────────────────────────────────────────────
 import authRoutes from "./routes/authRoutes.js";
 import carRoutes from "./routes/carRoutes.js";
+import valuationRoutes from "./routes/valuationRoutes.js";
 import bidRoutes from "./routes/bidRoutes.js";
 import dealerRoutes from "./routes/dealerRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -125,7 +126,6 @@ import commandCenterRoutes from "./routes/commandCenterRoutes.js";
 import improvementRoutes from "./routes/improvementRoutes.js";
 import platformFactoryRoutes from "./routes/platformFactoryRoutes.js";
 import ghostCheckersRoutes from "./routes/ghostCheckersRoutes.js";
-import ownershipRoutes from "./routes/ownershipRoutes.js";
 import dealerPlatformRoutes from "./routes/dealerPlatformRoutes.js";
 import { startIntegrityCron } from "./services/auctionIntegrityCron.js";
 import { startVerificationDeadlineCron } from "./services/deadlineService.js";
@@ -682,6 +682,7 @@ app.use("/api", csrfProtection);
 app.use("/api/auth/refresh", csrfProtection); // CSRF for cookie-based refresh
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/cars", carRoutes);
+app.use("/api/valuation", valuationRoutes);
 app.use("/api/bids", idempotencyCheck, csrfProtection, bidRoutes); // Idempotency + CSRF for state-changing bid operations
 app.use("/api/dealer", dealerRoutes);
 app.use("/api/admin", adminLimiter, adminRoutes);
@@ -765,7 +766,6 @@ app.use("/api/command-center", commandCenterRoutes);
 app.use("/api/improvement", improvementRoutes);
 app.use("/api/platform-factory", platformFactoryRoutes);
 app.use("/api/ghost-checkers", ghostCheckersRoutes);
-app.use("/api/ownership", ownershipRoutes);
 app.use("/api/dealer-platform", dealerPlatformRoutes);
 app.use(seoRoutes);
 

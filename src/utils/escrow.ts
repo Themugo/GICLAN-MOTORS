@@ -44,11 +44,6 @@ function globalRequirement(vehicle: Vehicle): 'mandatory' | 'optional' | 'disabl
 export function isEscrowApplicable(vehicle: Vehicle | null | undefined): boolean {
   if (!vehicle) return false;
 
-  // Hard business boundary: dealers can never use vehicle escrow.
-  // This mirrors the backend authorization and prevents legacy per-sale
-  // overrides from resurrecting the retired dealer escrow path.
-  if (!isPrivateSeller(vehicle)) return false;
-
   const override = getOverride(vehicle);
   if (override === 'enforce') return true;
   if (override === 'revoke') return false;

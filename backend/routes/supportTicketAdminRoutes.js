@@ -10,7 +10,7 @@ import {
   assignTicket,
   addTicketMessage,
   getTicketStats,
-} from "../controllers/supportController.js";
+} from "../controllers/supportTicketAdminController.js";
 
 const router = express.Router();
 
@@ -20,12 +20,12 @@ router.get("/stats", asyncHandler(getTicketStats));
 
 router.get("/", asyncHandler(getAllTickets));
 
-router.get("/:id", validateObjectId, asyncHandler((req, res) => getTicketById({ ...req, params: { ...req.params, ticketId: req.params.id } }, res)));
+router.get("/:id", validateObjectId, asyncHandler(getTicketById));
 
-router.patch("/:id/status", validateObjectId, asyncHandler((req, res) => updateTicketStatus({ ...req, params: { ...req.params, ticketId: req.params.id } }, res)));
+router.patch("/:id/status", validateObjectId, asyncHandler(updateTicketStatus));
 
-router.patch("/:id/assign", validateObjectId, asyncHandler((req, res) => assignTicket({ ...req, params: { ...req.params, ticketId: req.params.id } }, res)));
+router.patch("/:id/assign", validateObjectId, asyncHandler(assignTicket));
 
-router.post("/:id/messages", validateObjectId, asyncHandler((req, res) => addTicketMessage({ ...req, params: { ...req.params, ticketId: req.params.id } }, res)));
+router.post("/:id/messages", validateObjectId, asyncHandler(addTicketMessage));
 
 export default router;

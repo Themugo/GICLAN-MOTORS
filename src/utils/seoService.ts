@@ -316,14 +316,14 @@ export const generateAuctionMetadata = (auction: Auction): Metadata => {
 export const getDefaultMetadata = (): Metadata => {
   return {
     title: "Kayad – Kenya's Premium Car Marketplace",
-    description: "Buy, sell and bid on premium cars in Kenya. Live auctions with M-Pesa for supported payments. Bank-funded escrow for eligible private-seller purchases.",
+    description: "Buy, sell and bid on premium cars in Kenya. Live auctions with M-Pesa. Secure escrow payments.",
     url: BASE_URL,
     imageUrl: `${BASE_URL}/icon-512.png`,
     canonical: BASE_URL,
     openGraph: {
       type: "website",
       title: "Kayad – Kenya's Premium Car Marketplace",
-      description: "Buy, sell and bid on premium cars in Kenya. Live auctions with M-Pesa for supported payments. Bank-funded escrow for eligible private-seller purchases.",
+      description: "Buy, sell and bid on premium cars in Kenya. Live auctions with M-Pesa. Secure escrow payments.",
       url: BASE_URL,
       image: `${BASE_URL}/icon-512.png`,
       siteName: "Kayad",

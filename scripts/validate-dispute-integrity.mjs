@@ -1,19 +1,23 @@
 import fs from 'node:fs';
 import path from 'node:path';
-const root=process.cwd();
-const checks=[
- ['canonical dispute storage is escrow-backed','backend/services/dispute.service.js',/findById\("escrows"/],
- ['dispute opening uses atomic escrow transition','backend/services/dispute.service.js',/atomicTransitionEscrow/],
- ['financial resolution uses atomic database RPC','backend/services/dispute.service.js',/atomicResolveDispute/],
- ['no dedicated disputes table migration exists','supabase/migrations/20260907190000_dispute_escrow_consolidation.sql',/ALTER TABLE escrows/],
- ['dispute metadata is persisted on escrow','supabase/migrations/20260907190000_dispute_escrow_consolidation.sql',/"disputeWorkflowStatus"/],
- ['partial refunds are bounded','supabase/migrations/20260907190000_dispute_escrow_consolidation.sql',/Partial refund must be greater than zero/],
- ['split settlements enforce conservation','supabase/migrations/20260907190000_dispute_escrow_consolidation.sql',/seller \+ buyer \+ platform fee = escrow amount/],
- ['dispute state machine normalizes value states','backend/services/disputeStateMachine.js',/normalizedCurrent/],
- ['detail page imports real dispute panels','src/pages/DisputeDetailPage.jsx',/components\/MediationPanel/],
- ['internal notes use real API callback','src/pages/DisputeDetailPage.jsx',/disputeAPI\.addNote/],
- ['legacy common evidence timeline removed','src/components/features/common/EvidenceTimeline.tsx',null],
+
+const root = process.cwd();
+const checks = [
+  ['canonical dispute UI has real API-backed evidence upload', 'src/components/EvidenceUpload.jsx', /disputeAPI\.uploadEvidence/],
+  ['canonical dispute UI has real mediation API', 'src/components/MediationPanel.jsx', /disputeAPI\.startMediation|disputeAPI\.completeMediation/],
+  ['canonical dispute UI has real resolution API', 'src/components/ResolutionPanel.jsx', /disputeAPI\.resolve/],
+  ['canonical dispute UI has real appeal API', 'src/components/AppealPanel.jsx', /disputeAPI\.appeal|disputeAPI\.reviewAppeal/],
+  ['evidence item route enforces dispute-party/admin access', 'backend/controllers/disputeController.js', /const dispute = await Dispute\.findById\(id\)\.select\("openedBy openedAgainst status"\)/],
+  ['evidence mutations remain scoped to the requested dispute', 'backend/controllers/disputeController.js', /Evidence\.findOne\(\{ _id: evidenceId, dispute: id, deletedAt: null \}\)/],
+  ['successful mediation transitions to resolved', 'backend/controllers/disputeController.js', /dispute\.status = STATES\.RESOLVED;/],
+  ['common duplicate TS dispute panels removed', 'src/components/features/common/MediationPanel.tsx', null],
 ];
-let passed=0;
-for(const [label,file,re] of checks){const f=path.join(root,file);const exists=fs.existsSync(f);const ok=re===null?!exists:exists&&re.test(fs.readFileSync(f,'utf8'));console.log(`${ok?'PASS':'FAIL'}: ${label}`);if(ok)passed++;}
-console.log(`\nDispute domain integrity: ${passed}/${checks.length} checks passed`);process.exitCode=passed===checks.length?0:1;
+let passed = 0;
+for (const [label, file, pattern] of checks) {
+  const exists = fs.existsSync(path.join(root, file));
+  const ok = pattern === null ? !exists : exists && pattern.test(fs.readFileSync(path.join(root, file), 'utf8'));
+  console.log(`${ok ? 'PASS' : 'FAIL'}: ${label}`);
+  if (ok) passed++;
+}
+console.log(`\nDispute integrity: ${passed}/${checks.length} checks passed`);
+process.exitCode = passed === checks.length ? 0 : 1;

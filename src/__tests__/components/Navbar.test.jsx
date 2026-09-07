@@ -26,6 +26,7 @@ vi.mock('../../context/BrandingContext', () => ({
 }));
 vi.mock('../../api/api', () => ({
   carsAPI: { list: vi.fn().mockResolvedValue({ data: [] }) },
+  notifAPI: { list: vi.fn().mockResolvedValue({ notifications: [] }) },
 }));
 vi.mock('../../utils/helpers', () => ({ initials: () => 'TU' }));
 vi.mock('../../utils/authRoutes', () => ({ isSellerRole: () => false }));

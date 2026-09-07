@@ -58,11 +58,13 @@ After both fixes, the same real request against the same real database progresse
 
 ---
 
-### THIRD FINDING — resolved: canonical auction UI now uses the real bid transport
+## THIRD FINDING — the real, canonical auction UI never calls any of this backend at all
 
-The earlier audit correctly identified a gap in the then-current `AuctionsView`: bid actions were local state updates and did not reach the backend. That finding is now resolved. `src/features/AuctionsView.tsx` uses the canonical `fetchActiveAuctions()` read transport and the real `placeBid()` client for `POST /api/bids/:id/bid`.
+While tracing the frontend side of the bidding workflow to compare request/response shapes (this phase's own stated goal), found that `AuctionsView.tsx` - the component this project's own most recent work (the `VehicleMarketplace`/`AuctionsView` cutover) promoted to the sole, canonical, shipping implementation - does not make a single real network call to place a bid, anywhere. Its `sessions` state initializes from `INITIAL_AUCTION_SESSIONS` (mock data) and every bid-related action is a local `setSessions(prev => ...)` state update - never persisted, never reaching another user, gone on page refresh.
 
-The UI also treats the successful request correctly: the backend response means the bid/payment request was accepted for processing, while the bid remains pending until M-Pesa confirmation. After the request, the view reloads the authoritative auction list and replaces the selected auction from that refreshed response rather than fabricating a local bid count/current bid.
+A separate, real frontend client for this domain does exist (`src/services/auctionService.ts`, wrapping the legacy `auctionAPI` from `src/api/api.exports.ts`, itself flagged as a legacy system in this project's own Phase 2 work) - but it has zero real consumers anywhere in the codebase (confirmed by a direct repository-wide search), and it only implements read operations (`list`/`get`/`active`/`my`) - no bid-placing function exists in it at all, so even reconnecting it would not close this gap on its own.
+
+**Not fixed this phase.** Wiring the real, now-working `POST /api/bids/:id/bid` endpoint into the real `AuctionsView` UI is a substantial integration effort (matching the scale of this project's own Phase 3 vehicle-data work, which took a full, dedicated pass) - attempting it as a rushed addition to a phase already focused on finding and fixing two critical, reproduced backend bugs risked doing both pieces of work poorly. Documented here as the clearest, highest-value next step for this specific domain, with the backend side now confirmed actually functional and ready to be connected to.
 
 ---
 

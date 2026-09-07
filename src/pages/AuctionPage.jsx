@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchActiveAuctions } from '../services/auctionService';
-import { formatKES } from '../api/api';
+import { carsAPI, formatKES } from '../api/api';
 import { CountdownDisplay } from '../hooks/useCountdown';
 
 const S = {
@@ -42,10 +41,10 @@ export default function AuctionPage() {
     let mounted = true;
     (async () => {
       try {
-        const data = await fetchActiveAuctions({ page: 1, limit: 100 });
-        const rows = data.auctions || [];
+        const data = await carsAPI.list({ limit: 100 });
+        const cars = data.cars || data.data || [];
         if (mounted) {
-          setAuctions(rows);
+          setAuctions(cars.filter(c => c.isAuction || c.auction_status === 'live'));
         }
       } catch { /* show empty state below */ }
       if (mounted) setLoading(false);
@@ -63,12 +62,12 @@ export default function AuctionPage() {
           </div>
           <h1 style={S.heroH1}>Bid on Premium Vehicles</h1>
           <p style={S.heroDesc}>
-            Real-time competitive bidding with bank-funded escrow protection. Every vehicle is verified. Win the auction, pay securely, drive away.
+            Real-time competitive bidding with M-Pesa escrow protection. Every vehicle is verified. Win the auction, pay securely, drive away.
           </p>
           <div style={S.statsRow}>
             {[
               { label: 'Live Auctions', value: auctions.length },
-              { label: 'Total Bids', value: auctions.reduce((a, c) => a + (c.bidCount || 0), 0) },
+              { label: 'Total Bids', value: auctions.reduce((a, c) => a + (c.bidsCount || c.totalBids || 0), 0) },
               { label: 'Avg. Saving', value: '12%' },
             ].map((s, i) => (
               <div key={i} className="stat-box" style={S.statMinWidth}>
@@ -99,7 +98,7 @@ export default function AuctionPage() {
         ) : (
           <div className="car-grid">
             {auctions.map((car) => (
-              <Link key={car.carId || car.id} to={`/auction/${car.carId || car.id}`} style={S.blockLink}>
+              <Link key={car._id || car.id} to={`/auction/${car._id || car.id}`} style={S.blockLink}>
                 <div className="card" style={S.card}>
                   <div className="car-img-wrap" style={S.carImgWrap}>
                     <img src={car.images?.[0]?.url || car.images?.[0] || car.image} alt={car.title} style={S.carImg} />
@@ -107,7 +106,7 @@ export default function AuctionPage() {
                       <span className="badge badge-green"><span className="live-dot" /> LIVE</span>
                     </div>
                     <div style={S.countdown}>
-                      <CountdownDisplay endTime={car.endTime} />
+                      <CountdownDisplay endTime={car.auctionEnd} />
                     </div>
                   </div>
                   <div style={S.cardBody}>
@@ -120,7 +119,7 @@ export default function AuctionPage() {
                     <div style={S.priceRow}>
                       <div>
                         <div style={S.bidLabel}>Current Bid</div>
-                        <div className="price-tag" style={S.priceValue}>{formatKES(car.highestBid || car.startingBid)}</div>
+                        <div className="price-tag" style={S.priceValue}>{formatKES(car.currentBid || car.price)}</div>
                       </div>
                       <span style={S.bidCount}>{car.bidsCount || car.totalBids || 0} bids →</span>
                     </div>

@@ -1,5 +1,4 @@
 import express from "express";
-import { startAuction, extendAuction, closeAuction } from "../services/auctionLifecycle.service.js";
 import { protect, dealerOnly, requireApproved } from "../middleware/auth.js";
 import { requireDealerVerification } from "../middleware/dealerVerification.js";
 import asyncHandler from "../middleware/asyncHandler.js";
@@ -883,6 +882,7 @@ router.post(
 // =============================
 // Canonical engine only: auction state lives on the cars row, closing
 // goes through services/auctionClose.service.js.
+import { closeAuction } from "../services/auctionClose.service.js";
 
 // 🚀 Start auction on dealer's own car
 router.post(
@@ -891,28 +891,63 @@ router.post(
   invalidateCache("dealer"),
   asyncHandler(async (req, res) => {
     const { durationMs, startingBid, reservePrice, reserveMode } = req.body;
+    if (!durationMs) return res.status(400).json({ success: false, message: "durationMs required" });
+
+    // ⏱ Minimum 24h auction duration
+    const MIN_DURATION = 24 * 60 * 60 * 1000;
+    if (durationMs < MIN_DURATION) {
+      return res.status(400).json({
+        success: false,
+        message: `Minimum auction duration is 24 hours (${(durationMs / 3600000).toFixed(0)}h provided)`,
+      });
+    }
+
     const car = await findOne("cars", { id: req.params.id, dealer: req.user.id });
     if (!car) return res.status(404).json({ success: false, message: "Car not found" });
 
-    const dealer = await findById("users", car.dealer, "commissionBalance,listingsLocked");
-    if (dealer?.listingsLocked && Number(dealer.commissionBalance || 0) > 0) {
-      return res.status(403).json({ success: false, message: "Cannot start auction — outstanding commission balance and listings are locked." });
+    if (car.auctionStatus === "live") {
+      return res.status(400).json({ success: false, message: "Auction already live" });
     }
 
-    try {
-      const result = await startAuction({
-        carId: req.params.id,
-        durationMs: Number(durationMs),
-        startingBid: Number(startingBid),
-        reservePrice: reservePrice == null || reservePrice === "" ? null : Number(reservePrice),
-        reserveMode: reserveMode || "none",
-        req,
+    const dealer = await findById("users", car.dealer, "commissionBalance,listingsLocked");
+    if (dealer && dealer.listingsLocked && dealer.commissionBalance > 0) {
+      return res.status(403).json({
+        success: false,
+        message: "Cannot start auction — outstanding commission balance and listings are locked.",
       });
-      res.json({ success: true, message: "Auction started", endTime: result.auction_end, reservePrice: result.reserve_price, result });
-    } catch (err) {
-      const status = /already live|cannot be restarted|duration|starting bid|reserve price|reserve mode/i.test(err.message) ? 400 : 500;
-      res.status(status).json({ success: false, message: err.message || "Failed to start auction" });
     }
+
+    const startingBidVal = Number(startingBid) || 0;
+    if (startingBidVal < 1000) {
+      return res.status(400).json({ success: false, message: "Starting bid must be at least KES 1,000" });
+    }
+
+    const reserveVal = reservePrice ? Number(reservePrice) : null;
+    if (reserveVal !== null && reserveVal < startingBidVal) {
+      return res.status(400).json({ success: false, message: "Reserve price must be >= starting bid" });
+    }
+
+    // Server-authoritative schedule: the server sets both timestamps.
+    const endTime = new Date(Date.now() + durationMs);
+
+    const updated = await update("cars", req.params.id, {
+      auctionStatus: "live",
+      allowBid: true,
+      startingBid: startingBidVal,
+      currentBid: startingBidVal,
+      reservePrice: reserveVal,
+      reserveMode: reserveMode || "none",
+      auctionStartTime: new Date().toISOString(),
+      auctionEnd: endTime.toISOString(),
+    });
+
+    await logActionFromReq(req, "auction_start", {
+      target: req.params.id,
+      targetModel: "Car",
+      details: { startingBid: startingBidVal, reservePrice: reserveVal, durationMs },
+    });
+
+    res.json({ success: true, message: "Auction started", endTime, reservePrice: reserveVal });
   }),
 );
 
@@ -940,40 +975,99 @@ router.post(
   }),
 );
 
-// ⏱ Extend auction
+// ⏱ Extend auction (max 3 extensions per auction)
 router.post(
   "/cars/:id/auction/extend",
   invalidateCache("dealer"),
   asyncHandler(async (req, res) => {
     const { hours } = req.body;
+    if (!hours) return res.status(400).json({ success: false, message: "hours required" });
+
+    if (hours < 1 || hours > 72) {
+      return res.status(400).json({ success: false, message: "Extension must be between 1 and 72 hours" });
+    }
+
     const car = await findOne("cars", { id: req.params.id, dealer: req.user.id, auctionStatus: "live" });
     if (!car) return res.status(404).json({ success: false, message: "Car not found or auction not live" });
 
-    try {
-      const result = await extendAuction({ carId: req.params.id, extraMs: Number(hours) * 60 * 60 * 1000, req, reason: "auction_extend" });
-      res.json({ success: true, newEndTime: result.auction_end, extensionCount: result.extension_count, result });
-    } catch (err) {
-      const status = /extension|live/i.test(err.message) ? 400 : 500;
-      res.status(status).json({ success: false, message: err.message || "Failed to extend auction" });
+    const MAX_EXTENSIONS = 3;
+    const extensionCount = car.extensionCount || 0;
+    if (extensionCount >= MAX_EXTENSIONS) {
+      return res
+        .status(400)
+        .json({ success: false, message: `Maximum ${MAX_EXTENSIONS} extensions per auction reached` });
     }
+
+    const currentEnd = new Date(car.auctionEnd).getTime();
+    const newEnd = new Date(Math.max(currentEnd, Date.now()) + hours * 60 * 60 * 1000).toISOString();
+
+    const updated = await update("cars", req.params.id, {
+      auctionEnd: newEnd,
+      extensionCount: extensionCount + 1,
+    });
+
+    await logActionFromReq(req, "auction_extend", {
+      target: req.params.id,
+      targetModel: "Car",
+      details: { hours, extensionsUsed: extensionCount + 1, newEndTime: updated.auctionEnd },
+    });
+
+    res.json({ success: true, newEndTime: updated.auctionEnd, extensionsUsed: extensionCount + 1 });
   }),
 );
 
 // =============================
 // 📦 SELF-SERVICE PLAN UPGRADE
-// Canonical subscription workflow lives in dealerPlatformRoutes.
-// Keep this route only as a compatibility redirect so there is one
-// source of truth for plan pricing, limits and payment metadata.
+// =============================
 router.post(
   "/upgrade",
   asyncHandler(async (req, res) => {
-    const plans = await (await import("../services/dealerSubscription.service.js")).getDealerPlans();
-    const plan = plans.find((p) => p.id === req.body?.planId);
-    if (!plan) return res.status(400).json({ success: false, message: "Invalid plan" });
-    if (plan.contactSales || Number(plan.price || 0) <= 0) return res.status(400).json({ success: false, message: "Contact sales for this plan" });
-    if (!req.body?.phone) return res.status(400).json({ success: false, message: "M-Pesa phone number required" });
-    const result = await (await import("../services/dealerSubscription.service.js")).initiateDealerUpgrade({ dealerId: req.user.id, planId: plan.id, phone: req.body.phone, initiatePayment });
-    res.json({ success: true, checkoutRequestID: result.payment.checkoutRequestID, mode: result.payment.mode, message: "STK push sent. Enter PIN on your phone.", paymentId: result.payment.payment?.id });
+    const { planId, phone } = req.body;
+
+    const plan = PLANS[planId];
+    if (!plan) {
+      return res.status(400).json({ success: false, message: "Invalid plan" });
+    }
+
+    if (planId === "enterprise") {
+      return res.status(400).json({ success: false, message: "Contact sales for Enterprise plan" });
+    }
+
+    const user = await findById("users", req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Check if already on this plan
+    if (user.dealerPackage === planId && user.packageExpiresAt && new Date(user.packageExpiresAt) > new Date()) {
+      return res.status(400).json({ success: false, message: "Already on this plan" });
+    }
+
+    if (!phone) {
+      return res.status(400).json({ success: false, message: "M-Pesa phone number required" });
+    }
+
+    // Initiate M-Pesa payment
+    const result = await initiatePayment({
+      userId: req.user.id,
+      type: "package_upgrade",
+      amount: plan.price,
+      phone,
+      metadata: { planId, planName: plan.name },
+    });
+
+    if (!result.success) {
+      return res.status(502).json({ success: false, message: result.message || "Payment initiation failed" });
+    }
+
+    // Signal frontend to poll for payment completion
+    res.json({
+      success: true,
+      checkoutRequestID: result.checkoutRequestID,
+      mode: result.mode,
+      message: "STK push sent. Enter PIN on your phone.",
+      paymentId: result.payment.id,
+    });
   }),
 );
 

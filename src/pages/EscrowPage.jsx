@@ -15,7 +15,7 @@ const STATUS_META = {
 };
 
 const HOW_IT_WORKS = [
-  { step: '1', icon: '💳', label: 'You Pay',       desc: 'Full amount via bank transfer into the configured KAYAD escrow account' },
+  { step: '1', icon: '💳', label: 'You Pay',       desc: 'Full amount via M-Pesa into escrow' },
   { step: '2', icon: '🔒', label: 'Funds Locked',  desc: 'Admin holds payment securely' },
   { step: '3', icon: '🚗', label: 'Car Delivered',  desc: 'You inspect and confirm the car' },
   { step: '4', icon: '✅', label: 'Released',       desc: 'Funds sent to seller' },
@@ -127,7 +127,7 @@ export default function EscrowPage() {
           <div className="section-eyebrow" style={{ justifyContent: 'center' }}>Secure Transactions</div>
           <h1 style={{ marginBottom: 16 }}>🔒 Escrow Vault</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 15, maxWidth: 520, margin: '0 auto 32px', lineHeight: 1.7 }}>
-            Every purchase on KAYAD is protected by bank-funded escrow. Your money is held safely and only released when you confirm you have received the vehicle.
+            Every purchase on KAYAD is protected by M-Pesa escrow. Your money is held safely and only released when you confirm you have received the vehicle.
           </p>
           {!isAuth && (
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>

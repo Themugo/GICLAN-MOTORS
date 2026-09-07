@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getCars } from '../../../services/vehicleApi';
+import { carsAPI } from '../../../api/api';
 import CartyGrid from '../../../components/CartyGrid';
 import useMediaQuery from '../../../hooks/useMediaQuery';
 
@@ -12,10 +12,10 @@ export default function SimilarCars({ carId, brand }) {
   useEffect(() => {
     if (!brand) return;
     setLoading(true);
-    getCars({ page: 1, limit: 5, brand, sort: 'newest' })
+    carsAPI.list({ page: 1, limit: 5, brand, sort: '-createdAt' })
       .then(data => {
-        const all = data.data || [];
-        const filtered = all.filter(c => (c.id || c._id) !== carId);
+        const all = data.cars || data.data || [];
+        const filtered = all.filter(c => c._id !== carId);
         setCars(filtered.slice(0, 4));
       })
       .catch(() => {})

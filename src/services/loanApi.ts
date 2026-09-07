@@ -71,24 +71,3 @@ export async function getMyLoanApplications(): Promise<LoanApplication[]> {
   const body = await loanFetch<{ data: LoanApplication[] }>('/api/loans/my');
   return body.data || [];
 }
-
-export interface LoanApplicationReviewInput {
-  status: Exclude<LoanStatus, 'submitted'> | 'submitted';
-  reviewerNotes?: string;
-}
-
-/** GET /api/loans/all - admin review queue. */
-export async function getAllLoanApplications(status?: LoanStatus): Promise<LoanApplication[]> {
-  const path = status ? `/api/loans/all?status=${encodeURIComponent(status)}` : '/api/loans/all';
-  const body = await loanFetch<{ data: LoanApplication[] }>(path);
-  return body.data || [];
-}
-
-/** PUT /api/loans/:id/status - admin-only lifecycle transition. */
-export async function updateLoanApplicationStatus(id: string, input: LoanApplicationReviewInput): Promise<LoanApplication> {
-  const body = await loanFetch<{ data: LoanApplication }>(`/api/loans/${encodeURIComponent(id)}/status`, {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  });
-  return body.data;
-}

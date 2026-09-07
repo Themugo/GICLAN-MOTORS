@@ -6,8 +6,8 @@ import { supportAPI } from '../api/api';
 
 const FAQS = [
   {
-    q: 'How does the bank-funded escrow work?',
-    a: 'When an eligible private-seller vehicle is purchased with escrow, the full purchase funds are sent by bank transfer to the configured KAYAD escrow custody account and are not released until the escrow workflow permits it.',
+    q: 'How does the M-Pesa escrow work?',
+    a: 'When you buy a vehicle, your M-Pesa payment is held securely in escrow — not released to the seller until you confirm receipt and satisfaction. This protects both parties.',
   },
   {
     q: 'How do I list my car for sale?',

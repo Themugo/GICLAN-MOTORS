@@ -12,7 +12,6 @@ import asyncHandler from "../middleware/asyncHandler.js";
 import { validateObjectId, validateResponse, escrowResponseSchema } from "../middleware/validate.js";
 import { createLimiter } from "../middleware/rateLimiter.js";
 import { idempotencyCheck } from "../middleware/idempotency.js";
-import { getEscrowRules, getEscrowAccountById, sanitizeEscrowAccount, verifyEscrowFunding } from "../services/escrowConfiguration.service.js";
 
 import {
   getAllEscrows,
@@ -29,49 +28,6 @@ import {
 } from "../controllers/escrowController.js";
 
 const router = express.Router();
-
-
-
-// =============================
-// 🏦 FUNDING INSTRUCTIONS (BUYER / ESCROW PARTY)
-// Returns the administrator-configured bank custody account. No M-Pesa STK
-// is offered for vehicle escrow funding.
-// =============================
-router.get(
-  "/:id/funding-instructions",
-  protect,
-  validateObjectId,
-  asyncHandler(async (req, res) => {
-    const escrow = await (await import("../db/index.js")).findById("escrows", req.params.id);
-    if (!escrow) return res.status(404).json({ success: false, message: "Escrow not found" });
-    const isParty = [escrow.buyer, escrow.seller].some((id) => id?.toString() === req.user.id);
-    const isStaff = ["admin", "superadmin", "escrow_officer", "accounts"].includes(req.user.role);
-    if (!isParty && !isStaff) return res.status(403).json({ success: false, message: "Not authorized" });
-    const rules = await getEscrowRules();
-    const account = escrow.custodianAccount ? await getEscrowAccountById(escrow.custodianAccount) : null;
-    res.json({ success: true, fundingMethod: "bank_transfer", mpesaEligible: false, rules, account: sanitizeEscrowAccount(account) });
-  }),
-);
-
-// =============================
-// ✅ VERIFY BANK FUNDING (ACCOUNTS / ESCROW STAFF / ADMIN)
-// This is the authoritative custody transition: pending -> funded.
-// =============================
-router.post(
-  "/:id/verify-funding",
-  protect,
-  idempotencyCheck,
-  validateObjectId,
-  asyncHandler(async (req, res) => {
-    if (!["admin", "superadmin", "escrow_officer", "accounts"].includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: "Only authorized escrow/accounts staff may verify bank funding" });
-    }
-    const reference = String(req.body?.fundingReference || "").trim();
-    if (!reference) return res.status(400).json({ success: false, message: "Bank funding reference is required" });
-    const result = await verifyEscrowFunding(req.params.id, req.user.id, reference);
-    res.json({ success: true, data: result, message: "Bank funding verified and escrow funds are now held" });
-  }),
-);
 
 // =============================
 // 📄 GET: USER ESCROWS

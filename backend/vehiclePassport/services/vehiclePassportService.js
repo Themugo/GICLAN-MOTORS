@@ -2,7 +2,7 @@
 // KAYAD DIGITAL VEHICLE PASSPORT™ - PASSPORT SERVICE
 // ============================================================
 
-import * as db from '../../db/index.js';
+import db from '../../db/index.js';
 import { AppError } from '../../utils/AppError.js';
 import { logInfo } from '../../utils/logger.js';
 import crypto from 'crypto';
@@ -17,8 +17,6 @@ class VehiclePassportService {
    */
   async getOrCreatePassport(vehicleData) {
     const { vin, chassisNumber, registrationNumber, make, model } = vehicleData;
-    if (!vin && !chassisNumber && !registrationNumber) throw new AppError('VIN, chassis number or registration number is required', 400);
-    if (!make || !model) throw new AppError('Make and model are required', 400);
 
     // Check if passport exists
     let passport = await this.findPassport(vin, chassisNumber, registrationNumber);
@@ -164,8 +162,8 @@ class VehiclePassportService {
    */
   async getPublicPassport(passportId) {
     const passport = await db.findById('vehicle_passports', passportId);
-    if (!passport || passport.status !== 'active') {
-      throw new AppError('Public vehicle passport not found', 404);
+    if (!passport) {
+      throw new AppError('Passport not found', 404);
     }
 
     const [timeline, inspections, badges, documents] = await Promise.all([
@@ -258,14 +256,14 @@ class VehiclePassportService {
    * Get timeline
    */
   async getTimeline(passportId) {
-    return db.findAll('vehicle_timeline', { filters: { passport_id: passportId }, orderBy: 'event_date', ascending: false });
+    return db.find('vehicle_timeline', { passport_id: passportId }, { sort: { event_date: -1 } });
   }
 
   /**
    * Get public timeline (limited events)
    */
   async getPublicTimeline(passportId) {
-    const events = await db.findAll('vehicle_timeline', { filters: { passport_id: passportId }, orderBy: 'event_date', ascending: false });
+    const events = await db.find('vehicle_timeline', { passport_id: passportId }, { sort: { event_date: -1 } });
     return events.map(e => ({
       id: e.id,
       eventType: e.event_type,
@@ -280,7 +278,7 @@ class VehiclePassportService {
    * Get ownership history
    */
   async getOwnershipHistory(passportId) {
-    const history = await db.findAll('ownership_history', { filters: { passport_id: passportId }, orderBy: 'ownership_number', ascending: false });
+    const history = await db.find('ownership_history', { passport_id: passportId }, { sort: { ownership_number: -1 } });
     return history.map(h => ({
       id: h.id,
       ownershipNumber: h.ownership_number,
@@ -298,7 +296,7 @@ class VehiclePassportService {
    * Get inspection history
    */
   async getInspectionHistory(passportId) {
-    const history = await db.findAll('inspection_history', { filters: { passport_id: passportId }, orderBy: 'inspection_date', ascending: false });
+    const history = await db.find('inspection_history', { passport_id: passportId }, { sort: { inspection_date: -1 } });
     return history.map(i => ({
       id: i.id,
       inspectionId: i.inspection_id,
@@ -324,7 +322,7 @@ class VehiclePassportService {
    * Get service history
    */
   async getServiceHistory(passportId) {
-    const history = await db.findAll('service_history', { filters: { passport_id: passportId }, orderBy: 'service_date', ascending: false });
+    const history = await db.find('service_history', { passport_id: passportId }, { sort: { service_date: -1 } });
     return history.map(s => ({
       id: s.id,
       serviceDate: s.service_date,
@@ -344,14 +342,14 @@ class VehiclePassportService {
    * Get accident history
    */
   async getAccidentHistory(passportId) {
-    return db.findAll('accident_history', { filters: { passport_id: passportId }, orderBy: 'accident_date', ascending: false });
+    return db.find('accident_history', { passport_id: passportId }, { sort: { accident_date: -1 } });
   }
 
   /**
    * Get auction history
    */
   async getAuctionHistory(passportId) {
-    const history = await db.findAll('auction_history', { filters: { passport_id: passportId }, orderBy: 'auction_date', ascending: false });
+    const history = await db.find('auction_history', { passport_id: passportId }, { sort: { auction_date: -1 } });
     return history.map(a => ({
       id: a.id,
       auctionDate: a.auction_date,
@@ -373,28 +371,31 @@ class VehiclePassportService {
    * Get finance history
    */
   async getFinanceHistory(passportId) {
-    return db.findAll('finance_history', { filters: { passport_id: passportId }, orderBy: 'event_date', ascending: false });
+    return db.find('finance_history', { passport_id: passportId }, { sort: { event_date: -1 } });
   }
 
   /**
    * Get marketplace history
    */
   async getMarketplaceHistory(passportId) {
-    return db.findAll('marketplace_history', { filters: { passport_id: passportId }, orderBy: 'event_date', ascending: false });
+    return db.find('marketplace_history', { passport_id: passportId }, { sort: { event_date: -1 } });
   }
 
   /**
    * Get documents
    */
   async getDocuments(passportId) {
-    return db.findAll('vehicle_documents', { filters: { passport_id: passportId }, orderBy: 'created_at', ascending: false });
+    return db.find('vehicle_documents', { passport_id: passportId }, { sort: { created_at: -1 } });
   }
 
   /**
    * Get public documents only
    */
   async getPublicDocuments(passportId) {
-    return db.findAll('vehicle_documents', { filters: { passport_id: passportId, visibility: 'public' }, orderBy: 'created_at', ascending: false });
+    return db.find('vehicle_documents', { 
+      passport_id: passportId, 
+      visibility: 'public' 
+    }, { sort: { created_at: -1 } });
   }
 
   /**
@@ -468,7 +469,7 @@ class VehiclePassportService {
    * Get badges
    */
   async getBadges(passportId) {
-    return db.findAll('verification_badges', { filters: { passport_id: passportId, is_active: true } });
+    return db.find('verification_badges', { passport_id: passportId, is_active: true });
   }
 
   /**
@@ -568,10 +569,8 @@ class VehiclePassportService {
     if (query.make) searchQuery.make = { $regex: query.make, $options: 'i' };
     if (query.model) searchQuery.model = { $regex: query.model, $options: 'i' };
 
-    return db.findAll('vehicle_passports', {
-      filters: searchQuery,
-      orderBy: 'created_at',
-      ascending: false,
+    return db.find('vehicle_passports', searchQuery, {
+      sort: { created_at: -1 },
       limit: options.limit || 20,
     });
   }

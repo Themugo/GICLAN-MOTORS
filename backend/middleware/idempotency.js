@@ -15,6 +15,7 @@ import IdempotencyKey from "../models/IdempotencyKey.js";
 import IdempotencyAuditLog from "../models/IdempotencyAuditLog.js";
 import { withLock } from "./distributedLock.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
+import { findOne } from "../db/index.js";
 import {
   recordIdempotencyCheck,
   recordIdempotencyHit,
@@ -76,10 +77,9 @@ function lockKey(req) {
  */
 async function detectDuplicateReceipt(receipt) {
   if (!receipt) return null;
-  const Payment = (await import("../models/Payment.js")).default;
-  const existing = await Payment.findOne({ mpesaReceipt: receipt });
+  const existing = await findOne("payments", { mpesaReceipt: receipt });
   if (existing) {
-    logWarn("Duplicate mpesaReceipt detected", { receipt, existingPaymentId: existing._id });
+    logWarn("Duplicate mpesaReceipt detected", { receipt, existingPaymentId: existing.id });
     return existing;
   }
   return null;

@@ -80,6 +80,7 @@ export const carsAPI = {
   myCars:    ()      => api.get('/cars/dealer/my-cars').then(unwrap),
   analytics: ()      => api.get('/cars/dealer/analytics').then(unwrap),
   bid: (id: string, body: any)        => api.post(`/cars/${id}/bid`, body).then(unwrap),
+  toggleFav: (id: string)        => api.post(`/cars/${id}/favorite`).then(unwrap),
   batch: (body: any)         => api.post('/cars/batch', body).then(unwrap),
   fraudCheck: (id: string) => api.get(`/cars/admin/${id}/fraud`).then(unwrap),
   adminStart: (id: string) => api.post(`/cars/admin/${id}/start`).then(unwrap),
@@ -146,8 +147,7 @@ export const dealerAPI = {
   getProfile:   ()       => api.get('/dealer/profile').then(unwrap),
   updateProfile: (body: any)  => api.put('/dealer/profile', body).then(unwrap),
   milestones:   ()       => api.get('/dealer/milestones').then(unwrap),
-  upgrade:      (body: any) => api.post('/dealer-platform/subscription/upgrade', body).then(unwrap),
-  subscription: () => api.get('/dealer-platform/subscription').then(unwrap),
+  upgrade:      (body: any) => api.post('/dealer/upgrade', body).then(unwrap),
   getVerificationStatus: () => api.get('/dealer/verification').then(unwrap),
   submitVerification: (stepId: string, body: any) => api.post(`/dealer/verification/${stepId}`, body).then(unwrap),
   leads:           (params?: any) => api.get('/leads', { params }).then(unwrap),
@@ -171,11 +171,6 @@ export const adminAPI = {
   getConfig:      ()          => api.get('/admin/config').then(unwrap),
   getPublicConfig: ()         => api.get('/admin/public/config').then(unwrap),
   updateConfig:   (body: any)      => api.put('/admin/config', body).then(unwrap),
-  getEscrowConfig: () => api.get('/admin/escrow/config').then(unwrap),
-  updateEscrowConfig: (escrowRules: any) => api.put('/admin/escrow/config', { escrowRules }).then(unwrap),
-  addEscrowAccount: (body: any) => api.post('/admin/escrow/accounts', body).then(unwrap),
-  updateEscrowAccount: (id: string, body: any) => api.patch(`/admin/escrow/accounts/${id}`, body).then(unwrap),
-  deleteEscrowAccount: (id: string) => api.delete(`/admin/escrow/accounts/${id}`).then(unwrap),
   getAuditLog:    (params: any)    => api.get('/admin/audit-log', { params }).then(unwrap),
   appendAuditLog: (body: any)      => api.post('/admin/audit-log', body).then(unwrap),
   getAuditLogs:          (params: any) => api.get('/audit/logs', { params }).then(unwrap),
@@ -272,6 +267,15 @@ export const disputeAPI = {
   resolve:      (id: string, body: any) => api.post(`/disputes/${id}/resolve`, body).then(unwrap),
   appeal:       (id: string, body: any) => api.post(`/disputes/${id}/appeal`, body).then(unwrap),
   reviewAppeal: (id: string, body: any) => api.post(`/disputes/${id}/appeal/review`, body).then(unwrap),
+};
+
+// ── NOTIFICATIONS ─────────────────────────────────────
+export const notifAPI = {
+  list:        (params: any) => api.get('/notifications', { params }).then(unwrap),
+  markRead:    (id: string)     => api.post(`/notifications/${id}/read`).then(unwrap),
+  markAllRead: ()       => api.post('/notifications/read-all').then(unwrap),
+  remove:      (id: string)     => api.delete(`/notifications/${id}`).then(unwrap),
+  createReminder: (body: any) => api.post('/notifications/reminders', body).then(unwrap),
 };
 
 // ── FAVORITES ─────────────────────────────────────────
@@ -436,6 +440,16 @@ export const supportAPI = {
   analytics:     ()             => api.get('/support/analytics').then(unwrap),
   myTickets:     (params?: any) => api.get('/support/my-tickets', { params }).then(unwrap),
   create:        (body: any)    => api.post('/support', body).then(unwrap),
+};
+
+// ── SUPPORT TICKET ADMIN ──────────────────────────────
+export const supportTicketAdminAPI = {
+  stats:      ()            => api.get('/admin/support-tickets/stats').then(unwrap),
+  list:       (params?: any) => api.get('/admin/support-tickets', { params }).then(unwrap),
+  get:        (id: string)  => api.get(`/admin/support-tickets/${id}`).then(unwrap),
+  updateStatus: (id: string, body: any) => api.patch(`/admin/support-tickets/${id}/status`, body).then(unwrap),
+  assign:     (id: string, body: any) => api.patch(`/admin/support-tickets/${id}/assign`, body).then(unwrap),
+  addMessage: (id: string, body: any) => api.post(`/admin/support-tickets/${id}/messages`, body).then(unwrap),
 };
 
 // ── REPORTS ───────────────────────────────────────────

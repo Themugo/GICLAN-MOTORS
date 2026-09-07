@@ -38,8 +38,7 @@ import {
   Loader, SlidersHorizontal, ChevronDown, RefreshCw, AlertTriangle,
 } from 'lucide-react';
 
-import { savedSearchAPI } from '../api/api';
-import { getCars } from '../services/vehicleApi';
+import { carsAPI, savedSearchAPI } from '../api/api';
 import CartyGrid from '../components/CartyGrid';
 import SearchBar from '../components/SearchBar';
 import SearchSidebar from '../components/SearchSidebar';
@@ -247,8 +246,8 @@ export default function Showroom() {
     loadingRef.current = true;
     setLoading(true);
     try {
-      const data = await getCars(getApiParams(pageNum));
-      const newCars = data.data || [];
+      const data = await carsAPI.list(getApiParams(pageNum));
+      const newCars = data.data || data.cars || [];
       if (replace && (!newCars || newCars.length === 0)) {
         setCars([]);
         setTotalCount(0);

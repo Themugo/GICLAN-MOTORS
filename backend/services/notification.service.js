@@ -37,10 +37,3 @@ export const sendNotification = async ({ userId, title, message, type = "info", 
     return null;
   }
 };
-
-
-// Canonical compatibility helper for legacy jobs that previously imported
-// createNotification from the HTTP controller. Keep all notification writes
-// inside the service boundary so non-HTTP workers do not depend on controllers.
-export const createNotification = async ({ user, title, message, type = "info", data = {}, link }) =>
-  sendNotification({ userId: user, title, message, type, data, link });

@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { escrowAPI } from '../api/api';
-import { getMyListings } from '../services/vehicleApi';
+import { carsAPI, escrowAPI } from '../api/api';
 import { timeAgo } from '../utils/helpers';
 import { EnterpriseCard, EnterpriseKPI, EnterpriseTimeline, EnterpriseQuickActions, EnterpriseTable, EnterpriseMetricRow, EnterpriseStatus, DashboardHeader } from '../components/enterprise/EnterpriseDashboard';
 
@@ -24,10 +23,10 @@ export default function PrivateSellerDashboard() {
   const fetchData = async () => {
     try {
       const [listingsRes, escrowsRes] = await Promise.all([
-        getMyListings(),
+        carsAPI.list({ seller: user?._id, limit: 20 }),
         escrowAPI.mine(),
       ]);
-      const carList = listingsRes || [];
+      const carList = listingsRes.cars || listingsRes.data || [];
       const escrowList = escrowsRes.escrows || [];
       setListings(carList);
       setEscrows(escrowList);

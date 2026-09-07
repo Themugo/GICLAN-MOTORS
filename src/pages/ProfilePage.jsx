@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { authAPI, paymentsAPI, reviewsAPI, formatKES } from '../api/api';
-import { getMyListings } from '../services/vehicleApi';
+import { authAPI, paymentsAPI, reviewsAPI, carsAPI, formatKES } from '../api/api';
 import { timeAgo, formatDate, initials, validatePassword } from '../utils/helpers';
 import { SkeletonRow, SkeletonText } from '../components/Skeleton';
 
@@ -40,12 +39,7 @@ export default function ProfilePage() {
       reviewsAPI.mine().then(d => setReviews(d.reviews || d.data || [])).finally(() => setLoading(false));
     }
     if (tab === 'Profile' && isDealer && !myStats) {
-      getMyListings().then(listings => {
-        const active = listings.filter(l => l.status === 'available' || l.status === 'active').length;
-        const sold = listings.filter(l => l.status === 'sold').length;
-        const views = listings.reduce((sum, l) => sum + Number(l.views || 0), 0);
-        setMyStats({ totalListings: listings.length, activeListings: active, soldVehicles: sold, totalViews: views });
-      }).catch(() => {});
+      carsAPI.analytics().then(d => setMyStats(d.analytics || d.data || d)).catch(() => {});
     }
   }, [tab]);
 

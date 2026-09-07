@@ -4,6 +4,8 @@
 import Ticket from "../models/SupportTicket.js";
 import Chat from "../models/Chat.js";
 import User from "../models/User.js";
+import Dispute from "../models/Dispute.js";
+import { protect } from "../middleware/auth.js";
 import { logInfo, logError } from "../utils/logger.js";
 
 // =============================
@@ -39,7 +41,7 @@ export const getSupportDashboard = async (req, res) => {
     // ⏱️ RESPONSE TIME
     // =============================
     const responseTimeAgg = await Ticket.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo }, firstResponseAt: { $ne: null } } },
+      { $match: { createdAt: { $gte: thirtyDaysAgo }, firstResponseAt: { $exists: true } } },
       {
         $project: {
           responseTime: { $subtract: ["$firstResponseAt", "$createdAt"] },
@@ -65,7 +67,7 @@ export const getSupportDashboard = async (req, res) => {
     // 🔧 RESOLUTION TIME
     // =============================
     const resolutionTimeAgg = await Ticket.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo }, resolvedAt: { $ne: null } } },
+      { $match: { createdAt: { $gte: thirtyDaysAgo }, resolvedAt: { $exists: true } } },
       {
         $project: {
           resolutionTime: { $subtract: ["$resolvedAt", "$createdAt"] },
@@ -91,11 +93,11 @@ export const getSupportDashboard = async (req, res) => {
     // 😊 CSAT (Customer Satisfaction)
     // =============================
     const csatAgg = await Ticket.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo }, satisfactionRating: { $gte: 1 } } },
+      { $match: { createdAt: { $gte: thirtyDaysAgo }, rating: { $exists: true } } },
       {
         $group: {
           _id: null,
-          avgRating: { $avg: "$satisfactionRating" },
+          avgRating: { $avg: "$rating" },
           totalRatings: { $sum: 1 },
         },
       },
@@ -111,12 +113,12 @@ export const getSupportDashboard = async (req, res) => {
     // =============================
     const fcrTickets = await Ticket.countDocuments({
       createdAt: { $gte: thirtyDaysAgo },
-      resolvedAt: { $ne: null },
+      resolvedAt: { $exists: true },
       messageCount: { $lte: 2 },
     });
     const totalResolved = await Ticket.countDocuments({
       createdAt: { $gte: thirtyDaysAgo },
-      resolvedAt: { $ne: null },
+      resolvedAt: { $exists: true },
     });
 
     const firstContactResolution = totalResolved > 0 ? ((fcrTickets / totalResolved) * 100).toFixed(1) : 0;
@@ -157,7 +159,7 @@ export const getSupportDashboard = async (req, res) => {
               ],
             },
           },
-          avgRating: { $avg: "$satisfactionRating" },
+          avgRating: { $avg: "$rating" },
         },
       },
       { $sort: { ticketsHandled: -1 } },
@@ -298,7 +300,7 @@ export const getAgentPerformance = async (req, res) => {
               ],
             },
           },
-          avgRating: { $avg: "$satisfactionRating" },
+          avgRating: { $avg: "$rating" },
         },
       },
       { $sort: { ticketsHandled: -1 } },

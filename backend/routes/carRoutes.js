@@ -29,6 +29,7 @@ import {
 import { findAll, findById, findOne, create, update, remove, paginate } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
 import { closeAuction } from "../services/auctionClose.service.js";
+import { getVehicleValuation } from "../services/vehicleValuation.service.js";
 
 const router = express.Router();
 
@@ -210,6 +211,20 @@ router.post(
   }),
 );
 
+// ❤️ TRACK FAVORITE (rate-limited, optional auth to prevent bot inflation)
+router.post(
+  "/:id/favorite",
+  optionalAuth,
+  createLimiter,
+  validateObjectId,
+  asyncHandler(async (req, res) => {
+    const car = await findById("cars", req.params.id, "favoritesCount");
+    await update("cars", req.params.id, { favoritesCount: (car?.favoritesCount || 0) + 1 });
+
+    res.json({ success: true });
+  }),
+);
+
 // =============================
 // 🔐 DEALER ROUTES
 // =============================
@@ -341,80 +356,15 @@ router.get(
 );
 
 // =============================
-// 📊 LIVE MARKETPLACE VALUATION MATRIX
+// 📊 LIVE MARKETPLACE VALUATION
 // =============================
 router.get(
   "/:id/valuation",
-  cacheResponse(600), // 10 minutes cache
+  cacheResponse(600),
   asyncHandler(async (req, res) => {
-    const car = await findById("cars", req.params.id);
-    if (!car) return res.status(404).json({ success: false, message: "Car not found" });
-
-    const sb = getSupabase();
-    const [fromPlatform, fromMarketData] = await Promise.all([
-      sb
-        .from("cars")
-        .select("price,year,mileage,fuel,transmission,bodyType")
-        .eq("brand", car.brand)
-        .eq("model", car.model)
-        .gte("year", car.year - 3)
-        .lte("year", car.year + 1)
-        .neq("id", car.id)
-        .order("createdAt", { ascending: false })
-        .limit(25)
-        .then(({ data }) => data || []),
-
-      sb
-        .from("market_data")
-        .select("*")
-        .eq("brand", car.brand)
-        .eq("model", car.model)
-        .gte("year", car.year - 3)
-        .lte("year", car.year + 1)
-        .order("lastUpdated", { ascending: false })
-        .limit(10)
-        .then(({ data }) => data || []),
-    ]);
-
-    const allPrices = fromPlatform.map((c) => c.price).filter(Boolean);
-    const prices = [...allPrices];
-    if (fromMarketData.length > 0) {
-      fromMarketData.forEach((m) => {
-        if (m.lowPrice) prices.push(m.lowPrice);
-        if (m.avgPrice) prices.push(m.avgPrice);
-        if (m.highPrice) prices.push(m.highPrice);
-      });
-    }
-
-    const low = prices.length > 0 ? Math.min(...prices) : car.price * 0.85;
-    const high = prices.length > 0 ? Math.max(...prices) : car.price * 1.15;
-    const avg = prices.length > 0 ? prices.reduce((s, p) => s + p, 0) / prices.length : car.price;
-
-    const dealRating =
-      car.price < avg * 0.85
-        ? "great"
-        : car.price < avg * 0.97
-          ? "good"
-          : car.price > avg * 1.15
-            ? "overpriced"
-            : "fair";
-
-    const percentile = avg > 0 ? Math.round(((high - car.price) / (high - low)) * 100) : 50;
-
-    res.json({
-      success: true,
-      valuation: {
-        lowPrice: Math.round(low),
-        avgPrice: Math.round(avg),
-        highPrice: Math.round(high),
-        dealRating,
-        percentile: Math.max(0, Math.min(100, percentile)),
-        sampleSize: prices.length,
-        similarCount: fromPlatform.length,
-        marketDataCount: fromMarketData.length,
-        historicalRange: { low, avg, high },
-      },
-    });
+    const data = await getVehicleValuation(req.params.id);
+    if (!data) return res.status(404).json({ success: false, message: "Car not found" });
+    res.json({ success: true, valuation: data });
   }),
 );
 

@@ -395,7 +395,7 @@ export const getReconciliationAlerts = async (req, res) => {
 export const markAlertRead = async (req, res) => {
   try {
     const { id } = req.params;
-    const alert = await AdminAlert.findByIdAndUpdate(id, { read: true }, { new: true });
+    const alert = await AdminAlert.findByIdAndUpdate(id, { read: true }, { new: true }).lean();
     if (!alert) return res.status(404).json({ success: false, message: "Alert not found" });
 
     res.json({ success: true, data: alert });

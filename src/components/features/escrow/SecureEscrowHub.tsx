@@ -1,7 +1,5 @@
 import { useState, useEffect, type FC } from 'react';
-import { getLedgerSummary, getMyTransactions } from '../../../services/ledgerApi';
-import { getMyEscrows } from '../../../services/escrowApi';
-import { formatKES } from '../../../api/api.exports';
+import { ledgerAPI, escrowAPI, formatKES } from '../../../api/api.exports';
 
 interface SecureEscrowHubProps {
   className?: string;
@@ -27,13 +25,13 @@ export const SecureEscrowHub: FC<SecureEscrowHubProps> = ({
     setError(null);
     try {
       const [ledgerSummary, myEscrow] = await Promise.all([
-        getLedgerSummary(),
-        getMyEscrows().catch(() => null),
+        ledgerAPI.getSummary(),
+        escrowAPI.mine().catch(() => null),
       ]);
       setSummary(ledgerSummary);
       setEscrow(myEscrow);
 
-      const txns = await getMyTransactions({ page: 1, limit: compact ? 5 : 10 });
+      const txns = await ledgerAPI.getMyTransactions({ page: 1, limit: compact ? 5 : 10 });
       setTransactions(txns.data || txns || []);
     } catch (err: any) {
       setError(err.message || 'Failed to load escrow data');

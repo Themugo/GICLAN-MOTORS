@@ -12,7 +12,6 @@ import { sendNotification } from "./notification.service.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { findAll, findById, findOne, create, aggregate } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
-import ReconciliationReport from "../models/ReconciliationReport.js";
 
 // =============================
 // 🔄 RUN RECONCILIATION
@@ -22,15 +21,13 @@ export const runReconciliation = async (reportType, timeRange) => {
   const endTime = new Date(timeRange.endTime);
 
   const reportId = ReconciliationReport.generateReportId();
-  const report = await ReconciliationReport.create({
+  const report = await create("reconciliation_reports", {
     reportId,
     reportType,
     startTime,
     endTime,
     status: "in_progress",
-    generatedBy: null,
-    issues: [],
-    financials: {},
+    generatedBy: "system",
   });
 
   const reconciliationStartTime = Date.now();

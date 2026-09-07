@@ -77,27 +77,3 @@ export async function placeBid(carId: string, amount: number, phone: string): Pr
   }
 
 }
-
-export async function myBids() {
-  return request('/api/bids/my');
-}
-
-export async function fetchBidsForCar(carId: string) {
-  return request(`/api/bids/${encodeURIComponent(carId)}/bids`);
-}
-
-export async function fetchAdminBids(params: { page?: number; limit?: number; carId?: string; userId?: string; status?: string; min?: number; max?: number } = {}) {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') query.set(key, String(value));
-  });
-  return request(`/api/bids/admin/all${query.toString() ? `?${query}` : ''}`);
-}
-
-export async function fetchSuspiciousBids() {
-  return request('/api/bids/admin/suspicious');
-}
-
-export async function setBidWinner(bidId: string) {
-  return request(`/api/bids/admin/${encodeURIComponent(bidId)}/set-winner`, { method: 'POST', body: JSON.stringify({}) });
-}

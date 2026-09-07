@@ -138,7 +138,7 @@ export const GalleryPage: FC = () => {
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-200 font-sans font-medium max-w-xl leading-relaxed">
-            Curated luxury stock, transparent pricing, bank-funded escrow protected transactions.
+            Curated luxury stock, transparent pricing, M-Pesa escrow protected transactions.
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export const GalleryPage: FC = () => {
           <div className="flex-1 md:flex-none px-3.5 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center gap-2.5 text-xs text-white">
             <ShieldCheck className="w-4 h-4 text-[#23EBFF] shrink-0" />
             <div>
-              <p className="font-mono font-black text-[9px] uppercase text-[#23EBFF] leading-none">Bank Escrow</p>
+              <p className="font-mono font-black text-[9px] uppercase text-[#23EBFF] leading-none">M-Pesa Escrow</p>
               <p className="text-[11px] font-medium text-slate-200">100% Guaranteed</p>
             </div>
           </div>

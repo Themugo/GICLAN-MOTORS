@@ -348,18 +348,6 @@ function ReportsTab({ providerId }: { providerId: string }) {
 // Earnings Tab
 function EarningsTab({ earnings, providerId }: { earnings: EarningsSummary | null; providerId: string }) {
   const [period, setPeriod] = useState('monthly');
-  const [settlements, setSettlements] = useState<any[]>([]);
-  const [settlementsLoading, setSettlementsLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    setSettlementsLoading(true);
-    inspectionApi.getSettlements(providerId)
-      .then((data: any) => { if (active) setSettlements(data?.settlements || data || []); })
-      .catch(() => { if (active) setSettlements([]); })
-      .finally(() => { if (active) setSettlementsLoading(false); });
-    return () => { active = false; };
-  }, [providerId]);
 
   return (
     <div className="space-y-6">
@@ -412,37 +400,13 @@ function EarningsTab({ earnings, providerId }: { earnings: EarningsSummary | nul
 
       {/* Settlements */}
       <div className="rounded-xl p-6" style={{ backgroundColor: KAYAD_COLORS.white }}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold" style={{ color: KAYAD_COLORS.lightNavy }}>Settlements</h2>
-          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: KAYAD_COLORS.softBlue }}>Authoritative payout history</span>
+        <h2 className="text-lg font-bold mb-4" style={{ color: KAYAD_COLORS.lightNavy }}>
+          Settlements
+        </h2>
+        <div className="text-center py-8" style={{ color: KAYAD_COLORS.softBlue }}>
+          <DollarSign size={48} className="mx-auto mb-4" />
+          <p>Settlement history will appear here.</p>
         </div>
-        {settlementsLoading ? (
-          <div className="py-8 text-center" style={{ color: KAYAD_COLORS.softBlue }}>Loading settlements...</div>
-        ) : settlements.length === 0 ? (
-          <div className="text-center py-8" style={{ color: KAYAD_COLORS.softBlue }}>
-            <DollarSign size={48} className="mx-auto mb-4 opacity-50" />
-            <p>No settlements generated yet.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b">
-                <th className="text-left py-3">Reference</th><th className="text-left py-3">Period</th>
-                <th className="text-right py-3">Net</th><th className="text-right py-3">Status</th>
-              </tr></thead>
-              <tbody>
-                {settlements.map((s) => (
-                  <tr key={s.id} className="border-b last:border-0">
-                    <td className="py-3 font-semibold" style={{ color: KAYAD_COLORS.lightNavy }}>{s.reference}</td>
-                    <td className="py-3" style={{ color: KAYAD_COLORS.softBlue }}>{new Date(s.periodStart).toLocaleDateString()} – {new Date(s.periodEnd).toLocaleDateString()}</td>
-                    <td className="py-3 text-right font-semibold">KES {Number(s.netAmount || 0).toLocaleString()}</td>
-                    <td className="py-3 text-right"><span className="capitalize">{String(s.status || '').replace('_', ' ')}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
     </div>
   );

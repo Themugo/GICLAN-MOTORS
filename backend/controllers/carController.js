@@ -1,7 +1,6 @@
 import Car from "../models/Car.js";
 import User from "../models/User.js";
 import PlatformConfig from "../models/PlatformConfig.js";
-import { getEscrowRules } from "../services/escrowConfiguration.service.js";
 import { cacheDelPattern } from "../utils/cache.js";
 import { uploadMultiple, deleteImage } from "../config/cloudinary.js";
 import { cleanupFiles } from "../middleware/upload.js";
@@ -65,9 +64,6 @@ export const getCars = async (req, res) => {
       featured,
       auctionStatus,
       dealerType,
-      dealer,
-      seller,
-      status,
       vin,
       engine,
       drivetrain,
@@ -80,11 +76,7 @@ export const getCars = async (req, res) => {
     // never trigger an unbounded query (pagination cap — Issue: security test).
     limitNum = Math.min(Math.max(toNumber(limit, 12), 1), 100);
 
-    // Public marketplace defaults to available listings. Explicit status is
-    // supported for compatibility, but is still constrained to the public
-    // listing lifecycle values exposed by the query validator.
-    const publicStatus = status === "active" ? "available" : status;
-    query = { status: publicStatus || "available" };
+    query = { status: "available" };
 
     if (keyword) {
       const trimmed = keyword.trim();
@@ -105,7 +97,7 @@ export const getCars = async (req, res) => {
     }
     if (city) {
       const safeCity = city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      query.city = { $regex: `^${safeCity}$`, $options: "i" };
+      query["location.city"] = { $regex: `^${safeCity}$`, $options: "i" };
     }
 
     if (minPrice || maxPrice) {
@@ -151,12 +143,6 @@ export const getCars = async (req, res) => {
     } else if (dealerType === "private") {
       const sellerIds = await User.find({ role: "individual_seller" }).distinct("_id").lean();
       query.dealer = { $in: sellerIds };
-    } else if (dealer) {
-      query.dealer = dealer;
-    } else if (seller) {
-      // `seller` is the established public query alias used by older UI
-      // surfaces; it refers to the same real seller/dealer foreign key.
-      query.dealer = seller;
     }
 
     if (category === "auction") {
@@ -314,7 +300,7 @@ export const getMyListings = async (req, res) => {
 // =============================
 export const createCar = async (req, res) => {
   try {
-    const seller = await User.findById((req.dealerId || req.user.id)).select(
+    const seller = await User.findById(req.user.id).select(
       "+trialStartedAt +trialListingsUsed +firstVehicleUsed dealerPackage packageListingMax packageExpiresAt listingCount role status",
     );
 
@@ -332,7 +318,7 @@ export const createCar = async (req, res) => {
 
     const isDealer = seller.role === "dealer";
     const isSeller = seller.role === "individual_seller";
-    const currentListingCount = await Car.countDocuments({ dealer: (req.dealerId || req.user.id) });
+    const currentListingCount = await Car.countDocuments({ dealer: req.user.id });
 
     // Determine if user is allowed to create a listing (without incrementing yet)
     let shouldIncrementListingCount = false;
@@ -368,7 +354,7 @@ export const createCar = async (req, res) => {
 
         // Set trial start date on first listing
         if (!seller.trialStartedAt) {
-          await User.findByIdAndUpdate((req.dealerId || req.user.id), { trialStartedAt: now });
+          await User.findByIdAndUpdate(req.user.id, { trialStartedAt: now });
         }
       } else if (!pkg.isFree) {
         if (seller.packageExpiresAt && now > new Date(seller.packageExpiresAt)) {
@@ -415,23 +401,20 @@ export const createCar = async (req, res) => {
     }
 
     // ── ESCROW ENFORCEMENT ─────────────────────────────────
-    // Vehicle escrow is a private-seller-only feature. The server-side
-    // platform rule is authoritative; dealer escrow flags are retained
-    // only for legacy admin compatibility and cannot enable vehicle escrow.
-    const escrowRules = await getEscrowRules();
+    // individual_seller: escrow is always enabled (enforced in payment)
+    // dealer: if escrowForced -> auto-enable; if not approved/forced -> disable
     if (isDealer) {
-      req.body.escrowEnabled = false;
-    } else if (isSeller) {
-      if (!escrowRules.enabled || escrowRules.privateSellerRequirement === "disabled") {
-        req.body.escrowEnabled = false;
-      } else if (escrowRules.privateSellerRequirement === "mandatory") {
+      const dealerUser = seller; // seller is the dealer
+      if (dealerUser.escrowForced) {
         req.body.escrowEnabled = true;
+      } else if (!dealerUser.escrowApproved && !dealerUser.escrowForced) {
+        req.body.escrowEnabled = false;
       }
     }
 
     const body = {
       ...req.body,
-      dealer: (req.dealerId || req.user.id),
+      dealer: req.user.id,
       views: 0,
       bidsCount: 0,
       trustScore: 0,
@@ -500,7 +483,7 @@ export const createCar = async (req, res) => {
       if (isSeller && !seller.firstVehicleUsed) {
         updateOps.firstVehicleUsed = true;
       }
-      await User.findByIdAndUpdate((req.dealerId || req.user.id), updateOps);
+      await User.findByIdAndUpdate(req.user.id, updateOps);
     }
 
     await cacheDelPattern("cars:list:*");
@@ -528,11 +511,11 @@ export const createCar = async (req, res) => {
             price: car.price,
             mileage: car.mileage,
           },
-          (req.dealerId || req.user.id),
+          req.user.id,
         );
 
         if (detectionData.hasDuplicates) {
-          await flagDuplicate(car._id, detectionData, (req.dealerId || req.user.id));
+          await flagDuplicate(car._id, detectionData, req.user.id);
         }
       } catch (err) {
         // Duplicate detection failure should not affect listing creation
@@ -586,7 +569,7 @@ export const updateCar = async (req, res) => {
 
     const isStaff = STAFF_ROLES.includes(req.user.role);
     const isDealer = DEALER_ROLES.includes(req.user.role);
-    const isOwner = car.dealer?.toString() === (req.dealerId || req.user.id);
+    const isOwner = car.dealer?.toString() === req.user.id;
 
     // Permission rules: owners, staff, or the appropriate authorized seller/dealer may edit.
     const canEdit = isOwner || isStaff;
@@ -595,17 +578,16 @@ export const updateCar = async (req, res) => {
     }
 
     // ── ESCROW ENFORCEMENT ON UPDATE ─────────────────────
-    // Vehicle escrow is private-seller-only. Dealer escrow flags are legacy
-    // compatibility fields and can never enable vehicle escrow.
-    const ownerSeller = await User.findById(car.dealer).select("role");
-    const escrowRules = await getEscrowRules();
-    if (ownerSeller?.role === "dealer") {
-      car.escrowEnabled = false;
-    } else if (ownerSeller?.role === "individual_seller") {
-      if (!escrowRules.enabled || escrowRules.privateSellerRequirement === "disabled") {
-        car.escrowEnabled = false;
-      } else if (escrowRules.privateSellerRequirement === "mandatory") {
-        car.escrowEnabled = true;
+    // When a dealer updates a car, enforce escrow rules
+    const updaterIsDealer = req.user.role === "dealer";
+    if (updaterIsDealer || isOwner) {
+      const seller = await User.findById(req.user.id).select("role escrowApproved escrowForced");
+      if (seller) {
+        if (seller.escrowForced) {
+          car.escrowEnabled = true;
+        } else if (!seller.escrowApproved && !seller.escrowForced) {
+          car.escrowEnabled = false;
+        }
       }
     }
 
@@ -726,12 +708,12 @@ export const deleteCar = async (req, res) => {
 
     const isStaff = STAFF_ROLES.includes(req.user.role);
     const isDealer = DEALER_ROLES.includes(req.user.role);
-    const isOwner = car.dealer?.toString() === (req.dealerId || req.user.id);
+    const isOwner = car.dealer?.toString() === req.user.id;
     if (!isOwner && !isStaff) {
       return res.status(403).json({ success: false, message: "Not authorized to delete this listing" });
     }
 
-    await Car.softDelete(req.params.id, req.dealerId || req.user.id);
+    await Car.softDelete(req.params.id, req.user.id);
 
     // Decrement listing counts
     if (car.dealer) {
@@ -945,6 +927,50 @@ export const getCar = async (req, res) => {
   } catch (err) {
     logError("GET ONE ERROR", { error: err.message });
     res.status(500).json({ success: false, message: "Failed to fetch car" });
+  }
+};
+
+// =============================
+// ⚡ PLACE BID
+// =============================
+export const placeBid = async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    const car = await Car.findById(req.params.id);
+
+    if (!car || !car.allowBid) {
+      return res.status(400).json({ success: false, message: "Car not available for bidding" });
+    }
+
+    if (Number(amount) <= (car.currentBid || 0)) {
+      return res.status(400).json({
+        success: false,
+        message: "Bid too low",
+      });
+    }
+
+    car.currentBid = Number(amount);
+    car.bidsCount += 1;
+
+    await car.save();
+
+    await logActionFromReq(req, "place_bid", {
+      target: car._id,
+      targetModel: "Car",
+      details: { amount: Number(amount), bidsCount: car.bidsCount },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        currentBid: car.currentBid,
+        bidsCount: car.bidsCount,
+      },
+    });
+  } catch (err) {
+    logError("BID ERROR", { error: err.message });
+    res.status(500).json({ success: false, message: "Bid failed" });
   }
 };
 

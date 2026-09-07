@@ -3,12 +3,10 @@ import { Heart, ShoppingBag, ClipboardCheck, Loader2 } from 'lucide-react';
 import { getFavorites, BackendFavoriteCar } from '../../../services/favoriteApi';
 import { getMyEscrows, BackendEscrow } from '../../../services/escrowApi';
 import { getMyInspections, BackendInspectionOrder } from '../../../services/inspectionApi';
-import { getOwnershipDashboard, OwnershipVehicle, OwnershipDashboard } from '../../../services/ownershipApi';
 import type { UserProfile } from '../../../types';
 
 /**
- * Ownership platform now reads from the real ownership + passport domain.
- * Rebuilt from the previous demo-only surface ("My Garage", 2591 lines).
+ * Rebuilt entirely - the original ("My Garage", 2591 lines) defined
  * 13 separate data concepts (watchlist, purchase journey, inspection
  * records, finance accounts, documents, timeline events, service
  * reminders, expenses, resale valuations, reward points, messages,
@@ -42,7 +40,6 @@ export default function BuyerPlatform({ user, onNavigate, onOpenAuth }: BuyerPla
   const [favorites, setFavorites] = useState<BackendFavoriteCar[]>([]);
   const [escrows, setEscrows] = useState<BackendEscrow[]>([]);
   const [inspections, setInspections] = useState<BackendInspectionOrder[]>([]);
-  const [ownership, setOwnership] = useState<OwnershipDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,13 +50,11 @@ export default function BuyerPlatform({ user, onNavigate, onOpenAuth }: BuyerPla
       getFavorites().catch(() => ({ favorites: [] as BackendFavoriteCar[] })),
       getMyEscrows().catch(() => [] as BackendEscrow[]),
       getMyInspections().catch(() => ({ orders: [] as BackendInspectionOrder[] })),
-      getOwnershipDashboard().catch(() => null),
-    ]).then(([favRes, escrowRes, inspRes, ownershipRes]) => {
+    ]).then(([favRes, escrowRes, inspRes]) => {
       if (cancelled) return;
       setFavorites(favRes.favorites || []);
       setEscrows(escrowRes || []);
       setInspections((inspRes as { orders?: BackendInspectionOrder[] }).orders || []);
-      setOwnership(ownershipRes as OwnershipDashboard | null);
     }).catch(() => { if (!cancelled) setError('Could not load your garage.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -95,45 +90,6 @@ export default function BuyerPlatform({ user, onNavigate, onOpenAuth }: BuyerPla
         </div>
       ) : (
         <>
-          {/* OWNERSHIP - real lifelong ownership records */}
-          {ownership && (
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-base font-bold text-[#1E3063]">My Vehicles</h2>
-                  <p className="text-[11px] text-slate-500">Your real ownership records, maintenance and documents</p>
-                </div>
-                <span className="text-xs font-bold text-[#1E3063]">{ownership.currentVehicles.length} active</span>
-              </div>
-              {ownership.currentVehicles.length === 0 ? (
-                <p className="text-xs text-slate-400">No vehicles in your ownership garage yet.</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {ownership.currentVehicles.map((vehicle: OwnershipVehicle) => (
-                    <div key={vehicle.id} className="bg-white border border-slate-200 rounded-xl p-3.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-bold text-[#1E3063]">{vehicle.make} {vehicle.model}</p>
-                          <p className="text-[11px] text-slate-500">{vehicle.registration_number || vehicle.vin}</p>
-                        </div>
-                        <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 rounded-full px-2 py-1">Current</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 mt-3 text-[11px]">
-                        <div><span className="block text-slate-400">Mileage</span><span className="font-semibold">{vehicle.current_mileage ?? '—'}</span></div>
-                        <div><span className="block text-slate-400">Services</span><span className="font-semibold">{vehicle.services?.length ?? 0}</span></div>
-                        <div><span className="block text-slate-400">Docs</span><span className="font-semibold">{vehicle.documents?.length ?? 0}</span></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3"><p className="text-[10px] uppercase font-bold text-slate-400">This month</p><p className="text-base font-bold text-[#1E3063]">Ksh {ownership.expenseSummary.monthlyTotal.toLocaleString()}</p></div>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3"><p className="text-[10px] uppercase font-bold text-slate-400">Reminders</p><p className="text-base font-bold text-[#1E3063]">{ownership.upcomingReminders.length}</p></div>
-              </div>
-            </section>
-          )}
-
           {/* WATCHLIST - real, from the real favorites system */}
           <section>
             <div className="flex items-center gap-2 mb-4">

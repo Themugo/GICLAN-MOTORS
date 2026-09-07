@@ -89,7 +89,7 @@ export const EscrowWorkflowSection: FC = () => {
             </h2>
             
             <p className="text-xs sm:text-sm text-[#6B7A99] dark:text-slate-300 font-sans font-medium leading-relaxed">
-              Your money is not sent directly to the seller. Vehicle escrow is funded by bank transfer into the configured KAYAD custody account until the escrow workflow permits release.
+              Your money is never sent directly to a stranger. Funds remain 100% secured in CBK-regulated bank escrow until you physically inspect and approve the vehicle.
             </p>
           </div>
 

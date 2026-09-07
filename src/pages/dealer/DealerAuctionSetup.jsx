@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Gavel, Play, Clock, RefreshCw } from 'lucide-react';
-import { dealerAPI } from '../../api/api';
-import { startDealerAuction, endDealerAuction, extendDealerAuction } from '../../services/auctionService';
+import { dealerAPI, dealerAuctionAPI } from '../../api/api';
 import { useToast } from '../../context/ToastContext';
 import DealerAuctionDraftCard from './components/DealerAuctionDraftCard';
 import DealerAuctionLiveCard from './components/DealerAuctionLiveCard';
@@ -107,7 +106,7 @@ export default function DealerAuctionSetup() {
 
     setActionLoading((previous) => ({ ...previous, [car._id]: 'starting' }));
     try {
-      await startDealerAuction(car._id, {
+      await dealerAuctionAPI.start(car._id, {
         durationMs: durationHours * 60 * 60 * 1000, startingBid,
         ...(reservePrice !== undefined && { reservePrice }),
         reserveMode,
@@ -124,7 +123,7 @@ export default function DealerAuctionSetup() {
   const handleEndAuction = async (carId) => {
     if (!window.confirm('End this auction now?')) return;
     setActionLoading((previous) => ({ ...previous, [carId]: 'ending' }));
-    try { await endDealerAuction(carId); toast('Auction ended', 'info'); await fetchCars(); }
+    try { await dealerAuctionAPI.end(carId); toast('Auction ended', 'info'); await fetchCars(); }
     catch (err) { toast(err?.response?.data?.message || 'Failed to end auction', 'error'); }
     finally { setActionLoading((previous) => ({ ...previous, [carId]: null })); }
   };
@@ -136,7 +135,7 @@ export default function DealerAuctionSetup() {
     if (!hours || hours < 1) { toast('Choose an extension time first', 'error'); return; }
 
     setActionLoading((previous) => ({ ...previous, [carId]: 'extending' }));
-    try { await extendDealerAuction(carId, hours); toast(`Auction countdown extended by ${hours}h`, 'success'); await fetchCars(); }
+    try { await dealerAuctionAPI.extend(carId, hours); toast(`Auction countdown extended by ${hours}h`, 'success'); await fetchCars(); }
     catch (err) { toast(err?.response?.data?.message || 'Failed to extend auction', 'error'); }
     finally { setActionLoading((previous) => ({ ...previous, [carId]: null })); }
   };

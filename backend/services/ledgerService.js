@@ -25,7 +25,6 @@ async function ensureAccounts() {
     { code: "4200", name: "Inspection Fees", type: "revenue", category: "inspection", description: "Vehicle inspection fees" },
     { code: "4300", name: "Listing Fees", type: "revenue", category: "fees", description: "Listing promotion fees" },
     { code: "5000", name: "B2C Disbursement Payable", type: "liability", category: "payable", description: "Pending seller payouts" },
-    { code: "5100", name: "Inspection Provider Payable", type: "liability", category: "inspection", description: "Amounts owed to inspection providers" },
   ];
 
   // Upsert by the unique account code so concurrent workers cannot both
@@ -137,62 +136,6 @@ export async function recordSubscriptionPayment({ subscription_id, user_id, amou
     metadata: { subscription_id, event: "subscription" },
     debitAccountCode: "1000",
     creditAccountCode: "4100",
-  });
-}
-
-export async function recordInspectionPayment({ payment_id, booking_id, user_id, amount, commission }) {
-  const gross = formatCurrency(amount);
-  const fee = formatCurrency(commission || 0);
-  const providerAmount = formatCurrency(gross - fee);
-  if (gross <= 0 || providerAmount < 0) throw new Error("Invalid inspection payment allocation");
-  const entries = [];
-  if (providerAmount > 0) {
-    entries.push(await recordLedgerEntry({
-      external_reference: `${payment_id}:provider`, user_id, amount: providerAmount,
-      source: "inspection_payment", destination: "inspection_provider",
-      description: `Inspection provider payable for booking ${booking_id}`,
-      metadata: { payment_id, booking_id, event: "inspection_payment_provider" },
-      debitAccountCode: "1000", creditAccountCode: "5100",
-    }));
-  }
-  if (fee > 0) {
-    entries.push(await recordLedgerEntry({
-      external_reference: `${payment_id}:commission`, user_id, amount: fee,
-      source: "inspection_commission", destination: "platform",
-      description: `Inspection commission for booking ${booking_id}`,
-      metadata: { payment_id, booking_id, event: "inspection_commission" },
-      debitAccountCode: "1000", creditAccountCode: "4000",
-    }));
-  }
-  return { gross, commission: fee, providerAmount, entries };
-}
-
-export async function recordInspectionRefund({ refund_id, booking_id, user_id, providerAmount, commissionAmount = 0 }) {
-  const entries = [];
-  if (providerAmount > 0) entries.push(await recordLedgerEntry({
-    external_reference: `${refund_id}:provider`, user_id, amount: providerAmount,
-    source: "inspection_refund", destination: "customer",
-    description: `Inspection provider refund for booking ${booking_id}`,
-    metadata: { refund_id, booking_id, event: "inspection_provider_refund" },
-    debitAccountCode: "5100", creditAccountCode: "1200",
-  }));
-  if (commissionAmount > 0) entries.push(await recordLedgerEntry({
-    external_reference: `${refund_id}:commission`, user_id, amount: commissionAmount,
-    source: "inspection_commission_refund", destination: "customer",
-    description: `Inspection commission refund for booking ${booking_id}`,
-    metadata: { refund_id, booking_id, event: "inspection_commission_refund" },
-    debitAccountCode: "4000", creditAccountCode: "1200",
-  }));
-  return { entries };
-}
-
-export async function recordInspectionPayout({ settlement_id, provider_id, user_id, amount, reference }) {
-  return recordLedgerEntry({
-    external_reference: String(settlement_id), user_id, amount,
-    source: "inspection_payout", destination: "inspection_provider",
-    description: `Inspection provider payout ${reference || settlement_id}`,
-    metadata: { settlement_id, provider_id, event: "inspection_payout", reference },
-    debitAccountCode: "5100", creditAccountCode: "1200",
   });
 }
 
@@ -358,47 +301,6 @@ export async function getReconciliationReport({ startDate, endDate }) {
   summary.total_debit = formatCurrency(summary.total_debit);
   summary.total_credit = formatCurrency(summary.total_credit);
   return { entries, summary };
-}
-
-export async function getUserLedgerSummary(userId) {
-  const result = await getLedgerEntries({ user_id: userId, page: 1, limit: 1000 });
-  const summary = { totalIn: 0, totalOut: 0, netBalance: 0, bySource: {}, recentTransactions: result.entries.slice(0, 10) };
-  for (const entry of result.entries) {
-    const amount = Number(entry.amount || 0);
-    const destination = String(entry.destination || "").toLowerCase();
-    const source = String(entry.source || "unknown");
-    if (destination === "buyer" || destination === "user" || destination === "seller") summary.totalIn += amount;
-    else summary.totalOut += amount;
-    summary.bySource[source] = (summary.bySource[source] || 0) + amount;
-  }
-  summary.totalIn = formatCurrency(summary.totalIn);
-  summary.totalOut = formatCurrency(summary.totalOut);
-  summary.netBalance = formatCurrency(summary.totalIn - summary.totalOut);
-  return summary;
-}
-
-export async function verifyLedgerIntegrity(startDate) {
-  const sb = getSupabase();
-  let query = sb.from("ledger_entries").select("id,transaction_id,amount,entries,status,created_at").order("created_at", { ascending: true });
-  if (startDate) query = query.gte("created_at", new Date(startDate).toISOString());
-  const { data: entries, error } = await query;
-  if (error) throw error;
-  const problems = [];
-  const seen = new Set();
-  let balanced = 0;
-  for (const entry of entries || []) {
-    if (seen.has(entry.transaction_id)) problems.push({ id: entry.id, type: "duplicate_transaction_id" });
-    seen.add(entry.transaction_id);
-    const debit = (entry.entries || []).reduce((sum, line) => sum + Number(line.debit || 0), 0);
-    const credit = (entry.entries || []).reduce((sum, line) => sum + Number(line.credit || 0), 0);
-    if (Math.abs(debit - credit) > 0.01 || Math.abs(debit - Number(entry.amount || 0)) > 0.01) {
-      problems.push({ id: entry.id, type: "unbalanced_entry", debit, credit, amount: Number(entry.amount || 0) });
-    } else {
-      balanced += 1;
-    }
-    if (entry.status !== "completed") problems.push({ id: entry.id, type: "non_completed_entry", status: entry.status });
-  }
-  return { totalEntries: (entries || []).length, balancedEntries: balanced, problemCount: problems.length, healthy: problems.length === 0, problems };
 }
 
 export async function seedAccounts() {

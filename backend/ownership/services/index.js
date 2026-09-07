@@ -1,2 +1,5 @@
+// ============================================================
+// KAYAD VEHICLE OWNERSHIP PLATFORM - SERVICES INDEX
+// ============================================================
+
 export { ownershipService } from './ownershipService.js';
-export { default } from './ownershipService.js';

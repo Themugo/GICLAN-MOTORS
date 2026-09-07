@@ -21,6 +21,7 @@ import Ad from "../models/Ad.js";
 import AdminAlert from "../models/AdminAlert.js";
 import GlobalSettings from "../models/GlobalSettings.js";
 import Review from "../models/Review.js";
+import Dispute from "../models/Dispute.js";
 import Referral from "../models/Referral.js";
 import Transaction from "../models/Transaction.js";
 import Chat from "../models/Chat.js";
@@ -30,7 +31,6 @@ import FraudDetection from "../models/FraudDetection.js";
 import DealerVerification from "../models/DealerVerification.js";
 import { stkPush } from "../services/mpesaService.js";
 import { sendNotification } from "../services/notification.service.js";
-import { getEscrowRules, getActiveEscrowAccounts, saveEscrowAccount, removeEscrowAccount } from "../services/escrowConfiguration.service.js";
 
 let adminEmailService = {};
 try {
@@ -163,7 +163,7 @@ router.get(
       AdminAlert.countDocuments({ read: false }),                                      // activeAlerts
       User.countDocuments({ role: "individual_seller" }),                              // individualSellers
       Car.countDocuments({ status: "sold" }),                                          // carsSold
-      Escrow.countDocuments({ status: "disputed", "disputeWorkflowStatus": { $in: ["open", "under_review", "mediation", "appealed"] } }), // pendingReports
+      Dispute.countDocuments({ status: { $in: ["open", "investigating"] } }),          // pendingReports
       DealerVerification.countDocuments({ verificationStatus: { $in: ["pending", "under_review"] } }), // verificationQueue
       SupportTicket.countDocuments({ status: { $in: ["open", "in_progress", "waiting_on_user", "waiting_on_internal", "escalated"] } }), // supportQueue
       FraudDetection.countDocuments({ severity: { $in: ["critical", "high"] }, status: { $nin: ["dismissed", "action_taken"] } }), // fraudAlerts
@@ -2035,88 +2035,49 @@ router.get(
   }),
 );
 
-
-
 // =============================
-// 🏦 ESCROW CUSTODY CONFIGURATION
-// Vehicle escrow is private-seller only. Funds are held in
-// administrator-configured bank accounts; M-Pesa STK is not a
-// vehicle-custody rail. These settings are server authoritative.
+// 🔐 ESCROW MANAGEMENT (dealers)
 // =============================
-router.get(
-  "/escrow/config",
-  staffRole,
-  asyncHandler(async (req, res) => {
-    const [rules, accounts] = await Promise.all([getEscrowRules(), getActiveEscrowAccounts()]);
-    res.json({ success: true, rules, accounts });
-  }),
-);
 
+// Toggle escrow approval for dealers
 router.put(
-  "/escrow/config",
-  adminOrSuper,
-  asyncHandler(async (req, res) => {
-    const current = await PlatformConfig.findOne();
-    if (!current) return res.status(500).json({ success: false, message: "Platform configuration is unavailable" });
-    const requested = req.body?.escrowRules || {};
-    const next = {
-      ...(current.escrowRules || {}),
-      ...requested,
-      fundingMethods: ["bank_transfer"],
-      futureWalletEnabled: false,
-    };
-    if (!["mandatory", "optional", "disabled"].includes(next.privateSellerRequirement)) {
-      return res.status(400).json({ success: false, message: "Invalid private-seller escrow rule" });
-    }
-    next.releaseDays = Math.max(0, Math.min(90, Number(next.releaseDays ?? 3)));
-    next.minimumAmount = Math.max(0, Number(next.minimumAmount ?? 0));
-    next.maximumAmount = next.maximumAmount == null || next.maximumAmount === "" ? null : Math.max(next.minimumAmount, Number(next.maximumAmount));
-    next.commissionPct = Math.max(0, Math.min(50, Number(next.commissionPct ?? 0)));
-    if (next.enabled && !(await getActiveEscrowAccounts()).length) {
-      return res.status(400).json({ success: false, message: "Add an active escrow bank account before enabling vehicle escrow" });
-    }
-    current.escrowRules = next;
-    await current.save();
-    await AuditLog.create({ action: "Escrow custody configuration updated", admin: req.user.name || req.user.email, adminId: req.user.id });
-    res.json({ success: true, rules: next });
-  }),
-);
-
-router.post(
-  "/escrow/accounts",
-  adminOrSuper,
-  asyncHandler(async (req, res) => {
-    const { updateMany } = await import("../db/index.js");
-    if (req.body?.isPrimary === true) await updateMany("escrow_accounts", { isPrimary: true }, { isPrimary: false });
-    const account = await saveEscrowAccount(req.body || {});
-    await AuditLog.create({ action: "Escrow bank account added", admin: req.user.name || req.user.email, adminId: req.user.id });
-    res.status(201).json({ success: true, account });
-  }),
-);
-
-router.patch(
-  "/escrow/accounts/:id",
+  "/users/:id/escrow-approve",
   adminOrSuper,
   validateObjectId,
   asyncHandler(async (req, res) => {
-    const { updateMany } = await import("../db/index.js");
-    if (req.body?.isPrimary === true) await updateMany("escrow_accounts", { isPrimary: true }, { isPrimary: false });
-    const account = await saveEscrowAccount(req.body || {}, req.params.id);
-    await AuditLog.create({ action: "Escrow bank account updated", admin: req.user.name || req.user.email, adminId: req.user.id });
-    res.json({ success: true, account });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (user.role !== "dealer")
+      return res.status(400).json({ success: false, message: "Only dealers can be escrow-approved" });
+    user.escrowApproved = !user.escrowApproved;
+    await user.save();
+    res.json({
+      success: true,
+      user,
+      message: `Escrow ${user.escrowApproved ? "approved" : "revoked"} for ${user.name || user.email}`,
+    });
   }),
 );
 
-router.delete(
-  "/escrow/accounts/:id",
+// Force escrow on dealers who violate trust
+router.put(
+  "/users/:id/escrow-force",
   adminOrSuper,
   validateObjectId,
   asyncHandler(async (req, res) => {
-    await removeEscrowAccount(req.params.id);
-    await AuditLog.create({ action: "Escrow bank account deleted", admin: req.user.name || req.user.email, adminId: req.user.id });
-    res.json({ success: true });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (user.role !== "dealer")
+      return res.status(400).json({ success: false, message: "Only dealers can be escrow-forced" });
+    user.escrowForced = !user.escrowForced;
+    if (user.escrowForced) user.escrowApproved = true;
+    await user.save();
+    res.json({
+      success: true,
+      user,
+      message: `Escrow ${user.escrowForced ? "forced" : "unforced"} for ${user.name || user.email}`,
+    });
   }),
 );
-
 
 export default router;

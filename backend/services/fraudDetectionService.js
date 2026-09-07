@@ -105,10 +105,10 @@ export const detectSelfBidding = async (carId) => {
   const car = await findById("cars", carId) /* .populate("dealer") - TODO: use separate query */;
   if (!car) return null;
 
-  const bids = await findAll("bids", { filters: { carId } }) /* .populate("user") - TODO: use separate query */;
-  const dealerId = car.dealer;
+  const bids = await findAll("bids", { filters: { car: carId } }) /* .populate("user") - TODO: use separate query */;
+  const dealerId = car.dealer?._id;
 
-  const suspiciousBids = bids.filter((bid) => String(bid.user || "") === String(dealerId || ""));
+  const suspiciousBids = bids.filter((bid) => bid.user?._id.toString() === dealerId?.toString());
 
   if (suspiciousBids.length > 0) {
     await create("fraud_detections", {
@@ -135,7 +135,7 @@ export const detectSelfBidding = async (carId) => {
 };
 
 export const detectBidRing = async (carId) => {
-  const bids = await findAll("bids", { filters: { carId } }) /* .populate("user") - TODO: use separate query */;
+  const bids = await findAll("bids", { filters: { car: carId } }) /* .populate("user") - TODO: use separate query */;
 
   // Group bids by user
   const userBids = {};
@@ -193,7 +193,7 @@ export const detectBidRing = async (carId) => {
 };
 
 export const detectSuspiciousBidSpike = async (carId) => {
-  const bids = await findAll("bids", { filters: { carId }, orderBy: { createdAt: 1 } });
+  const bids = await findAll("bids", { filters: { car: carId }, orderBy: { createdAt: 1 } });
 
   if (bids.length < 5) return null;
 

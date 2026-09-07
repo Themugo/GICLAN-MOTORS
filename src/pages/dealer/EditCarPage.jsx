@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { formatKES } from '../../api/api';
-import { getCarById, updateCar } from '../../services/vehicleApi';
-import { startDealerAuction, endDealerAuction, extendDealerAuction } from '../../services/auctionService';
+import { carsAPI, auctionAdminAPI, formatKES } from '../../api/api';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -23,7 +21,8 @@ export default function EditCarPage() {
   const [previews, setPreviews] = useState([]);
 
   useEffect(() => {
-    getCarById(id).then(c => {
+    carsAPI.get(id).then(d => {
+      const c = d.car || d.data || d;
       // Ownership check — only the listing owner can edit
       if (c?.dealer?._id && c.dealer._id !== user?._id) {
         setOwnershipError(true);
@@ -60,9 +59,9 @@ export default function EditCarPage() {
           if (v !== '' && v !== null) fd.append(k, v);
         });
         newImages.forEach(img => fd.append('images', img));
-        await updateCar(id, fd);
+        await carsAPI.update(id, fd);
       } else {
-        await updateCar(id, form);
+        await carsAPI.update(id, form);
       }
       toast('Listing updated!', 'success');
       navigate('/dealer');
@@ -74,10 +73,7 @@ export default function EditCarPage() {
     if (!form.auctionEnd) { toast('Set an auction end time first', 'error'); return; }
     setAuctionAction('starting');
     try {
-      const endTime = new Date(form.auctionEnd).getTime();
-      const durationMs = endTime - Date.now();
-      const startingBid = Number(form.startingBid || form.currentBid || form.price || 0);
-      await startDealerAuction(id, { durationMs, startingBid: Math.max(startingBid, 1000) });
+      await auctionAdminAPI.start(id, { auctionEnd: form.auctionEnd });
       toast('🔴 Auction is now LIVE!', 'success');
       setCar(prev => ({ ...prev, auctionStatus: 'live' }));
     } catch (err) { toast(err.response?.data?.message || 'Failed', 'error'); }
@@ -88,7 +84,7 @@ export default function EditCarPage() {
     if (!confirm('End this auction now?')) return;
     setAuctionAction('ending');
     try {
-      await endDealerAuction(id);
+      await auctionAdminAPI.end(id);
       toast('Auction ended.', 'info');
       setCar(prev => ({ ...prev, auctionStatus: 'ended' }));
     } catch { toast('Failed', 'error'); }
@@ -98,7 +94,7 @@ export default function EditCarPage() {
   const handleExtend = async () => {
     setAuctionAction('extending');
     try {
-      await extendDealerAuction(id, Number(extendHours));
+      await auctionAdminAPI.extend(id, { hours: extendHours });
       toast(`Auction extended by ${extendHours}h`, 'success');
     } catch { toast('Failed', 'error'); }
     finally { setAuctionAction(null); }

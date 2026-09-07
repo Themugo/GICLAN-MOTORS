@@ -31,7 +31,6 @@ const TABLE_MAP = {
   ReconciliationReport: "reconciliation_reports",
   EscrowAnomaly: "escrow_anomalies", EscrowRiskScore: "escrow_risk_scores",
   EscrowAudit: "escrow_audits",
-  EscrowAccount: "escrow_accounts",
   AuctionIntegrityFlag: "auction_integrity_flags",
   AuctionRiskProfile: "auction_risk_profiles",
   MpesaTransaction: "mpesa_transactions", SmsBidder: "sms_bidders",
@@ -392,62 +391,6 @@ function wrapDoc(doc, tableName, sb) {
       writable: true, configurable: true,
     },
   };
-
-  if (tableName === "reconciliation_reports") {
-    props.addIssue = {
-      value: async function (issue) {
-        if (!Array.isArray(this.issues)) this.issues = [];
-        const normalized = {
-          ...issue,
-          resolved: issue?.resolved === true,
-          resolvedAt: issue?.resolvedAt || null,
-          resolvedBy: issue?.resolvedBy || null,
-        };
-        this.issues.push(normalized);
-        await this.save();
-        return normalized;
-      },
-      writable: true, configurable: true,
-    };
-    props.calculateSuccessRate = {
-      value: async function () {
-        const total = Number(this.totalTransactions || 0);
-        const reconciled = Number(this.reconciled || 0);
-        this.successRate = total > 0 ? Math.round((reconciled / total) * 10000) / 100 : 100;
-        return this.successRate;
-      },
-      writable: true, configurable: true,
-    };
-    props.getCriticalIssues = {
-      value: function () {
-        return (Array.isArray(this.issues) ? this.issues : []).filter((issue) =>
-          (issue.severity === "critical" || issue.severity === "high") && issue.resolved !== true
-        );
-      },
-      writable: true, configurable: true,
-    };
-    props.resolveIssue = {
-      value: async function (issueIndex, userId, notes) {
-        if (!Array.isArray(this.issues)) throw new Error("Reconciliation report has no issue list");
-        const index = Number(issueIndex);
-        if (!Number.isInteger(index) || index < 0 || index >= this.issues.length) {
-          throw new Error("Invalid reconciliation issue index");
-        }
-        const issue = this.issues[index];
-        if (issue.resolved === true) return issue;
-        this.issues[index] = {
-          ...issue,
-          resolved: true,
-          resolvedAt: new Date().toISOString(),
-          resolvedBy: userId || null,
-          resolutionNotes: notes || null,
-        };
-        await this.save();
-        return this.issues[index];
-      },
-      writable: true, configurable: true,
-    };
-  }
 
   if (tableName === "users" || tableName === "user_auth") {
     props.matchPassword = {

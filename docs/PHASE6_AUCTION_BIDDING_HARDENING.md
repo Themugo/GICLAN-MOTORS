@@ -92,8 +92,3 @@ What this phase can certify from static analysis: bid placement itself is genuin
 - Did not delete the dead placeBid functions in carController.js/auctionEngine.js - flagged as dead code, not run through this program's full 9-step pre-deletion verification this phase.
 - Did not build an explicit bid-idempotency-key check for the duplicate-double-click gap named in section 1 - a real, but unconfirmed-as-exploited gap, and adding new protection is closer to a new feature than a fix to a proven defect, given no evidence this has actually caused a problem.
 - Did not live-test Socket.IO reconnect/resync behavior - no reachable live environment.
-
-
-## Subsequent resolution — 2026-09-07
-
-The architecture decision left open by this historical audit has now been completed. The `cars`-denormalized auction model is authoritative. Admin and dealer start/extend controls were rebuilt onto the same atomic lifecycle service, auction close/settlement remains canonical, and the dead duplicate `carController.placeBid` engine was removed. The former `realtime/auctionEngine.js` implementation referenced in this historical document is no longer part of the active repository. See `docs/AUCTION_DOMAIN_INTEGRITY.md` for the current end-to-end contract and verification.

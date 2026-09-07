@@ -1,14 +1,12 @@
 // backend/controllers/paymentController.js
 
 import { findOne, findById } from "../db/index.js";
-import Payment from "../models/Payment.js";
 import { isValidId } from "../utils/validateId.js";
 import { initiatePayment as initiate } from "../services/paymentService.js";
 import { handleMpesaCallback } from "../services/paymentCallback.service.js";
 import { logInfo } from "../utils/logger.js";
 import { logError } from "../infrastructure/logging/index.js";
-import { validatePrivateSellerEscrow, sanitizeEscrowAccount } from "../services/escrowConfiguration.service.js";
-import { create as createDb, findOne as findOneDb } from "../db/index.js";
+import { findAll, count } from "../db/index.js";
 
 // =============================
 // 📲 INITIATE PAYMENT (Phase 2 Transaction Support)
@@ -17,126 +15,130 @@ export const initiatePayment = async (req, res) => {
   try {
     const { phone, amount, carId, type } = req.body;
 
-    if (!amount || !type) {
-      return res.status(400).json({ success: false, message: "Amount and payment type required" });
+    if (!phone || !amount || !type) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone, amount and type required",
+      });
     }
 
     const parsedAmount = Number(amount);
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount must be a positive number",
+      });
     }
+
+    // Minimum payment: KES 1 (M-Pesa minimum is 1)
     if (parsedAmount < 1) {
-      return res.status(400).json({ success: false, message: "Minimum payment is KES 1" });
+      return res.status(400).json({
+        success: false,
+        message: "Minimum payment is KES 1",
+      });
     }
 
-    // ─────────────────────────────────────────────────────────
-    // VEHICLE ESCROW CUSTODY BOUNDARY
-    // A full vehicle purchase for a private seller is never sent
-    // through M-Pesa STK. M-Pesa remains available for ordinary
-    // marketplace payments, but vehicle escrow funds are directed
-    // to an administrator-configured KAYAD bank custody account.
-    // ─────────────────────────────────────────────────────────
-    if ((type === "escrow" || type === "buy" || type === "direct") && carId) {
-      const car = await findById("cars", carId, "price,winner,dealer,escrowEnabled");
-      if (!car) return res.status(404).json({ success: false, message: "Car not found" });
-      const seller = await findById("users", car.dealer, "role,name,email");
-      const isPrivateSeller = seller?.role === "individual_seller";
+    // All purchases go through escrow by default — normalize buy-type
+    const normalizedType = type === "buy" || type === "direct" ? "escrow" : type;
 
-      if (type === "escrow" && !isPrivateSeller) {
-        return res.status(400).json({ success: false, message: "KAYAD vehicle escrow is available only for private-seller transactions" });
+    // Vehicle escrow is funded into the administrator-configured custody
+    // bank account. M-Pesa STK is not a vehicle escrow rail because the
+    // transaction value may exceed provider limits.
+    if (normalizedType === "escrow") {
+      return res.status(400).json({
+        success: false,
+        message: "Vehicle escrow funding uses the configured bank-transfer custody flow, not M-Pesa STK",
+      });
+    }
+
+    // Amount integrity: for vehicle escrow payments the settlement
+    // amount is derived server-side from the car record — the winning
+    // bid when this user won the auction, otherwise the listing price.
+    // A client-supplied amount must match it exactly; it never
+    // determines settlement on its own.
+    let settlementAmount = parsedAmount;
+    if (normalizedType === "escrow" && carId) {
+      const carForAmount = await findById("cars", carId, "price,winner");
+      if (!carForAmount) {
+        return res.status(404).json({ success: false, message: "Car not found" });
       }
-
-      if (isPrivateSeller) {
-        const winnerUser = car.winner?.user?.toString?.() || car.winner?.user;
-        const winnerAmount = Number(car.winner?.amount);
-        const serverAmount = winnerUser && winnerUser === req.user.id && Number.isFinite(winnerAmount) && winnerAmount > 0
+      const winnerUser = carForAmount.winner?.user?.toString?.() || carForAmount.winner?.user;
+      const winnerAmount = Number(carForAmount.winner?.amount);
+      const serverAmount =
+        winnerUser && winnerUser === req.user.id && Number.isFinite(winnerAmount) && winnerAmount > 0
           ? winnerAmount
-          : Number(car.price);
-        if (!Number.isFinite(serverAmount) || serverAmount <= 0) {
-          return res.status(400).json({ success: false, message: "Cannot determine a valid vehicle settlement amount" });
-        }
-        if (parsedAmount !== serverAmount) {
-          return res.status(400).json({ success: false, message: "Amount does not match the server-determined vehicle settlement amount" });
-        }
+          : Number(carForAmount.price);
 
-        const { rules, account } = await validatePrivateSellerEscrow({ car, seller, amount: serverAmount });
-        const existing = await findOneDb("payments", { user: req.user.id, car: carId, type: "escrow", status: "pending" });
-        if (existing) {
-          const escrow = await findOneDb("escrows", { payment: existing.id });
-          return res.json({
-            success: true,
-            mode: "bank_transfer",
-            payment: existing,
-            escrowId: escrow?.id,
-            fundingAccount: sanitizeEscrowAccount(account),
-            fundingMethods: rules.fundingMethods,
-            message: "Escrow already opened. Transfer the purchase funds to the configured KAYAD escrow bank account.",
-          });
-        }
-
-        const payment = await createDb("payments", {
-          user: req.user.id,
-          car: carId,
-          type: "escrow",
-          amount: serverAmount,
-          referenceId: carId,
-          referenceModel: "Car",
-          status: "pending",
-          processed: false,
-          checkoutRequestId: null,
-          mode: "bank_transfer",
-          metadata: {
-            custody: "admin_escrow_account",
-            fundingMethod: "bank_transfer",
-            custodianAccountId: account.id,
-            mpesaEligible: false,
-            sellerType: "individual_seller",
-          },
+      if (!Number.isFinite(serverAmount) || serverAmount <= 0) {
+        return res.status(400).json({ success: false, message: "Cannot determine a valid settlement amount for this vehicle" });
+      }
+      if (parsedAmount !== serverAmount) {
+        logError("Payment amount mismatch — client amount rejected", null, {
+          userId: req.user.id,
+          carId,
+          clientAmount: parsedAmount,
+          serverAmount,
         });
+        return res.status(400).json({
+          success: false,
+          message: "Amount does not match the server-determined amount for this vehicle",
+        });
+      }
+      settlementAmount = serverAmount;
+    }
 
-        const commission = Math.round(serverAmount * (Number(rules.commissionPct || 0) / 100));
-        const escrow = await createDb("escrows", {
+    const result = await initiate({
+      userId: req.user.id,
+      carId,
+      type: normalizedType,
+      amount: settlementAmount,
+      phone,
+    });
+
+    // Create Escrow record for private sellers (individual_seller) - MANDATORY
+    // Private sellers cannot disable escrow; it's enforced for all their transactions
+    if (normalizedType === "escrow" && result.payment?.id) {
+      const car = await findById("cars", carId, "escrowEnabled,dealer");
+      const sellerUser = car ? await findById("users", car.dealer, "role,escrowApproved,escrowForced") : null;
+      const isPrivateSeller = sellerUser && sellerUser.role === "individual_seller";
+      const dealerCanEscrow = sellerUser && sellerUser.role === "dealer" && car.escrowEnabled && (sellerUser.escrowApproved || sellerUser.escrowForced);
+      const useEscrow = isPrivateSeller || dealerCanEscrow;
+
+      if (car && useEscrow) {
+        const { create: createEscrow } = await import("../db/index.js");
+        const escrow = await createEscrow("escrows", {
           car: carId,
           buyer: req.user.id,
           seller: car.dealer,
-          amount: serverAmount,
-          commission,
-          sellerAmount: serverAmount - commission,
-          payment: payment.id,
+          amount: settlementAmount,
+          payment: result.payment.id,
           status: "pending",
-          custodianAccount: account.id,
-          fundingMethod: "bank_transfer",
-          history: [{ action: "Escrow created — bank funding required", at: new Date() }],
         });
 
-        return res.json({
-          success: true,
-          mode: "bank_transfer",
-          payment,
-          escrowId: escrow.id,
-          fundingAccount: sanitizeEscrowAccount(account),
-          fundingMethods: rules.fundingMethods,
-          message: "Escrow opened. Transfer the vehicle purchase funds to the configured KAYAD escrow bank account. M-Pesa is not used for vehicle escrow custody.",
-        });
+        // Create or update lead from escrow
+        try {
+          const { findOrCreateLeadFromEscrow, updateLeadStage } = await import("../services/leadService.js");
+          const lead = await findOrCreateLeadFromEscrow(escrow.id);
+          await updateLeadStage(lead.id, "escrow_started", car.dealer);
+        } catch (leadErr) {
+          console.warn("⚠️ Failed to update lead from escrow:", leadErr.message);
+        }
+
+        result.escrowId = escrow.id;
       }
     }
 
-    // Ordinary non-escrow payments may still use M-Pesa.
-    const normalizedType = type === "buy" || type === "direct" ? "buy" : type;
-    if (!phone) {
-      return res.status(400).json({ success: false, message: "Phone is required for M-Pesa payments" });
-    }
-
-    let settlementAmount = parsedAmount;
-    if (normalizedType === "escrow" && carId) {
-      return res.status(400).json({ success: false, message: "Vehicle escrow must use an administrator-configured bank escrow account" });
-    }
-
-    const result = await initiate({ userId: req.user.id, carId, type: normalizedType, amount: settlementAmount, phone });
-    res.json({ success: true, ...result });
+    res.json({
+      success: true,
+      ...result,
+    });
   } catch (err) {
     logError("INITIATE ERROR", err);
-    res.status(400).json({ success: false, message: err.message || "Payment initiation failed" });
+
+    res.status(500).json({
+      success: false,
+      message: err.message || "Payment initiation failed",
+    });
   }
 };
 
@@ -215,7 +217,7 @@ export const checkPaymentStatus = async (req, res) => {
     }
 
     // 🔒 SECURITY CHECK
-    if (req.user && payment.user && payment.user.toString() !== req.user.id && !["admin", "superadmin", "escrow_officer", "accounts"].includes(req.user.role)) {
+    if (req.user && payment.user && payment.user.toString() !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Not authorized",
@@ -251,14 +253,15 @@ export const getUserPayments = async (req, res) => {
     if (req.query.status && VALID_STATUSES.includes(req.query.status)) filters.status = req.query.status;
     if (req.query.type && VALID_TYPES.includes(req.query.type)) filters.type = req.query.type;
     const [payments, total] = await Promise.all([
-      Payment.find(filters)
-        .select("id user car amount type phone status mpesaReceipt checkoutRequestId createdAt updatedAt referenceId referenceModel mode processed paidAt metadata platformFee dealerAmount")
-        .populate("car", "title brand model year")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Payment.countDocuments(filters),
+      findAll("payments", {
+        filters,
+        select: "id user car amount type phone status mpesaReceipt checkoutRequestId createdAt updatedAt referenceId referenceModel mode processed paidAt metadata platformFee dealerAmount",
+        orderBy: "createdAt",
+        ascending: false,
+        limit,
+        offset: skip,
+      }),
+      count("payments", filters),
     ]);
     res.json({ success: true, payments, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
   } catch (err) {
@@ -281,14 +284,15 @@ export const getAllPayments = async (req, res) => {
     if (req.query.status && VALID_STATUSES.includes(req.query.status)) filters.status = req.query.status;
     if (req.query.type && VALID_TYPES.includes(req.query.type)) filters.type = req.query.type;
     const [payments, total] = await Promise.all([
-      Payment.find(filters)
-        .select("id user car amount type phone status mpesaReceipt checkoutRequestId createdAt updatedAt referenceId referenceModel mode processed paidAt metadata platformFee dealerAmount")
-        .populate("car", "title brand model year")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Payment.countDocuments(filters),
+      findAll("payments", {
+        filters,
+        select: "id user car amount type phone status mpesaReceipt checkoutRequestId createdAt updatedAt referenceId referenceModel mode processed paidAt metadata platformFee dealerAmount",
+        orderBy: "createdAt",
+        ascending: false,
+        limit,
+        offset: skip,
+      }),
+      count("payments", filters),
     ]);
     res.json({ success: true, payments, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
   } catch (err) {

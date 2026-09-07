@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { dealerAPI } from '../../../api/api';
-import { deleteCar } from '../../../services/vehicleApi';
+import { dealerAPI, carsAPI } from '../../../api/api';
 import { Plus, Download, Copy, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { StatusBadge } from './DashboardWidgets';
 
@@ -51,7 +50,7 @@ export default function DealerListingsTab({ cars: initialCars, totalCars: initia
   const handleDelete = async (carId) => {
     if (!confirm('Delete this listing permanently?')) return;
     try {
-      await deleteCar(carId);
+      await carsAPI.remove(carId);
       toast('Listing deleted', 'info');
       fetchListings(page, pageSize, search, statusFilter);
       if (setCars) setCars(p => p.filter(c => c._id !== carId));

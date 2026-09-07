@@ -37,7 +37,7 @@ describe('EscrowPage', () => {
 
   it('renders description', () => {
     render(<MemoryRouter><EscrowPage /></MemoryRouter>);
-    expect(screen.getByText(/protected by bank-funded escrow/i)).toBeInTheDocument();
+    expect(screen.getByText(/protected by M-Pesa escrow/i)).toBeInTheDocument();
   });
 
   it('displays escrow transactions', async () => {

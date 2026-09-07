@@ -2,6 +2,7 @@ import Escrow from "../models/Escrow.js";
 import Car from "../models/Car.js";
 import InspectionOrder from "../models/InspectionOrder.js";
 import User from "../models/User.js";
+import Dispute from "../models/Dispute.js";
 import Payment from "../models/Payment.js";
 import { logError } from '../infrastructure/logging/index.js';
 
@@ -46,12 +47,12 @@ export const getOperationsDashboard = async (req, res) => {
           },
         },
       ]),
-      Escrow.aggregate([
+      Dispute.aggregate([
         {
           $facet: {
-            open: [{ $match: { status: "disputed", "disputedAt": { $gte: today }, $or: [{ "disputeWorkflowStatus": "open" }, { "disputeWorkflowStatus": null }] } }, { $count: "count" }],
-            urgent: [{ $match: { status: "disputed", "disputePriority": "urgent", "disputedAt": { $gte: today } } }, { $count: "count" }],
-            escalated: [{ $match: { status: "disputed", "disputeWorkflowStatus": "appealed", "disputedAt": { $gte: today } } }, { $count: "count" }],
+            open: [{ $match: { status: "open", createdAt: { $gte: today } } }, { $count: "count" }],
+            urgent: [{ $match: { status: "open", severity: "critical", createdAt: { $gte: today } } }, { $count: "count" }],
+            escalated: [{ $match: { status: "appealed", createdAt: { $gte: today } } }, { $count: "count" }],
           },
         },
       ]),
@@ -293,31 +294,17 @@ export const getSupportQueue = async (req, res) => {
 
     const skip = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 100);
 
-    const escrowFilter = { status: "disputed" };
-    if (status && status !== "open") escrowFilter.disputeWorkflowStatus = status;
-    if (severity === "critical" || severity === "urgent") escrowFilter.disputePriority = "urgent";
-    const [escrows, total] = await Promise.all([
-      Escrow.find(escrowFilter)
-        .populate("buyer", "name email phone")
-        .populate("seller", "name email")
-        .populate("car", "title price brand model year")
-        .populate("disputeAssignedTo", "name email")
-        .sort({ disputedAt: -1 })
+    const [disputes, total] = await Promise.all([
+      Dispute.find(filter)
+        .populate("openedBy", "name email phone")
+        .populate("openedAgainst", "name email")
+        .populate("relatedEscrow", "amount status buyer seller")
+        .select("openedBy openedAgainst relatedEscrow status severity subject description createdAt")
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Math.min(Number(limit), 100)),
-      Escrow.countDocuments(escrowFilter),
+      Dispute.countDocuments(filter),
     ]);
-    const disputes = escrows.map((e) => ({
-      _id: e._id,
-      openedBy: e.disputedBy,
-      openedAgainst: String(e.disputedBy) === String(e.buyer?._id || e.buyer) ? e.seller : e.buyer,
-      relatedEscrow: e,
-      status: e.disputeWorkflowStatus || "open",
-      severity: e.disputePriority === "urgent" ? "critical" : e.disputePriority,
-      subject: e.disputeTitle || "Escrow dispute",
-      description: e.disputeDescription || e.disputeReason || "",
-      createdAt: e.disputedAt || e.createdAt,
-    }));
 
     res.json({
       success: true,

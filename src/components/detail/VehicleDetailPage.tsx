@@ -301,10 +301,10 @@ export const VehicleDetailPage: FC = () => {
             <button
               onClick={() => navigateTo('escrow')}
               className="px-3 py-1.5 rounded-xl bg-[#23EBFF]/15 hover:bg-[#23EBFF]/25 text-[#2E4080] border border-[#23EBFF]/40 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer group shadow-2xs"
-              title="Click to view Bank Escrow Custody"
+              title="Click to view M-Pesa Escrow Guarantee"
             >
               <Lock className="w-3.5 h-3.5 text-[#23EBFF] group-hover:scale-110 transition-transform" />
-              <span>Bank Escrow Protected</span>
+              <span>M-Pesa Escrow Protected</span>
               <ChevronRight className="w-3 h-3 text-[#2E4080]/60" />
             </button>
 
@@ -904,10 +904,10 @@ export const VehicleDetailPage: FC = () => {
                   className="w-full py-3.5 rounded-xl bg-[#2E4080] hover:bg-[#141E3F] text-white font-extrabold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-md border border-[#2E4080] cursor-pointer"
                 >
                   <Lock className="w-4 h-4 text-[#23EBFF]" />
-                  <span>Buy Now via Bank Escrow</span>
+                  <span>Buy Now via M-Pesa Escrow</span>
                 </button>
                 <p className="text-[11px] text-[#6B7A99] text-center leading-normal font-medium">
-                  Funds are directed to the configured KAYAD escrow bank account and released only when the escrow workflow permits.
+                  Protected by M-Pesa Regulated Escrow. Funds released only after 48-hr buyer inspection.
                 </p>
               </div>
             )}

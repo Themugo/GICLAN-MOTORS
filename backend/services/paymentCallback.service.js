@@ -2,10 +2,10 @@ import { findById, findOne, findAll, create, update, updateMany } from "../db/in
 import { sendNotification } from "../services/notification.service.js";
 import { sendDigitalReceipt } from "../services/receiptService.js";
 import { getIO } from "../utils/io.js";
-import { getSupabase } from "../utils/supabase.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { atomicSettleBidPayment, atomicSettlePurchasePayment } from "../utils/atomicTransactions.js";
 import { recordPaymentEvent, recordWebhookReceipt, markWebhookProcessed, markAttemptByCheckout } from "./paymentFinancialLifecycle.service.js";
+import { assertPaymentTransition } from "./paymentStateMachine.js";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
@@ -85,22 +85,8 @@ export const handleMpesaCallback = async (callbackData) => {
         logError("Failed to release payment claim", e, { paymentId: payment.id }),
       );
 
-    // Vehicle escrow is not an M-Pesa custody product. Any legacy or
-    // malformed escrow payment that reaches this callback is failed and
-    // never transitions the escrow to funded. Current vehicle escrow uses
-    // bank-transfer verification against an administrator-configured
-    // custody account.
-    if (payment.type === "escrow") {
-      const reason = "M-Pesa is not a vehicle escrow funding rail";
-      await update("payments", payment.id, { status: "failed", resultDesc: reason, processed: true });
-      await markPaymentEventSafe(payment.id, "escrow_mpesa_rejected", { reason });
-      await markWebhookProcessed(webhookEventId);
-      finalized = true;
-      logWarn("Rejected M-Pesa callback for vehicle escrow payment", { paymentId: payment.id, checkoutId });
-      return payment;
-    }
-
     if (!success) {
+      assertPaymentTransition(payment.status, "failed");
       await update("payments", payment.id, {
         status: "failed",
         resultDesc: stk.ResultDesc || "M-Pesa transaction failed",
@@ -145,15 +131,11 @@ export const handleMpesaCallback = async (callbackData) => {
     if (Number(amount) !== Number(payment.amount)) {
       // Amount integrity violation — definitive, not retryable. The
       // settled amount must always equal the server-recorded amount.
-      const mismatchReason = `Amount mismatch: expected ${payment.amount}, provider reported ${amount}`;
+      assertPaymentTransition(payment.status, "failed");
       await update("payments", payment.id, {
         status: "failed",
-        resultDesc: mismatchReason,
+        resultDesc: `Amount mismatch: expected ${payment.amount}, provider reported ${amount}`,
       });
-      await markAttemptByCheckout(checkoutId, "failed", { failureReason: mismatchReason }).catch(() => {});
-      await markPaymentEventSafe(payment.id, "amount_mismatch", { expected: Number(payment.amount), reported: Number(amount), receipt });
-      await markWebhookProcessed(webhookEventId);
-      finalized = true;
       logError("M-Pesa callback amount mismatch — payment failed", null, {
         paymentId: payment.id,
         expected: payment.amount,
@@ -166,6 +148,7 @@ export const handleMpesaCallback = async (callbackData) => {
     await markPaymentEventSafe(payment.id, "amount_verified", { expected: Number(payment.amount), reported: Number(amount), receipt });
 
     if (!['bid', 'purchase', 'escrow'].includes(payment.type)) {
+      assertPaymentTransition(payment.status, "success");
       await update("payments", payment.id, {
         status: "success",
         mpesaReceipt: receipt,
@@ -203,6 +186,22 @@ export const handleMpesaCallback = async (callbackData) => {
       }
     }
 
+    if (payment.type === "escrow") {
+      // Defensive guard: vehicle escrow must never be funded from an M-Pesa
+      // STK callback. Funding is verified separately against the admin-
+      // configured custody bank account.
+      assertPaymentTransition(payment.status, "failed");
+      await update("payments", payment.id, {
+        status: "failed",
+        resultDesc: "Vehicle escrow cannot be funded through M-Pesa STK",
+      });
+      await markPaymentEventSafe(payment.id, "escrow_mpesa_rejected", { checkoutRequestId: checkoutId });
+      await markAttemptByCheckout(checkoutId, "failed", { failureReason: "Vehicle escrow requires custody bank transfer" }).catch(() => {});
+      await markWebhookProcessed(webhookEventId);
+      finalized = true;
+      return payment;
+    }
+
     await sendNotification({
       userId: payment.user,
       title: "Payment Successful",
@@ -211,20 +210,20 @@ export const handleMpesaCallback = async (callbackData) => {
 
     if (payment.type === "package_upgrade") {
       const planId = payment.metadata?.planId;
-      const listingMax = Number(payment.metadata?.listingMax || 0);
-      const durationDays = Math.max(1, Number(payment.metadata?.durationDays || 30));
-      if (planId) {
-        const expiresAt = new Date(Date.now() + durationDays * 86400000);
-        const sb = getSupabase();
-        const { data: activation, error: activationError } = await sb.rpc("kayad_activate_dealer_subscription_atomic", {
-          p_payment_id: payment.id, p_dealer: payment.user, p_plan_id: planId,
-          p_plan_name: payment.metadata?.planName || planId, p_amount: Number(payment.amount || 0),
-          p_currency: payment.currency || "KES", p_listing_max: listingMax,
-          p_features: Array.isArray(payment.metadata?.features) ? payment.metadata.features : [],
-          p_duration_days: durationDays, p_snapshot_hash: payment.metadata?.planSnapshotHash || null,
+      const PLANS = {
+        starter:    { limit: 10,  name: "Starter" },
+        growth:     { limit: 30,  name: "Growth" },
+        elite:      { limit: 100, name: "Elite" },
+        enterprise: { limit: 0,   name: "Enterprise" },
+      };
+      const plan = PLANS[planId];
+      if (plan) {
+        await update("users", payment.user, {
+          dealerPackage: planId,
+          packageListingMax: plan.limit,
+          packageExpiresAt: new Date(Date.now() + 30 * 86400000),
         });
-        if (activationError) throw activationError;
-        logInfo("Package upgraded via payment", { userId: payment.user, planId, paymentId: payment.id });
+        logInfo("Package upgraded via payment", { userId: payment.user, planId });
       }
     }
 
