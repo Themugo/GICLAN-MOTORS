@@ -198,6 +198,19 @@ export const FIELD_ALIASES = {
   notifications: {
     user: "user_id",
   },
+  command_center_widget_layouts: {
+    userId: "user_id",
+    createdAt: "created_at",
+    updatedAt: "updated_at",
+  },
+  command_center_war_rooms: {
+    activatedBy: "activated_by",
+    activatedAt: "activated_at",
+    deactivatedBy: "deactivated_by",
+    deactivatedAt: "deactivated_at",
+    createdAt: "created_at",
+    updatedAt: "updated_at",
+  },
   user_preferences: {
     user: "user_id",
   },

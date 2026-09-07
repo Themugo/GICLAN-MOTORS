@@ -47,7 +47,7 @@ import {
 const router = express.Router();
 
 // All routes require authentication
-router.use(protect);
+router.use(protect, allowRoles("admin", "superadmin", "executive", "engineer", "manager"));
 
 // Mission Control
 router.get("/mission-control", asyncHandler(getMissionControl));
@@ -78,7 +78,7 @@ router.get("/decisions", asyncHandler(getDecisions));
 
 // Command Palette
 router.get("/commands", asyncHandler(getCommands));
-router.post("/commands/execute", asyncHandler(executeCommand));
+router.post("/commands/execute", allowRoles("admin", "superadmin", "executive", "engineer", "manager"), asyncHandler(executeCommand));
 
 // War Room
 router.get("/war-room", asyncHandler(getWarRoom));
