@@ -4,7 +4,9 @@
 
 import db from './dbAdapter.js';
 import { AppError } from '../../utils/AppError.js';
-import { logInfo, logError } from '../../utils/logger.js';
+import { logInfo } from '../../utils/logger.js';
+import { getSupabase } from '../../utils/supabase.js';
+import { recordInspectionPayment, recordInspectionRefund, recordInspectionPayout } from '../../services/ledgerService.js';
 
 /**
  * Generate settlement reference
@@ -35,164 +37,24 @@ class SettlementService {
    * Process payment for booking
    */
   async processPayment(bookingId, paymentData) {
-    const booking = await db.findById('inspection_bookings', bookingId);
-    if (!booking) {
-      throw new AppError('Booking not found', 404);
-    }
-
-    if (booking.payment_status === 'fully_paid') {
-      const existing = paymentData.reference
-        ? await db.findOne('inspection_transactions', {
-            booking_id: bookingId,
-            transaction_type: 'inspection_payment',
-            reference: paymentData.reference,
-            status: 'completed',
-          })
-        : null;
-      if (existing) {
-        return {
-          bookingId,
-          grossAmount: parseFloat(booking.total_price),
-          commissionAmount: 0,
-          commissionRate: 0,
-          taxAmount: 0,
-          netAmount: parseFloat(booking.total_price),
-          paymentStatus: 'fully_paid',
-          idempotent: true,
-        };
-      }
-      throw new AppError('Booking already paid', 409);
-    }
-
-    const provider = await db.findById('inspection_providers', booking.provider_id);
-    const commissionRate = provider.commission_rate || 15.0;
-
-    // Calculate amounts
-    const grossAmount = parseFloat(booking.total_price);
-    const commissionAmount = grossAmount * (commissionRate / 100);
-    const taxAmount = 0; // Would calculate tax based on provider's tax status
-    const netAmount = grossAmount - commissionAmount - taxAmount;
-
-    // Update booking payment
-    await db.update('inspection_bookings', bookingId, {
-      payment_status: 'fully_paid',
-      payment_method: paymentData.method,
-      payment_reference: paymentData.reference,
-      paid_at: new Date(),
-      updated_at: new Date(),
+    const { data, error } = await getSupabase().rpc('kayad_process_inspection_payment_atomic', {
+      p_booking_id: bookingId, p_payment_method: paymentData.method || null,
+      p_payment_reference: paymentData.reference || null, p_user_id: null,
     });
-
-    // Create transaction record
-    await db.create('inspection_transactions', {
-      provider_id: booking.provider_id,
-      booking_id: bookingId,
-      transaction_type: 'inspection_payment',
-      amount: grossAmount,
-      currency: booking.currency,
-      status: 'completed',
-      description: `Payment for inspection ${booking.booking_reference}`,
-      reference: paymentData.reference,
-      created_at: new Date(),
-    });
-
-    // Create commission transaction
-    await db.create('inspection_transactions', {
-      provider_id: booking.provider_id,
-      booking_id: bookingId,
-      transaction_type: 'commission',
-      amount: -commissionAmount,
-      currency: booking.currency,
-      status: 'pending',
-      description: `KAYAD commission (${commissionRate}%) for ${booking.booking_reference}`,
-      reference: `COMM-${booking.booking_reference}`,
-      created_at: new Date(),
-    });
-
-    logInfo('Payment processed', { bookingId, amount: grossAmount, commission: commissionAmount });
-
-    return {
-      bookingId,
-      grossAmount,
-      commissionAmount,
-      commissionRate,
-      taxAmount,
-      netAmount,
-      paymentStatus: 'fully_paid',
-    };
+    if (error) throw new AppError(error.message || 'Inspection payment failed', 400);
+    return data;
   }
 
   /**
    * Process refund
    */
   async processRefund(bookingId, refundData, userId) {
-    const booking = await db.findById('inspection_bookings', bookingId);
-    if (!booking) {
-      throw new AppError('Booking not found', 404);
-    }
-
-    const refundAmount = parseFloat(refundData.amount);
-    if (!Number.isFinite(refundAmount) || refundAmount <= 0) {
-      throw new AppError('Refund amount must be greater than zero', 400);
-    }
-    if (booking.payment_status !== 'fully_paid' && booking.payment_status !== 'deposit_paid') {
-      throw new AppError('Booking has no settled payment to refund', 400);
-    }
-
-    const priorRefunds = await db.find('inspection_transactions', {
-      booking_id: bookingId,
-      transaction_type: 'refund',
-      status: { $in: ['processing', 'completed'] },
+    const { data, error } = await getSupabase().rpc('kayad_process_inspection_refund_atomic', {
+      p_booking_id: bookingId, p_amount: Number(refundData.amount),
+      p_reason: String(refundData.reason || 'Inspection refund'), p_user_id: userId || null,
     });
-    const refundedSoFar = priorRefunds.reduce((sum, item) => sum + Math.abs(parseFloat(item.amount) || 0), 0);
-    if (refundedSoFar + refundAmount > parseFloat(booking.total_price)) {
-      throw new AppError('Refund amount exceeds remaining refundable balance', 400);
-    }
-
-    const provider = await db.findById('inspection_providers', booking.provider_id);
-    const commissionRate = provider.commission_rate || 15.0;
-    const commissionRefund = (refundAmount * commissionRate) / 100;
-
-    // Update booking
-    await db.update('inspection_bookings', bookingId, {
-      payment_status: refundAmount >= parseFloat(booking.total_price) ? 'refunded' : 'partial_refund',
-      updated_at: new Date(),
-    });
-
-    // Create refund transaction
-    await db.create('inspection_transactions', {
-      provider_id: booking.provider_id,
-      booking_id: bookingId,
-      transaction_type: 'refund',
-      amount: -refundAmount,
-      currency: booking.currency,
-      status: 'processing',
-      description: refundData.reason,
-      reference: `REF-${Date.now()}`,
-      created_at: new Date(),
-    });
-
-    // Reverse commission
-    if (commissionRefund > 0) {
-      await db.create('inspection_transactions', {
-        provider_id: booking.provider_id,
-        booking_id: bookingId,
-        transaction_type: 'commission_refund',
-        amount: commissionRefund,
-        currency: booking.currency,
-        status: 'pending',
-        description: `Commission refund for ${booking.booking_reference}`,
-        reference: `COMM-REF-${booking.booking_reference}`,
-        created_at: new Date(),
-      });
-    }
-
-    logInfo('Refund processed', { bookingId, amount: refundAmount });
-
-    return {
-      bookingId,
-      refundAmount,
-      commissionRefunded: commissionRefund,
-    };
+    if (error) throw new AppError(error.message || 'Inspection refund failed', 400);
+    return data;
   }
 
   /**
@@ -200,69 +62,23 @@ class SettlementService {
    */
   async generateSettlement(providerId, periodStart, periodEnd) {
     const provider = await db.findById('inspection_providers', providerId);
-    if (!provider) {
-      throw new AppError('Provider not found', 404);
-    }
-
-    // Get paid bookings in period
-    const bookings = await db.find('inspection_bookings', {
-      provider_id: providerId,
-      paid_at: {
-        $gte: new Date(periodStart),
-        $lte: new Date(periodEnd)
-      },
-      payment_status: { $in: ['fully_paid', 'deposit_paid'] }
-    });
-
-    if (bookings.length === 0) {
-      throw new AppError('No paid bookings in this period', 400);
-    }
-
-    // Calculate totals
-    let grossAmount = 0;
-    let commissionAmount = 0;
+    if (!provider) throw new AppError('Provider not found', 404);
+    const start = new Date(periodStart); const end = new Date(periodEnd);
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start >= end) throw new AppError('Invalid settlement period', 400);
+    const bookings = await db.find('inspection_bookings', { provider_id: providerId, paid_at: { $gte: start, $lte: end }, payment_status: 'fully_paid', status: 'closed' });
+    if (!bookings.length) throw new AppError('No eligible completed paid bookings in this period', 400);
+    const existing = await db.find('inspection_settlements', { provider_id: providerId, period_start: start, period_end: end, status: { $in: ['pending', 'processing', 'paid'] } });
+    if (existing.length) return existing[0];
+    const commissionRate = Number(provider.commission_rate || 15);
+    let grossAmount = 0, commissionAmount = 0;
     const breakdown = [];
-
     for (const booking of bookings) {
-      const bookingGross = parseFloat(booking.total_price);
-      const bookingCommission = bookingGross * ((provider.commission_rate || 15) / 100);
-      
-      grossAmount += bookingGross;
-      commissionAmount += bookingCommission;
-
-      breakdown.push({
-        bookingId: booking.id,
-        reference: booking.booking_reference,
-        amount: bookingGross,
-        commission: bookingCommission,
-        paidAt: booking.paid_at,
-      });
+      const gross = Number(booking.total_price); const commission = Math.round(gross * commissionRate) / 100;
+      grossAmount += gross; commissionAmount += commission;
+      breakdown.push({ bookingId: booking.id, reference: booking.booking_reference, amount: gross, commission, paidAt: booking.paid_at });
     }
-
-    const taxAmount = 0;
-    const netAmount = grossAmount - commissionAmount - taxAmount;
-
-    // Create settlement
-    const settlement = {
-      provider_id: providerId,
-      settlement_reference: generateSettlementReference(),
-      period_start: periodStart,
-      period_end: periodEnd,
-      gross_amount: grossAmount,
-      commission_amount: commissionAmount,
-      tax_amount: taxAmount,
-      net_amount: netAmount,
-      currency: 'KES',
-      status: 'pending',
-      bookings_count: bookings.length,
-      breakdown,
-      created_at: new Date(),
-    };
-
-    const result = await db.create('inspection_settlements', settlement);
-
-    logInfo('Settlement generated', { settlementId: result.id, providerId, amount: netAmount });
-
+    const result = await db.create('inspection_settlements', { provider_id: providerId, settlement_reference: generateSettlementReference(), period_start: start, period_end: end, gross_amount: grossAmount, commission_amount: commissionAmount, tax_amount: 0, net_amount: grossAmount - commissionAmount, currency: 'KES', status: 'pending', bookings_count: bookings.length, breakdown, created_at: new Date(), updated_at: new Date() });
+    await db.updateMany('inspection_transactions', { provider_id: providerId, booking_id: { $in: bookings.map(b => b.id) }, transaction_type: 'commission', settlement_id: null }, { settlement_id: result.id });
     return result;
   }
 
@@ -354,51 +170,13 @@ class SettlementService {
   /**
    * Mark settlement as paid
    */
-  async markSettlementPaid(settlementId, paymentData) {
-    const settlement = await db.findById('inspection_settlements', settlementId);
-    if (!settlement) {
-      throw new AppError('Settlement not found', 404);
-    }
-
-    if (settlement.status === 'paid') {
-      throw new AppError('Settlement already paid', 400);
-    }
-
-    // Update settlement
-    await db.update('inspection_settlements', settlementId, {
-      status: 'paid',
-      payment_method: paymentData.method,
-      payment_reference: paymentData.reference,
-      paid_at: new Date(),
-      processed_at: new Date(),
+  async markSettlementPaid(settlementId, paymentData, userId = null) {
+    const { data, error } = await getSupabase().rpc('kayad_mark_inspection_settlement_paid_atomic', {
+      p_settlement_id: settlementId, p_payment_method: paymentData.method || null,
+      p_payment_reference: paymentData.reference || null, p_user_id: userId || null,
     });
-
-    // Update transactions
-    await db.updateMany('inspection_transactions', 
-      { settlement_id: settlementId },
-      { status: 'completed' }
-    );
-
-    // Create payout transaction
-    await db.create('inspection_transactions', {
-      provider_id: settlement.provider_id,
-      settlement_id: settlementId,
-      transaction_type: 'payout',
-      amount: settlement.net_amount,
-      currency: settlement.currency,
-      status: 'completed',
-      description: `Payout for settlement ${settlement.settlement_reference}`,
-      reference: paymentData.reference,
-      created_at: new Date(),
-    });
-
-    logInfo('Settlement paid', { settlementId, amount: settlement.net_amount });
-
-    return {
-      settlementId,
-      status: 'paid',
-      paidAt: new Date(),
-    };
+    if (error) throw new AppError(error.message || 'Settlement payout failed', 409);
+    return data;
   }
 
   /**

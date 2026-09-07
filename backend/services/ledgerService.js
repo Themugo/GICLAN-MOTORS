@@ -25,6 +25,7 @@ async function ensureAccounts() {
     { code: "4200", name: "Inspection Fees", type: "revenue", category: "inspection", description: "Vehicle inspection fees" },
     { code: "4300", name: "Listing Fees", type: "revenue", category: "fees", description: "Listing promotion fees" },
     { code: "5000", name: "B2C Disbursement Payable", type: "liability", category: "payable", description: "Pending seller payouts" },
+    { code: "5100", name: "Inspection Provider Payable", type: "liability", category: "inspection", description: "Amounts owed to inspection providers" },
   ];
 
   // Upsert by the unique account code so concurrent workers cannot both
@@ -136,6 +137,62 @@ export async function recordSubscriptionPayment({ subscription_id, user_id, amou
     metadata: { subscription_id, event: "subscription" },
     debitAccountCode: "1000",
     creditAccountCode: "4100",
+  });
+}
+
+export async function recordInspectionPayment({ payment_id, booking_id, user_id, amount, commission }) {
+  const gross = formatCurrency(amount);
+  const fee = formatCurrency(commission || 0);
+  const providerAmount = formatCurrency(gross - fee);
+  if (gross <= 0 || providerAmount < 0) throw new Error("Invalid inspection payment allocation");
+  const entries = [];
+  if (providerAmount > 0) {
+    entries.push(await recordLedgerEntry({
+      external_reference: `${payment_id}:provider`, user_id, amount: providerAmount,
+      source: "inspection_payment", destination: "inspection_provider",
+      description: `Inspection provider payable for booking ${booking_id}`,
+      metadata: { payment_id, booking_id, event: "inspection_payment_provider" },
+      debitAccountCode: "1000", creditAccountCode: "5100",
+    }));
+  }
+  if (fee > 0) {
+    entries.push(await recordLedgerEntry({
+      external_reference: `${payment_id}:commission`, user_id, amount: fee,
+      source: "inspection_commission", destination: "platform",
+      description: `Inspection commission for booking ${booking_id}`,
+      metadata: { payment_id, booking_id, event: "inspection_commission" },
+      debitAccountCode: "1000", creditAccountCode: "4000",
+    }));
+  }
+  return { gross, commission: fee, providerAmount, entries };
+}
+
+export async function recordInspectionRefund({ refund_id, booking_id, user_id, providerAmount, commissionAmount = 0 }) {
+  const entries = [];
+  if (providerAmount > 0) entries.push(await recordLedgerEntry({
+    external_reference: `${refund_id}:provider`, user_id, amount: providerAmount,
+    source: "inspection_refund", destination: "customer",
+    description: `Inspection provider refund for booking ${booking_id}`,
+    metadata: { refund_id, booking_id, event: "inspection_provider_refund" },
+    debitAccountCode: "5100", creditAccountCode: "1200",
+  }));
+  if (commissionAmount > 0) entries.push(await recordLedgerEntry({
+    external_reference: `${refund_id}:commission`, user_id, amount: commissionAmount,
+    source: "inspection_commission_refund", destination: "customer",
+    description: `Inspection commission refund for booking ${booking_id}`,
+    metadata: { refund_id, booking_id, event: "inspection_commission_refund" },
+    debitAccountCode: "4000", creditAccountCode: "1200",
+  }));
+  return { entries };
+}
+
+export async function recordInspectionPayout({ settlement_id, provider_id, user_id, amount, reference }) {
+  return recordLedgerEntry({
+    external_reference: String(settlement_id), user_id, amount,
+    source: "inspection_payout", destination: "inspection_provider",
+    description: `Inspection provider payout ${reference || settlement_id}`,
+    metadata: { settlement_id, provider_id, event: "inspection_payout", reference },
+    debitAccountCode: "5100", creditAccountCode: "1200",
   });
 }
 
