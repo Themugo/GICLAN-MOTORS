@@ -77,3 +77,7 @@ export async function placeBid(carId: string, amount: number, phone: string): Pr
   }
 
 }
+
+export async function myBids() {
+  return request('/api/bids/my');
+}
