@@ -23,7 +23,7 @@ export default function HomeHero({ liveCount, isAuth, user }) {
       </h1>
 
       <p className="text-white/55 text-xs md:text-sm max-w-[460px] mx-auto mb-4 leading-relaxed z-[1] font-normal">
-        Live auctions, verified dealers, and M-Pesa secured escrow — East Africa's most sophisticated automotive marketplace.
+        Live auctions, verified dealers, and bank-funded escrow — East Africa's most sophisticated automotive marketplace.
       </p>
 
       <div className="flex gap-2 justify-center flex-wrap z-[1]">

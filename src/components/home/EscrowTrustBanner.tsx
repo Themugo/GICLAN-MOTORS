@@ -73,7 +73,7 @@ export const EscrowTrustBanner: FC = () => {
             </h2>
             
             <p className="text-xs sm:text-sm text-[#6B7A99] font-sans font-medium leading-relaxed">
-              Your funds remain 100% protected in CBK-regulated bank escrow until you physically inspect and approve the vehicle.
+              Your funds are directed to the configured KAYAD escrow custody account until the escrow workflow permits release.
             </p>
           </div>
 

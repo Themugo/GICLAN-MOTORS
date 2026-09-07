@@ -21,7 +21,7 @@ interface CreateAccountProps {
 
 const PRIVATE_PERKS = [
   'List up to 3 vehicles',
-  'M-Pesa escrow on every sale',
+  'bank-funded escrow on every sale',
   'Free KAYAD certification badge',
   'Direct buyer messaging',
 ];

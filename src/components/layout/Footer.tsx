@@ -142,7 +142,7 @@ export default function Footer({ setPage }: FooterProps) {
               </span>
             </button>
             <p style={{ fontSize: 13, opacity: 0.5, maxWidth: 400, margin: '0 auto 24px', lineHeight: 1.6 }}>
-              Kenya's premium car marketplace. Buy, sell, and auction vehicles with M-Pesa escrow protection.
+              Kenya's premium car marketplace. Buy, sell, and auction vehicles with bank-funded escrow protection.
             </p>
             <div
               style={{
@@ -249,7 +249,7 @@ export default function Footer({ setPage }: FooterProps) {
                   </span>
                 </button>
                 <p style={{ fontSize: 13, opacity: 0.4, lineHeight: 1.6 }}>
-                  Kenya's premium car marketplace. Buy, sell, and auction vehicles with M-Pesa escrow protection.
+                  Kenya's premium car marketplace. Buy, sell, and auction vehicles with bank-funded escrow protection.
                 </p>
               </div>
             )}

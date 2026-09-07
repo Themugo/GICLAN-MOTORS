@@ -3,6 +3,7 @@ import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { adminAPI } from '../../api/api';
 import AdminSettingsBranding from './AdminSettingsBranding';
+import AdminEscrowCustody from './AdminEscrowCustody';
 
 const DEFAULTS = {
   platformName: 'Giclan Motors',
@@ -170,10 +171,11 @@ export default function AdminSettings() {
       { id: 'general', label: '⚙ General' },
       { id: 'branding', label: '🎨 Branding' },
       { id: 'payments', label: '💳 Payments' },
+      { id: 'escrow', label: '🏦 Escrow Custody' },
       { id: 'reconciliation', label: '🔄 Reconciliation' },
       { id: 'audit', label: '📋 Audit Log' },
     ];
-    return isSuperAdmin ? all : all.slice(0, 3);
+    return isSuperAdmin ? all : all.filter((item) => ['general', 'branding', 'payments', 'escrow'].includes(item.id));
   }, [isSuperAdmin]);
 
   if (loading) {
@@ -378,6 +380,9 @@ export default function AdminSettings() {
             </div>
           </div>
         )}
+
+        {/* ═══ ESCROW CUSTODY ═══ */}
+        {tab === 'escrow' && <AdminEscrowCustody />}
 
         {/* ═══ RECONCILIATION ═══ */}
         {tab === 'reconciliation' && (

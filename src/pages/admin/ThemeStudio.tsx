@@ -458,7 +458,7 @@ export default function ThemeStudio() {
                   style={{ fontFamily: draft.fonts.body, color: 'var(--text-secondary)' }}
                 >
                   KAYAD is Kenya's premier automotive marketplace — offering verified dealers,
-                  live auctions, M-Pesa escrow protection, and 150-point pre-inspections to keep
+                  live auctions, bank-funded escrow protection, and 150-point pre-inspections to keep
                   every transaction safe and transparent.
                 </p>
                 <div className="flex gap-4 mt-4">

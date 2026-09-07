@@ -180,7 +180,7 @@ export const SupportView: React.FC<SupportViewProps> = ({ user, onOpenAuth }) =>
             </span>
             <h4 className="text-lg font-bold font-display">Escrow-Backed Purchases</h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              If a vehicle fails inspection or logbook verification during the escrow hold, your refund request is reviewed and processed to your M-Pesa or bank account.
+              If a vehicle fails inspection or logbook verification during the escrow hold, your refund request is reviewed and processed through the configured financial operations process.
             </p>
           </div>
         </div>

@@ -63,7 +63,7 @@ export default function AuctionPage() {
           </div>
           <h1 style={S.heroH1}>Bid on Premium Vehicles</h1>
           <p style={S.heroDesc}>
-            Real-time competitive bidding with M-Pesa escrow protection. Every vehicle is verified. Win the auction, pay securely, drive away.
+            Real-time competitive bidding with bank-funded escrow protection. Every vehicle is verified. Win the auction, pay securely, drive away.
           </p>
           <div style={S.statsRow}>
             {[

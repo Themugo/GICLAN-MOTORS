@@ -31,6 +31,7 @@ const TABLE_MAP = {
   ReconciliationReport: "reconciliation_reports",
   EscrowAnomaly: "escrow_anomalies", EscrowRiskScore: "escrow_risk_scores",
   EscrowAudit: "escrow_audits",
+  EscrowAccount: "escrow_accounts",
   AuctionIntegrityFlag: "auction_integrity_flags",
   AuctionRiskProfile: "auction_risk_profiles",
   MpesaTransaction: "mpesa_transactions", SmsBidder: "sms_bidders",

@@ -8,13 +8,14 @@ import { findById, findOne, create, update } from "../db/index.js";
 import { STATES, validateTransition } from "../services/escrowStateMachine.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { atomicTransitionEscrow } from "../utils/atomicTransactions.js";
+import { getEscrowRules } from "./escrowConfiguration.service.js";
 
 const getCommissionRate = async () => {
   try {
-    const config = await findOne("platform_config", {});
-    if (config?.dealerCommission) return config.dealerCommission / 100;
+    const rules = await getEscrowRules();
+    return Number(rules.commissionPct || 0) / 100;
   } catch {}
-  return 0.05;
+  return 0;
 };
 
 const calculateCommission = async (amount) => {
@@ -25,6 +26,14 @@ const calculateCommission = async (amount) => {
 
 export const createEscrow = async (data) => {
   try {
+    const seller = await findById("users", data.seller, "role");
+    if (seller?.role !== "individual_seller") {
+      throw new Error("Vehicle escrow is available only for private-seller transactions");
+    }
+    const rules = await getEscrowRules();
+    if (!rules.enabled || rules.privateSellerRequirement === "disabled") {
+      throw new Error("Private-seller escrow is currently disabled by KAYAD administration");
+    }
     const { commission, sellerAmount } = await calculateCommission(data.amount);
 
     const escrow = await create("escrows", {

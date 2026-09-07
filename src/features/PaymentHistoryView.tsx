@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, Clock, CreditCard, RefreshCw, XCircle } from 'lucide-react';
-import { paymentsAPI } from '../api/api';
+import { getMyPayments, getPaymentStatus } from '../services/paymentApi';
 import { Button, Card, PageHeader } from '../components/ui';
 
 type PaymentStatus = 'pending' | 'success' | 'failed' | 'cancelled';
@@ -22,7 +22,7 @@ export default function PaymentHistoryView() {
   const load = useCallback(async (nextPage = page, nextFilter = filter, background = false) => {
     if (background) setRefreshing(true); else setLoading(true);
     setError(null);
-    try { const result = (await paymentsAPI.myPayments({ page: nextPage, limit: 10, ...(nextFilter ? { status: nextFilter } : {}) })) as PaymentResponse; setPayments(result.payments || []); setTotal(result.pagination?.total || 0); setPages(Math.max(1, result.pagination?.pages || 1)); }
+    try { const result = (await getMyPayments({ page: nextPage, limit: 10, ...(nextFilter ? { status: nextFilter } : {}) })) as PaymentResponse; setPayments(result.payments || []); setTotal(result.pagination?.total || 0); setPages(Math.max(1, result.pagination?.pages || 1)); }
     catch (err: any) { setError(err?.message || 'Could not load your payment history.'); }
     finally { setLoading(false); setRefreshing(false); }
   }, [filter, page]);
@@ -31,7 +31,7 @@ export default function PaymentHistoryView() {
   const completed = useMemo(() => payments.filter((p) => p.status === 'success'), [payments]);
   const completedAmount = useMemo(() => completed.reduce((sum, p) => sum + Number(p.amount || 0), 0), [completed]);
   const refreshPending = async () => {
-    await Promise.all(pending.filter((p) => p.checkoutRequestId).map(async (p) => { try { await paymentsAPI.status(p.checkoutRequestId as string); } catch {} }));
+    await Promise.all(pending.filter((p) => p.checkoutRequestId).map(async (p) => { try { await getPaymentStatus(p.checkoutRequestId as string); } catch {} }));
     void load(page, filter, true);
   };
   return <div className="space-y-6">

@@ -284,7 +284,7 @@ export const INITIAL_DEALER_LEADS: DealerLead[] = [
     source: 'Escrow Negotiation',
     status: 'Deposit Paid',
     assignedToName: 'Grace Wanjiku',
-    notes: 'Offered Ksh 7,200,000 via M-Pesa Escrow. Inspection passed with 96/100.',
+    notes: 'Offered Ksh 7,200,000 via Bank Escrow. Inspection passed with 96/100.',
     offeredPrice: 7200000,
     createdAt: '2026-07-28',
     lastFollowUp: 'Today 11:30 AM'

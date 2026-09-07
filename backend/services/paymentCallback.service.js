@@ -4,7 +4,6 @@ import { sendDigitalReceipt } from "../services/receiptService.js";
 import { getIO } from "../utils/io.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { atomicSettleBidPayment, atomicSettlePurchasePayment } from "../utils/atomicTransactions.js";
-import { fundEscrow } from "./escrow.service.js";
 import { recordPaymentEvent, recordWebhookReceipt, markWebhookProcessed, markAttemptByCheckout } from "./paymentFinancialLifecycle.service.js";
 
 const MAX_RETRIES = 3;
@@ -85,6 +84,21 @@ export const handleMpesaCallback = async (callbackData) => {
         logError("Failed to release payment claim", e, { paymentId: payment.id }),
       );
 
+    // Vehicle escrow is not an M-Pesa custody product. Any legacy or
+    // malformed escrow payment that reaches this callback is failed and
+    // never transitions the escrow to funded. Current vehicle escrow uses
+    // bank-transfer verification against an administrator-configured
+    // custody account.
+    if (payment.type === "escrow") {
+      const reason = "M-Pesa is not a vehicle escrow funding rail";
+      await update("payments", payment.id, { status: "failed", resultDesc: reason, processed: true });
+      await markPaymentEventSafe(payment.id, "escrow_mpesa_rejected", { reason });
+      await markWebhookProcessed(webhookEventId);
+      finalized = true;
+      logWarn("Rejected M-Pesa callback for vehicle escrow payment", { paymentId: payment.id, checkoutId });
+      return payment;
+    }
+
     if (!success) {
       await update("payments", payment.id, {
         status: "failed",
@@ -130,10 +144,15 @@ export const handleMpesaCallback = async (callbackData) => {
     if (Number(amount) !== Number(payment.amount)) {
       // Amount integrity violation — definitive, not retryable. The
       // settled amount must always equal the server-recorded amount.
+      const mismatchReason = `Amount mismatch: expected ${payment.amount}, provider reported ${amount}`;
       await update("payments", payment.id, {
         status: "failed",
-        resultDesc: `Amount mismatch: expected ${payment.amount}, provider reported ${amount}`,
+        resultDesc: mismatchReason,
       });
+      await markAttemptByCheckout(checkoutId, "failed", { failureReason: mismatchReason }).catch(() => {});
+      await markPaymentEventSafe(payment.id, "amount_mismatch", { expected: Number(payment.amount), reported: Number(amount), receipt });
+      await markWebhookProcessed(webhookEventId);
+      finalized = true;
       logError("M-Pesa callback amount mismatch — payment failed", null, {
         paymentId: payment.id,
         expected: payment.amount,
@@ -181,15 +200,6 @@ export const handleMpesaCallback = async (callbackData) => {
         finalized = true;
         return payment;
       }
-    }
-
-    if (payment.type === "escrow") {
-      const escrow = await findOne("escrows", { payment: payment.id });
-      if (!escrow) throw new Error("Escrow payment has no escrow record");
-      await update("payments", payment.id, { status: "success", mpesaReceipt: receipt, paidAt: new Date() });
-      const funded = await fundEscrow(escrow.id, { idempotencyKey: `payment-callback:${checkoutId}` });
-      await recordPaymentEvent({ paymentId: payment.id, eventType: "escrow_funded", payload: { escrowId: escrow.id } }).catch(() => {});
-      if (funded) logInfo("Escrow funded from confirmed M-Pesa payment", { paymentId: payment.id, escrowId: escrow.id });
     }
 
     await sendNotification({

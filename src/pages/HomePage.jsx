@@ -105,7 +105,7 @@ export default function HomePage() {
   }, [cars]);
 
   const WHY_KAYAD_FEATURES = [
-    { icon: '💳', title: 'M-Pesa Escrow', desc: 'Your money is protected until you safely receive your car. No scams, no risk.' },
+    { icon: '💳', title: 'Bank Escrow', desc: 'Your money is protected until you safely receive your car. No scams, no risk.' },
     { icon: '🔍', title: '150-Point Inspection', desc: 'Certified mechanics inspect every vehicle before you commit to buying.' },
     { icon: '✓', title: 'Verified Dealers', desc: 'All dealers are vetted, licensed, and rated by real buyers like you.' },
     { icon: '🏷️', title: 'Live Auctions', desc: 'Bid on rare finds in real-time. Transparent pricing, no hidden fees.' },
@@ -231,7 +231,7 @@ export default function HomePage() {
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg, #16C4A4 0%, #0C7B68 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🚗</div>
                 <span style={{ fontSize: 22, fontWeight: 700, color: '#FDFAF5', fontFamily: 'Playfair Display, serif' }}>KAYAD</span>
               </div>
-              <p style={{ fontSize: 14, color: 'rgba(253, 250, 245, 0.55)', lineHeight: 1.7, margin: 0, maxWidth: 240 }}>Kenya's premium car marketplace. Buy, sell, and auction vehicles with M-Pesa escrow protection.</p>
+              <p style={{ fontSize: 14, color: 'rgba(253, 250, 245, 0.55)', lineHeight: 1.7, margin: 0, maxWidth: 240 }}>Kenya's premium car marketplace. Buy, sell, and auction vehicles with bank-funded escrow protection.</p>
             </div>
             <div>
               <h4 style={{ fontSize: 12, fontWeight: 700, color: '#FDFAF5', marginBottom: 16, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Marketplace</h4>

@@ -26,7 +26,7 @@ export default function Footer({ setPage }: FooterProps) {
               <span className="text-gold-400 font-sans font-bold tracking-[0.15em] uppercase">KAYAD</span>
             </button>
             <p className="font-sans text-sm text-white/40 leading-relaxed">
-              Kenya's premium car marketplace. Buy, sell, and auction vehicles with M-Pesa escrow protection.
+              Kenya's premium car marketplace. Buy, sell, and auction vehicles with bank-funded escrow protection.
             </p>
           </div>
 

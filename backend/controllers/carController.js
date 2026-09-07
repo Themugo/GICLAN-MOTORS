@@ -1,6 +1,7 @@
 import Car from "../models/Car.js";
 import User from "../models/User.js";
 import PlatformConfig from "../models/PlatformConfig.js";
+import { getEscrowRules } from "../services/escrowConfiguration.service.js";
 import { cacheDelPattern } from "../utils/cache.js";
 import { uploadMultiple, deleteImage } from "../config/cloudinary.js";
 import { cleanupFiles } from "../middleware/upload.js";
@@ -401,14 +402,17 @@ export const createCar = async (req, res) => {
     }
 
     // ── ESCROW ENFORCEMENT ─────────────────────────────────
-    // individual_seller: escrow is always enabled (enforced in payment)
-    // dealer: if escrowForced -> auto-enable; if not approved/forced -> disable
+    // Vehicle escrow is a private-seller-only feature. The server-side
+    // platform rule is authoritative; dealer escrow flags are retained
+    // only for legacy admin compatibility and cannot enable vehicle escrow.
+    const escrowRules = await getEscrowRules();
     if (isDealer) {
-      const dealerUser = seller; // seller is the dealer
-      if (dealerUser.escrowForced) {
-        req.body.escrowEnabled = true;
-      } else if (!dealerUser.escrowApproved && !dealerUser.escrowForced) {
+      req.body.escrowEnabled = false;
+    } else if (isSeller) {
+      if (!escrowRules.enabled || escrowRules.privateSellerRequirement === "disabled") {
         req.body.escrowEnabled = false;
+      } else if (escrowRules.privateSellerRequirement === "mandatory") {
+        req.body.escrowEnabled = true;
       }
     }
 
@@ -578,16 +582,17 @@ export const updateCar = async (req, res) => {
     }
 
     // ── ESCROW ENFORCEMENT ON UPDATE ─────────────────────
-    // When a dealer updates a car, enforce escrow rules
-    const updaterIsDealer = req.user.role === "dealer";
-    if (updaterIsDealer || isOwner) {
-      const seller = await User.findById(req.user.id).select("role escrowApproved escrowForced");
-      if (seller) {
-        if (seller.escrowForced) {
-          car.escrowEnabled = true;
-        } else if (!seller.escrowApproved && !seller.escrowForced) {
-          car.escrowEnabled = false;
-        }
+    // Vehicle escrow is private-seller-only. Dealer escrow flags are legacy
+    // compatibility fields and can never enable vehicle escrow.
+    const ownerSeller = await User.findById(car.dealer).select("role");
+    const escrowRules = await getEscrowRules();
+    if (ownerSeller?.role === "dealer") {
+      car.escrowEnabled = false;
+    } else if (ownerSeller?.role === "individual_seller") {
+      if (!escrowRules.enabled || escrowRules.privateSellerRequirement === "disabled") {
+        car.escrowEnabled = false;
+      } else if (escrowRules.privateSellerRequirement === "mandatory") {
+        car.escrowEnabled = true;
       }
     }
 

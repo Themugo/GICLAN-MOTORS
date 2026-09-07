@@ -107,7 +107,7 @@ export const SupportPage: React.FC = () => {
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed max-w-2xl">
-            Dedicated high-priority assistance for high-value automotive purchases, M-Pesa Escrow Vault clearances, 150-Point inspection verification, and official vehicle handover dispute resolution across Kenya.
+            Dedicated high-priority assistance for high-value automotive purchases, Bank Escrow Vault clearances, 150-Point inspection verification, and official vehicle handover dispute resolution across Kenya.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs text-slate-200">

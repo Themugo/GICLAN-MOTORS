@@ -82,7 +82,7 @@ export const EscrowPage: FC = () => {
     },
     {
       q: 'Is my capital protected against platform insolvency?',
-      a: 'Yes. All escrow capital is held in ring-fenced, segregated client trust accounts governed by Kenyan trust law and Central Bank of Kenya guidelines, completely isolated from KAYAD operating assets.'
+      a: 'Yes. Vehicle escrow funds are directed to the administrator-configured KAYAD escrow bank account. KAYAD does not use M-Pesa STK to collect full vehicle purchase funds. The applicable custody structure and release process are controlled by the platform administrators.'
     }
   ];
 
@@ -95,7 +95,7 @@ export const EscrowPage: FC = () => {
         <div className="relative z-10 space-y-3 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#23EBFF]/20 text-[#23EBFF] text-xs font-extrabold uppercase tracking-wider border border-[#23EBFF]/30">
             <ShieldCheck className="w-4 h-4 text-[#23EBFF]" />
-            <span>CBK Regulated Escrow Framework</span>
+            <span>Administrator-Configured Bank Escrow</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black font-serif tracking-tight text-white">
@@ -103,7 +103,7 @@ export const EscrowPage: FC = () => {
           </h1>
 
           <p className="text-sm sm:text-base text-slate-200 font-medium leading-relaxed max-w-2xl">
-            Your transaction capital remains strictly protected in a segregated, licensed escrow account. Funds are released to the seller only after physical vehicle inspection, VIN verification, and digital handover sign-off.
+            Your transaction funds are instructed to the configured KAYAD escrow bank account and remain pending in the escrow workflow until the release conditions are satisfied.
           </p>
         </div>
 
@@ -170,7 +170,7 @@ export const EscrowPage: FC = () => {
                 Buyer Deposits Capital
               </h3>
               <p className="text-xs text-[#3D4F6F] leading-relaxed font-medium">
-                Buyer deposits transaction capital into KAYAD Escrow Vault — a ring-fenced, segregated client account managed under CBK trust regulations.
+                Buyer deposits transaction capital by bank transfer into the administrator-configured KAYAD escrow custody account.
               </p>
             </div>
             <div className="pt-2 flex items-center gap-1.5 text-[11px] font-bold text-[#23EBFF]">
@@ -227,7 +227,7 @@ export const EscrowPage: FC = () => {
                 Instant Fund Disbursal
               </h3>
               <p className="text-xs text-[#3D4F6F] leading-relaxed font-medium">
-                Escrow Vault automatically disburses net purchase funds directly to seller’s verified corporate account within minutes of signoff.
+                After the authorized release decision, the escrow process records the amount due to the seller; disbursement is handled through the configured financial operations process.
               </p>
             </div>
             <div className="pt-2 flex items-center gap-1.5 text-[11px] font-bold text-[#3ddb72]">
@@ -249,7 +249,7 @@ export const EscrowPage: FC = () => {
             Bank-Grade Capital Protection
           </h2>
           <p className="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed max-w-3xl">
-            KAYAD Escrow Vault operates under Central Bank of Kenya trust frameworks. All buyer capital is deposited in ring-fenced client trust accounts, completely insulated from operational liabilities.
+            KAYAD vehicle escrow is configured and controlled by administrators. The platform currently uses bank-transfer funding into configured custody accounts; a future KAYAD e-wallet is planned separately.
           </p>
         </div>
 

@@ -139,11 +139,11 @@ export default function RegisterPage() {
                     'Run live auctions with real-time bidding',
                     'Verified badge builds buyer trust',
                     'Dashboard with analytics & lead tracking',
-                    'M-Pesa escrow handles payment securely',
+                    'bank-funded escrow handles payment securely',
                   ] : [
                     'List your car in under 5 minutes',
                     'Reach thousands of serious buyers instantly',
-                    'M-Pesa escrow protects your payment',
+                    'bank-funded escrow protects your payment',
                     'Free listing — only pay when it sells',
                     'Dedicated support throughout the sale',
                   ].map(b => (

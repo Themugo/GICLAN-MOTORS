@@ -68,6 +68,10 @@ export interface BackendEscrow {
   deliveredAt?: string | null;
   releasedAt?: string | null;
   closedAt?: string | null;
+  custodianAccount?: string | null;
+  fundingMethod?: 'bank_transfer' | 'future_wallet' | null;
+  fundingReference?: string | null;
+  fundingVerifiedAt?: string | null;
   disputeReason?: string | null;
   disputedAt?: string | null;
   createdAt: string;
@@ -175,4 +179,36 @@ export function mapBackendEscrowToTransaction(e: BackendEscrow): EscrowTransacti
     vaultHolder: undefined,
     whoControlsFunds: e.status === 'released' || e.status === 'closed' ? 'Released' : 'KAYAD Escrow (Neutral Hold)',
   };
+}
+
+export async function getEscrow(escrowId: string): Promise<BackendEscrow> {
+  const body = await escrowFetch<{ data: BackendEscrow }>(`/api/escrow/${encodeURIComponent(escrowId)}`);
+  return body.data;
+}
+
+export async function getEscrowState(escrowId: string) {
+  return escrowFetch<{ data: { currentState: BackendEscrow['status']; allowedTransitions: string[]; history: unknown[] } }>(`/api/escrow/${encodeURIComponent(escrowId)}/state`);
+}
+
+export async function requestEscrowRelease(escrowId: string) {
+  return escrowFetch<{ message: string }>(`/api/escrow/${encodeURIComponent(escrowId)}/request-release`, { method: 'POST' });
+}
+
+export async function confirmDelivery(escrowId: string): Promise<BackendEscrow> {
+  const body = await escrowFetch<{ data: BackendEscrow }>(`/api/escrow/${encodeURIComponent(escrowId)}/confirm-delivery`, { method: 'POST' });
+  return body.data;
+}
+
+export async function refundEscrow(escrowId: string, reason: string) {
+  return escrowFetch<{ message: string; data?: BackendEscrow }>(`/api/escrow/${encodeURIComponent(escrowId)}/refund`, { method: 'POST', body: JSON.stringify({ reason }) });
+}
+
+export async function closeEscrow(escrowId: string) {
+  return escrowFetch<{ data?: BackendEscrow }>(`/api/escrow/${encodeURIComponent(escrowId)}/close`, { method: 'POST' });
+}
+
+export async function getAllEscrows(params: { page?: number; limit?: number; status?: string } = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => { if (value !== undefined && value !== '') query.set(key, String(value)); });
+  return escrowFetch<{ data: BackendEscrow[]; pagination: { page: number; limit: number; total: number; pages: number } }>(`/api/escrow${query.toString() ? `?${query}` : ''}`);
 }
