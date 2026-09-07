@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { carsAPI } from '../api/api';
+import { getCars } from '../services/vehicleApi';
 
 const DEFAULT_HERO_IMG = 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1600';
 
@@ -15,10 +15,10 @@ export default function HomePage() {
     const timeoutId = setTimeout(() => {}, 2000);
     (async () => {
       try {
-        const data = await carsAPI.list({ limit: 50 });
-        if (mounted && data.cars?.length > 0) {
+        const data = await getCars({ limit: 50 });
+        if (mounted && data.data?.length > 0) {
           clearTimeout(timeoutId);
-          setCars(data.cars);
+          setCars(data.data);
         }
       } catch { /* fallback */ }
     })();
@@ -36,7 +36,7 @@ export default function HomePage() {
     // fall back to any car in the gallery that has a real photo — so the
     // hero always has enough to shuffle from, not just a handful of
     // specially-flagged listings.
-    const withImage = (c) => Boolean(c.images?.[0] || c.image);
+    const withImage = (c) => Boolean(c.images?.[0]?.url || c.images?.[0] || c.image);
     const priority = cars.filter(c => withImage(c) && (c.featured || c.isAuction || c.auction_status === 'live'));
     const rest = cars.filter(c => withImage(c) && !priority.includes(c));
 
@@ -55,7 +55,7 @@ export default function HomePage() {
 
     return sourceCars.length >= 3 ? sourceCars.map((car, i) => ({
       id: car.id || i,
-      image: car.images?.[0] || car.image || HERO_SLIDES[i % HERO_SLIDES.length].image,
+      image: car.images?.[0]?.url || car.images?.[0] || car.image || HERO_SLIDES[i % HERO_SLIDES.length].image,
       headline: car.title || car.name,
       sub: car.year ? `${car.year} · ${car.fuel} · ${car.location}` : car.location || 'Nairobi',
       price: car.price ? `KES ${(car.price / 1000000).toFixed(1)}M` : '',
@@ -69,7 +69,7 @@ export default function HomePage() {
   }, [SLIDES.length, heroHovered]);
 
   const FEATURED_CARS = useMemo(() => {
-    const withImage = (c) => Boolean(c.images?.[0] || c.image);
+    const withImage = (c) => Boolean(c.images?.[0]?.url || c.images?.[0] || c.image);
     let eligible = cars.filter(c => withImage(c) && (c.isPromoted || c.featured));
     if (eligible.length === 0) eligible = cars.filter(withImage); // fall back to real listings, never fake ones
 
@@ -97,7 +97,7 @@ export default function HomePage() {
       location: car.location,
       price: car.price ? Number(car.price).toLocaleString() : '',
       dealer: car.dealer?.businessName || car.dealer?.name || 'Private Seller',
-      image: car.images?.[0] || car.image,
+      image: car.images?.[0]?.url || car.images?.[0] || car.image,
       // Escrow is for private-seller transactions, not dealer sales —
       // only show the badge where it actually applies.
       hasEscrow: car.dealer?.role === 'individual_seller',

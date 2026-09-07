@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { carsAPI } from '../api/api';
+import { getCars, getCarById } from '../services/vehicleApi';
 import { Button, Badge, PriceTag, Breadcrumb, Card, MapPlaceholder, Avatar, Progress, EmptyState } from '../components/ui';
 import CarCard from '../components/CarCard';
 import OptimizedImg from '../components/OptimizedImg';
@@ -73,9 +73,9 @@ export default function CarDetailPage() {
     let mounted = true;
     setLoading(true);
     setLoadError(false);
-    carsAPI.get(id).then(d => {
+    getCarById(id).then(carData => {
       if (mounted) {
-        setCar(d.car || d.data);
+        setCar(carData);
         setLoading(false);
       }
     }).catch(() => {
@@ -124,9 +124,9 @@ export default function CarDetailPage() {
   useEffect(() => {
     if (!car) { setRelatedCars([]); return; }
     let mounted = true;
-    carsAPI.list({ brand: car.brand, limit: 5 }).then(d => {
+    getCars({ brand: car.brand, limit: 5 }).then(d => {
       if (!mounted) return;
-      const cars = (d.cars || d.data || []).filter(c => (c.id || c._id) !== (car.id || car._id));
+      const cars = (d.data || []).filter(c => (c.id || c._id) !== (car.id || car._id));
       setRelatedCars(cars.slice(0, 4));
     }).catch(() => { if (mounted) setRelatedCars([]); });
     return () => { mounted = false; };

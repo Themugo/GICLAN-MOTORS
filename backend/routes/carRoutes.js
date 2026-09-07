@@ -210,20 +210,6 @@ router.post(
   }),
 );
 
-// ❤️ TRACK FAVORITE (rate-limited, optional auth to prevent bot inflation)
-router.post(
-  "/:id/favorite",
-  optionalAuth,
-  createLimiter,
-  validateObjectId,
-  asyncHandler(async (req, res) => {
-    const car = await findById("cars", req.params.id, "favoritesCount");
-    await update("cars", req.params.id, { favoritesCount: (car?.favoritesCount || 0) + 1 });
-
-    res.json({ success: true });
-  }),
-);
-
 // =============================
 // 🔐 DEALER ROUTES
 // =============================

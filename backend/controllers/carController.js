@@ -65,6 +65,9 @@ export const getCars = async (req, res) => {
       featured,
       auctionStatus,
       dealerType,
+      dealer,
+      seller,
+      status,
       vin,
       engine,
       drivetrain,
@@ -77,7 +80,11 @@ export const getCars = async (req, res) => {
     // never trigger an unbounded query (pagination cap — Issue: security test).
     limitNum = Math.min(Math.max(toNumber(limit, 12), 1), 100);
 
-    query = { status: "available" };
+    // Public marketplace defaults to available listings. Explicit status is
+    // supported for compatibility, but is still constrained to the public
+    // listing lifecycle values exposed by the query validator.
+    const publicStatus = status === "active" ? "available" : status;
+    query = { status: publicStatus || "available" };
 
     if (keyword) {
       const trimmed = keyword.trim();
@@ -98,7 +105,7 @@ export const getCars = async (req, res) => {
     }
     if (city) {
       const safeCity = city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      query["location.city"] = { $regex: `^${safeCity}$`, $options: "i" };
+      query.city = { $regex: `^${safeCity}$`, $options: "i" };
     }
 
     if (minPrice || maxPrice) {
@@ -144,6 +151,12 @@ export const getCars = async (req, res) => {
     } else if (dealerType === "private") {
       const sellerIds = await User.find({ role: "individual_seller" }).distinct("_id").lean();
       query.dealer = { $in: sellerIds };
+    } else if (dealer) {
+      query.dealer = dealer;
+    } else if (seller) {
+      // `seller` is the established public query alias used by older UI
+      // surfaces; it refers to the same real seller/dealer foreign key.
+      query.dealer = seller;
     }
 
     if (category === "auction") {

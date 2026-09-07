@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { dealerAPI, carsAPI } from '../../api/api';
+import { dealerAPI } from '../../api/api';
+import { deleteCar } from '../../services/vehicleApi';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { 
@@ -41,7 +42,7 @@ export default function DealerDashboard() {
   const handleDelete = async (carId) => {
     if (!confirm('Delete this listing?')) return;
     try {
-      await carsAPI.remove(carId);
+      await deleteCar(carId);
       setCars(prev => prev.filter(c => c._id !== carId));
       toast.success('Listing deleted');
     } catch { toast.error('Failed to delete'); }

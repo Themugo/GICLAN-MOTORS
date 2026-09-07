@@ -123,7 +123,7 @@ export const removeFavorite = async (req, res) => {
     const { carId } = req.params;
     const deleted = await Favorite.findOneAndDelete({ user: req.user.id, car: carId });
     if (deleted) {
-      await Car.findByIdAndUpdate(carId, { $inc: { favoritesCount: -1 } });
+      await Car.updateOne({ _id: carId, favoritesCount: { $gt: 0 } }, { $inc: { favoritesCount: -1 } });
     }
     res.json({ success: true, favorited: false, message: "Removed from favourites" });
   } catch (err) {
@@ -146,7 +146,7 @@ export const toggleFavorite = async (req, res) => {
 
     if (existing) {
       await existing.deleteOne();
-      await Car.findByIdAndUpdate(carId, { $inc: { favoritesCount: -1 } });
+      await Car.updateOne({ _id: carId, favoritesCount: { $gt: 0 } }, { $inc: { favoritesCount: -1 } });
       return res.json({ success: true, favorited: false, message: "Removed from favourites" });
     }
 

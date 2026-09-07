@@ -33,6 +33,7 @@ export const carListQuerySchema = z.object({
   sortBy: z.enum(["createdAt", "price", "views", "clicks"]).optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
   seller: z.string().optional(),
+  dealer: z.string().optional(),
   ids: z.string().optional(),
   dealerType: z.enum(["dealer", "private"]).optional(),
   vin: z.string().optional(),

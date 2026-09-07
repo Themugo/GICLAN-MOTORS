@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { adminAPI, carsAPI, partnersAPI } from '../../api/api';
+import { adminAPI, partnersAPI } from '../../api/api';
+import { getCars } from '../../services/vehicleApi';
 import { useToast } from '../../context/ToastContext';
 import { DollarSign, Car, Star, Megaphone, Settings, TrendingUp, Crown, Shield } from 'lucide-react';
 
@@ -19,11 +20,11 @@ export default function MonetizationCenter() {
   useEffect(() => {
     Promise.all([
       adminAPI.getConfig().catch(() => ({})),
-      carsAPI.list({ limit: 50, sort: '-createdAt' }).catch(() => ({ cars: [] })),
+      getCars({ limit: 50, sort: 'newest' }).catch(() => ({ data: [] })),
       partnersAPI.list().catch(() => []),
     ]).then(([cfg, cars, pts]) => {
       setConfig(cfg);
-      setFeatured(cars.cars || cars.data || []);
+      setFeatured(cars.data || []);
       setPartners(pts);
       setHeroCarIds((cfg.heroCarIds || []).join(', '));
       setSponsorCarIds((cfg.sponsorCarIds || []).join(', '));

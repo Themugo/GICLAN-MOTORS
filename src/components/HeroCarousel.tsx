@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, type TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight, MapPin, Shield, Star, Eye, Clock } from 'lucide-react';
 import { formatKES, timeAgo } from '../utils/helpers';
-import { carsAPI } from '../api/api';
+import { getCars } from '../services/vehicleApi';
 
 interface FeaturedCar {
   _id: string;
@@ -40,8 +40,8 @@ export default function HeroCarousel({ onViewCar }: HeroCarouselProps) {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const data = await carsAPI.list({ page: 1, limit: 20, status: 'active' });
-        const fetchedCars = data?.cars || data?.data || [];
+        const data = await getCars({ page: 1, limit: 20, status: 'active' });
+        const fetchedCars = data?.data || [];
         // Filter for promoted or top viewed
         const featured = fetchedCars.filter((car: FeaturedCar) => 
           car.isPromoted || (car.views && car.views > 100)

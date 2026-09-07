@@ -159,6 +159,9 @@ export interface GetCarsParams {
   category?: 'auction' | 'fixed';
   featured?: boolean;
   dealerType?: 'dealer' | 'private';
+  dealer?: string;
+  seller?: string;
+  status?: 'active' | 'sold' | 'pending' | 'rejected';
   vin?: string;
   engine?: string;
   drivetrain?: string;
@@ -206,6 +209,37 @@ export async function getCarById(id: string): Promise<BackendCar | null> {
 export async function getMyListings(): Promise<BackendCar[]> {
   const res = await vehicleFetch<{ data: BackendCar[] }>('/api/cars/my-listings', { method: 'GET' });
   return res.data || [];
+}
+
+export interface UpdateCarPayload {
+  [key: string]: unknown;
+}
+
+/** PUT /api/cars/:id - canonical listing mutation boundary. */
+export async function updateCar(id: string, payload: UpdateCarPayload | FormData): Promise<CreateCarResponse> {
+  try {
+    const body = payload instanceof FormData ? payload : (() => {
+      const formData = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') formData.append(key, String(value));
+      });
+      return formData;
+    })();
+    return await request<CreateCarResponse>(`/api/cars/${id}`, { method: 'PUT', body });
+  } catch (err) {
+    const error = err instanceof HttpRequestError ? err : new HttpRequestError('Request failed.');
+    throw new VehicleApiError(error.message, error.status === 404 ? 'not_found' : 'server', error.status);
+  }
+}
+
+/** DELETE /api/cars/:id - canonical listing deletion boundary. */
+export async function deleteCar(id: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    return await request<{ success: boolean; message?: string }>(`/api/cars/${id}`, { method: 'DELETE' });
+  } catch (err) {
+    const error = err instanceof HttpRequestError ? err : new HttpRequestError('Request failed.');
+    throw new VehicleApiError(error.message, error.status === 404 ? 'not_found' : 'server', error.status);
+  }
 }
 
 /** Maps a real backend car row to this frontend's real Vehicle type

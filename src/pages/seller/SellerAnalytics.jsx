@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { carsAPI } from '../../api/api';
+import { getMyListings } from '../../services/vehicleApi';
 import { TrendingUp, Eye, MessageCircle, DollarSign, Calendar, BarChart3 } from 'lucide-react';
 import BackButton from '../../components/BackButton';
 
@@ -16,8 +16,8 @@ export default function SellerAnalytics() {
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await carsAPI.list({ seller: user?._id, limit: 100 });
-      setListings(data.cars || data.data || []);
+      const data = await getMyListings();
+      setListings(data || []);
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
       let errorMessage = 'Could not load analytics data';

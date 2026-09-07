@@ -80,7 +80,6 @@ export const carsAPI = {
   myCars:    ()      => api.get('/cars/dealer/my-cars').then(unwrap),
   analytics: ()      => api.get('/cars/dealer/analytics').then(unwrap),
   bid: (id: string, body: any)        => api.post(`/cars/${id}/bid`, body).then(unwrap),
-  toggleFav: (id: string)        => api.post(`/cars/${id}/favorite`).then(unwrap),
   batch: (body: any)         => api.post('/cars/batch', body).then(unwrap),
   fraudCheck: (id: string) => api.get(`/cars/admin/${id}/fraud`).then(unwrap),
   adminStart: (id: string) => api.post(`/cars/admin/${id}/start`).then(unwrap),

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { carsAPI, formatKES } from '../../api/api';
+import { formatKES } from '../../api/api';
+import { getCarById, updateCar } from '../../services/vehicleApi';
 import { startDealerAuction, endDealerAuction, extendDealerAuction } from '../../services/auctionService';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
@@ -22,8 +23,7 @@ export default function EditCarPage() {
   const [previews, setPreviews] = useState([]);
 
   useEffect(() => {
-    carsAPI.get(id).then(d => {
-      const c = d.car || d.data || d;
+    getCarById(id).then(c => {
       // Ownership check — only the listing owner can edit
       if (c?.dealer?._id && c.dealer._id !== user?._id) {
         setOwnershipError(true);
@@ -60,9 +60,9 @@ export default function EditCarPage() {
           if (v !== '' && v !== null) fd.append(k, v);
         });
         newImages.forEach(img => fd.append('images', img));
-        await carsAPI.update(id, fd);
+        await updateCar(id, fd);
       } else {
-        await carsAPI.update(id, form);
+        await updateCar(id, form);
       }
       toast('Listing updated!', 'success');
       navigate('/dealer');

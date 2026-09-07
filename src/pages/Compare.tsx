@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, X, Trash2, ArrowRight, Calendar, Gauge, Fuel, MapPin, Settings } from 'lucide-react';
 import { useCompare } from '../context/CompareContext';
-import { carsAPI } from '../api/api';
+import { getCarById } from '../services/vehicleApi';
 import { formatKES } from '../utils/helpers';
 
 interface CompareProps {
@@ -17,8 +17,8 @@ export default function Compare({ setPage, viewCar }: CompareProps) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all(compareIds.map(id => carsAPI.get(id).catch(() => null)))
-      .then(results => { if (!cancelled) setCompareCars(results.map((r: any) => r?.car || r?.data || r).filter(Boolean)); });
+    Promise.all(compareIds.map(id => getCarById(id).catch(() => null)))
+      .then(results => { if (!cancelled) setCompareCars(results.filter(Boolean)); });
     return () => { cancelled = true; };
   }, [compareIds]);
 

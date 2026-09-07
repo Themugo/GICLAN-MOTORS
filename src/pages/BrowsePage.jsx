@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { carsAPI, BRANDS, savedSearchAPI } from '../api/api';
+import { BRANDS, savedSearchAPI } from '../api/api';
+import { getCars } from '../services/vehicleApi';
 import CarCard from '../components/CarCard';
 import { Button, Badge, FilterChip, RangeSlider, EmptyState, Skeleton, Segmented, Drawer } from '../components/ui';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -127,7 +128,7 @@ export default function BrowsePage() {
       if (filters.auctionOnly) params.auctionStatus = 'live';
 
       const cacheKey = `cars:${JSON.stringify(params)}:page${pageNum}`;
-      const data = await dedupedFetch(cacheKey, () => carsAPI.listPaginated(params, pageNum, PAGE_SIZE), 15000);
+      const data = await dedupedFetch(cacheKey, () => getCars({ ...params, page: pageNum, limit: PAGE_SIZE }), 15000);
 
       // If a newer fetch has started since this one was kicked off
       // (rapid filter changes), this response is stale — drop it
@@ -136,11 +137,11 @@ export default function BrowsePage() {
       if (pageNum === 1 && requestKey !== filterKey.current) return;
 
       if (append) {
-        setCars(prev => [...prev, ...(data.cars || [])]);
+        setCars(prev => [...prev, ...(data.data || [])]);
       } else {
-        setCars(data.cars || []);
+        setCars(data.data || []);
       }
-      setTotal(data.total || 0);
+      setTotal(data.pagination?.total || 0);
       setHasMore(data.hasMore !== false);
       setPage(pageNum);
       setFetchError(false);

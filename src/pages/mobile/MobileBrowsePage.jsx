@@ -22,7 +22,7 @@ import {
 } from '../../components/mobile';
 
 import { toast } from '../../components/mobile/MobileToast';
-import { carsAPI } from '../../api/api';
+import { getCars } from '../../services/vehicleApi';
 
 const PAGE_SIZE = 8;
 
@@ -109,15 +109,15 @@ export default function MobileBrowsePage() {
         inspectedOnly: filters.inspectedOnly || undefined,
         sort: sortParam,
       };
-      const data = await carsAPI.listPaginated(params, pageNum, PAGE_SIZE);
+      const data = await getCars({ ...params, page: pageNum, limit: PAGE_SIZE, keyword: params.search, body: params.bodyType });
       // Drop this response if a newer fetch has started since —
       // otherwise rapid search/filter changes could let an older,
       // slower request overwrite the newer results already shown.
       if (pageNum === 1 && requestKey !== requestKeyRef.current) return;
-      const newCars = data.cars || [];
+      const newCars = data.data || [];
       setCars(prev => append ? [...prev, ...newCars] : newCars);
-      setTotal(data.total || newCars.length);
-      setHasMore(data.hasMore !== false);
+      setTotal(data.pagination?.total || newCars.length);
+      setHasMore(pageNum < (data.pagination?.pages || 1));
       setPage(pageNum);
     } catch {
       if (pageNum === 1 && requestKey !== requestKeyRef.current) return;
