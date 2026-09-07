@@ -128,6 +128,7 @@ import improvementRoutes from "./routes/improvementRoutes.js";
 import platformFactoryRoutes from "./routes/platformFactoryRoutes.js";
 import ghostCheckersRoutes from "./routes/ghostCheckersRoutes.js";
 import dealerPlatformRoutes from "./routes/dealerPlatformRoutes.js";
+import regionalConfigurationRoutes from "./routes/regionalConfigurationRoutes.js";
 import { startIntegrityCron } from "./services/auctionIntegrityCron.js";
 import { startVerificationDeadlineCron } from "./services/deadlineService.js";
 
@@ -769,6 +770,7 @@ app.use("/api/improvement", improvementRoutes);
 app.use("/api/platform-factory", platformFactoryRoutes);
 app.use("/api/ghost-checkers", ghostCheckersRoutes);
 app.use("/api/dealer-platform", dealerPlatformRoutes);
+app.use("/api/countries", regionalConfigurationRoutes);
 app.use(seoRoutes);
 
 // ─── API VERSIONING ──────────────────────────────────────────

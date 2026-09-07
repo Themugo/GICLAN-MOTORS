@@ -32,6 +32,7 @@ import bidLogRoutes from "./bidLogRoutes.js";
 import transactionLedgerRoutes from "./transactionLedgerRoutes.js";
 import localizationRoutes from "./localizationRoutes.js";
 import userPreferenceRoutes from "./userPreferenceRoutes.js";
+import regionalConfigurationRoutes from "./regionalConfigurationRoutes.js";
 
 const router = Router();
 
@@ -76,5 +77,6 @@ router.use("/localization", localizationRoutes);
 
 // User Preferences (Dark Mode, etc.)
 router.use("/preferences", userPreferenceRoutes);
+router.use("/countries", regionalConfigurationRoutes);
 
 export default router;

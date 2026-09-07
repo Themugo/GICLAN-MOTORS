@@ -565,23 +565,6 @@ export const ledgerAPI = {
   verifyTransaction: (ledgerId: string) => api.patch(`/ledger/${ledgerId}/verify`).then(unwrap),
 };
 
-// ── LOCALIZATION / i18n ─────────────────────────────────
-export const localizationAPI = {
-  getTranslations: (locale?: string, namespace?: string) => 
-    api.get('/localization', { params: { locale, namespace } }).then(unwrap),
-  getNamespaces: (locale?: string) => api.get('/localization/namespaces', { params: { locale } }).then(unwrap),
-  getAllTranslations: (locale?: string) => api.get('/localization/all', { params: { locale } }).then(unwrap),
-  search: (params: any) => api.get('/localization/search', { params }).then(unwrap),
-  create: (body: any) => api.post('/localization', body).then(unwrap),
-  update: (id: string, body: any) => api.patch(`/localization/${id}`, body).then(unwrap),
-  delete: (id: string) => api.delete(`/localization/${id}`).then(unwrap),
-  import: (body: any) => api.post('/localization/import', body).then(unwrap),
-  export: (params?: any) => api.get('/localization/export', { params }).then(unwrap),
-  getKeyInAllLocales: (key: string, namespace?: string) => 
-    api.get(`/localization/key/${key}`, { params: { namespace } }).then(unwrap),
-  getStats: () => api.get('/localization/stats').then(unwrap),
-};
-
 // ── USER PREFERENCES ────────────────────────────────────
 export const preferencesAPI = {
   get: () => api.get('/preferences').then(unwrap),

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
-import { localizationAPI, preferencesAPI } from '../api/api.exports';
+import { preferencesAPI } from '../api/api.exports';
+import { getTranslations } from '../services/localizationApi';
+import { listCountries } from '../services/regionalConfigurationApi';
 
 interface Translations {
   [key: string]: string | Translations;
@@ -16,16 +18,7 @@ interface LocalizationContextType {
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
 
-const AVAILABLE_LOCALES = [
-  { code: 'en', name: 'English' },
-  { code: 'sw', name: 'Kiswahili' },
-  { code: 'ar', name: 'العربية' },
-  { code: 'zh', name: '中文' },
-  { code: 'de', name: 'Deutsch' },
-  { code: 'fr', name: 'Français' },
-  { code: 'es', name: 'Español' },
-  { code: 'pt', name: 'Português' },
-];
+const FALLBACK_LOCALES = [{ code: 'en', name: 'English' }];
 
 export const useLocalization = () => {
   const context = useContext(LocalizationContext);
@@ -47,12 +40,13 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({
   const [locale, setLocaleState] = useState(defaultLocale);
   const [translations, setTranslations] = useState<Translations>({});
   const [loading, setLoading] = useState(true);
+  const [availableLocales, setAvailableLocales] = useState<{ code: string; name: string }[]>(FALLBACK_LOCALES);
 
   // Load translations
   const loadTranslations = useCallback(async (lang: string) => {
     setLoading(true);
     try {
-      const data = await localizationAPI.getTranslations(lang);
+      const data = await getTranslations(lang);
       setTranslations(data.translations || data || {});
     } catch (error) {
       console.error('Failed to load translations:', error);
@@ -68,7 +62,17 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({
     const init = async () => {
       try {
         // Try to get user's language preference
-        const prefs = await preferencesAPI.get();
+        const [prefs, countries] = await Promise.all([
+          preferencesAPI.get(),
+          listCountries(true),
+        ]);
+        const localeMap = new Map<string, string>();
+        for (const country of countries) {
+          for (const language of country.configuration?.supportedLanguages || []) {
+            if (!localeMap.has(language)) localeMap.set(language, language === 'sw' ? 'Kiswahili' : language === 'fr' ? 'Français' : language === 'rw' ? 'Kinyarwanda' : language === 'rn' ? 'Kirundi' : 'English');
+          }
+        }
+        if (localeMap.size) setAvailableLocales([...localeMap.entries()].map(([code, name]) => ({ code, name })).sort((a, b) => a.code.localeCompare(b.code)));
         const userLocale = prefs?.language || defaultLocale;
         setLocaleState(userLocale);
         await loadTranslations(userLocale);
@@ -133,7 +137,7 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({
         translations,
         t,
         loading,
-        availableLocales: AVAILABLE_LOCALES,
+        availableLocales,
       }}
     >
       {children}

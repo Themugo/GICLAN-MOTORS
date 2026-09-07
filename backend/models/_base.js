@@ -62,7 +62,7 @@ const TABLE_MAP = {
   // graceful behavior - not a redesign of the settings table, which
   // is out of this phase's own scope.
   GlobalSettings: "system_settings",
-  TransactionLedger: "transaction_ledger", Localization: "localizations",
+  TransactionLedger: "transaction_ledger", Localization: "localization_strings",
   UserPreference: "user_preferences",
   BidLog: "bid_logs",
   // CMS Models
