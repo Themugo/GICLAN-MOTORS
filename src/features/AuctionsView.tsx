@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Gavel, Clock3, Heart, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { Vehicle, UserProfile } from '../types';
-import { auctionAPI } from '../api/api.exports';
+import { fetchActiveAuctions } from '../services/auctionService';
 import { placeBid, BidApiError } from '../services/bidApi';
 import { getFavorites, toggleFavorite, FavoriteApiError } from '../services/favoriteApi';
 import { PageHeader, Card, Badge, Button, LazyImage, Input } from '../components/ui';
@@ -80,7 +80,7 @@ export const AuctionsView: React.FC<AuctionsViewProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const result = await auctionAPI.active({ page: 1, limit: 100 });
+      const result = await fetchActiveAuctions({ page: 1, limit: 100 });
       setAuctions((result?.auctions || []) as AuctionRecord[]);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Unable to load live auctions from KAYAD.');

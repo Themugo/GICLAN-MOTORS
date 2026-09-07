@@ -344,14 +344,6 @@ export const transactionsAPI = {
   summary: ()       => api.get('/transactions/summary').then(unwrap),
 };
 
-// ── AUCTIONS (PUBLIC) ──────────────────────────────────
-export const auctionAPI = {
-  list:     (params: any) => api.get('/auctions', { params }).then(unwrap),
-  get:      (id: string)     => api.get(`/auctions/${id}`).then(unwrap),
-  active:   (params: any) => api.get('/auctions/active', { params }).then(unwrap),
-  my:       (params: any) => api.get('/auctions/my', { params }).then(unwrap),
-};
-
 // ── AUCTION ADMIN ─────────────────────────────────────
 export const auctionAdminAPI = {
   start:     (carId: string, body: any)  => api.post(`/auction-admin/${carId}/start`, body).then(unwrap),

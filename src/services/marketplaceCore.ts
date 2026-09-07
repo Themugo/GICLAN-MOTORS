@@ -1,5 +1,6 @@
 import { getCars, getCarById, mapBackendCarToVehicle, type GetCarsParams } from './vehicleApi';
-import { auctionAPI, bidsAPI } from '../api/api.exports';
+import { fetchActiveAuctions, fetchAuction } from './auctionService';
+import { bidsAPI } from '../api/api.exports';
 import type { Vehicle } from '../types';
 
 /** Canonical read model for marketplace surfaces. No mock/demo fallback is permitted. */
@@ -19,11 +20,11 @@ export async function fetchMarketplaceVehicle(id: string): Promise<Vehicle | nul
 }
 
 export async function fetchLiveAuctions(params: { page?: number; limit?: number } = {}) {
-  return auctionAPI.active(params);
+  return fetchActiveAuctions(params);
 }
 
 export async function fetchAuction(id: string) {
-  return auctionAPI.get(id);
+  return fetchAuction(id);
 }
 
 export async function fetchMyBids() {
