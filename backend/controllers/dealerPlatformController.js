@@ -9,7 +9,7 @@ import Review from "../models/Review.js";
 import InspectionOrder from "../models/InspectionOrder.js";
 import DealerAnalytics from "../models/DealerAnalytics.js";
 import Car from "../models/Car.js";
-import Lead from "../models/Lead.js";
+import { getDealerLeadRecords, getDealerLeads, updateLeadStage, updateLeadFields, addLeadNote as serviceAddLeadNote, markLeadAsHot } from "../services/leadService.js";
 import Escrow from "../models/Escrow.js";
 import MarketingCampaign from "../models/MarketingCampaign.js";
 import { createCar, updateCar, deleteCar } from "./carController.js";
@@ -35,7 +35,7 @@ export async function getDealerDashboard(req, res) {
     const dealerId = req.user.id;
     const [listings, leads, releasedEscrows] = await Promise.all([
       Car.find({ dealer: dealerId }),
-      Lead.find({ dealer: dealerId }),
+      getDealerLeadRecords(dealerId),
       Escrow.find({ seller: dealerId, status: "released" }),
     ]);
 
@@ -248,72 +248,52 @@ export async function bulkUpdateListings(req, res) {
 // all despite existing in the schema).
 export async function getLeads(req, res) {
   try {
-    const { stage, page = 1, limit = 20 } = req.query;
-    const dealerId = req.user.id;
-    const filter = { dealer: dealerId };
-    if (stage) filter.stage = stage;
-
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const [leads, allLeads] = await Promise.all([
-      Lead.find(filter)
-        .populate("buyer", "name email phone")
-        .populate("vehicle", "title")
-        .sort({ createdAt: -1 })
-        .skip((pageNum - 1) * limitNum)
-        .limit(limitNum),
-      Lead.find({ dealer: dealerId }),
-    ]);
-
-    const stats = { total: allLeads.length, new: 0, contacted: 0, negotiating: 0, inspectionBooked: 0, reserved: 0, sold: 0, lost: 0 };
-    for (const lead of allLeads) {
-      if (Object.prototype.hasOwnProperty.call(stats, lead.stage)) stats[lead.stage]++;
-    }
-
-    res.json({
-      success: true,
-      data: {
-        items: leads,
-        pagination: { page: pageNum, limit: limitNum, total: allLeads.length, pages: Math.ceil(allLeads.length / limitNum) },
-        stats,
-      },
+    const result = await getDealerLeads(req.user.id, {
+      stage: req.query.stage,
+      search: req.query.search,
+      page: req.query.page,
+      limit: req.query.limit,
+      archived: req.query.archived === "true" ? true : req.query.archived === "false" ? false : undefined,
     });
+    res.json({ success: true, data: { items: result.items, pagination: { page: result.page, limit: result.limit, total: result.count, pages: result.pages }, stats: {} } });
   } catch (err) {
     logError("Error fetching leads:", err);
-    res.status(500).json({ success: false, message: "Failed to load leads" });
+    res.status(500).json({ success: false, message: "Failed to load dealer leads" });
   }
 }
 
 export async function updateLead(req, res) {
   try {
     const { leadId } = req.params;
-    const existing = await Lead.findById(leadId);
-    if (!existing) {
-      return res.status(404).json({ success: false, message: "Lead not found" });
+    const existing = await getDealerLeadRecords(req.user.id);
+    const lead = existing.find((item) => String(item.id) === String(leadId));
+    if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
+    const body = req.body || {};
+    let updated = lead;
+    if (body.stage !== undefined) updated = await updateLeadStage(leadId, body.stage, req.user.id);
+    if (body.isHot !== undefined && Boolean(body.isHot) !== Boolean(updated.isHot)) {
+      updated = await markLeadAsHot(leadId, req.user.id);
     }
-    // Fixed: this previously just echoed back req.body without ever
-    // writing to the database at all - a dealer changing a lead's
-    // stage (e.g. dragging a card in a real pipeline view) would see
-    // a confident success response while nothing was actually saved.
-    if (existing.dealer !== req.user.id) {
-      return res.status(403).json({ success: false, message: "Not authorized to update this lead" });
-    }
-    const allowedFields = ["stage", "isHot", "archived", "estimatedValue"];
-    const updates = {};
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) updates[field] = req.body[field];
-    }
-    updates.lastActivityAt = new Date().toISOString();
-    const updated = await Lead.findByIdAndUpdate(leadId, updates, { new: true });
+    updated = await updateLeadFields(leadId, req.user.id, { estimatedValue: body.estimatedValue, archived: body.archived });
     res.json({ success: true, data: updated });
   } catch (err) {
     logError("Error updating lead:", err);
-    res.status(500).json({ success: false, message: "Failed to update lead" });
+    const status = err.message?.startsWith("Invalid lead stage") ? 400 : err.message === "Lead not found" ? 404 : 500;
+    res.status(status).json({ success: false, message: status === 500 ? "Failed to update lead" : err.message });
   }
 }
 
 export async function addLeadNote(req, res) {
-  return res.status(501).json({ success: false, code: "DEALER_CRM_NOTE_UNAVAILABLE", message: "Dealer lead notes are not available because the canonical schema does not define a dealer-scoped lead note contract." });
+  try {
+    const note = String(req.body?.note || "").trim();
+    if (!note) return res.status(400).json({ success: false, message: "note is required" });
+    const existing = await getDealerLeadRecords(req.user.id);
+    if (!existing.some((lead) => String(lead.id) === String(req.params.leadId))) return res.status(404).json({ success: false, message: "Lead not found" });
+    res.json({ success: true, data: await serviceAddLeadNote(req.params.leadId, req.user.id, note) });
+  } catch (err) {
+    logError("Error adding lead note:", err);
+    res.status(500).json({ success: false, message: "Failed to add lead note" });
+  }
 }
 
 export async function createTask(req, res) {
@@ -328,7 +308,7 @@ export async function getSalesPipeline(req, res) {
   try {
     const dealerId = req.user.id;
     const [leads, releasedEscrows] = await Promise.all([
-      Lead.find({ dealer: dealerId }),
+      getDealerLeadRecords(dealerId),
       Escrow.find({ seller: dealerId, status: "released" }),
     ]);
 
@@ -400,7 +380,7 @@ export async function getDealerAnalytics(req, res) {
     const dealerId = req.user.id;
     const [listings, leads, releasedEscrows] = await Promise.all([
       Car.find({ dealer: dealerId }),
-      Lead.find({ dealer: dealerId }),
+      getDealerLeadRecords(dealerId),
       Escrow.find({ seller: dealerId, status: "released" }),
     ]);
 

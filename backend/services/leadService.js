@@ -1,60 +1,134 @@
-// backend/services/leadService.js - Production Hardened v7.0
-// ─────────────────────────────────────────────────────────────
-// Lead service
-// Manages lead creation, updates, and analytics
-// ─────────────────────────────────────────────────────────────
+// Canonical lead/CRM service.
+// All persistence uses the shared DB adapter and explicit lead workflow rules.
 
-import { addTimelineEvent, getLeadTimeline } from "./leadTimelineService.js";
-import { logInfo, logError, logWarn } from "../utils/logger.js";
-import { findAll, findById, findOne, create, count, aggregate } from "../db/index.js";
+import { addTimelineEvent } from "./leadTimelineService.js";
+import { logInfo, logError } from "../utils/logger.js";
+import { findAll, findById, findOne, create, count, aggregate, update } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
 
-// =============================
-// ➕ CREATE LEAD
-// =============================
+export const LEAD_STAGES = Object.freeze([
+  "new",
+  "contacted",
+  "negotiating",
+  "test_drive",
+  "inspectionBooked",
+  "reserved",
+  "escrow_started",
+  "sold",
+  "lost",
+]);
+
+const TRANSITIONS = Object.freeze({
+  new: ["contacted", "negotiating", "lost"],
+  contacted: ["negotiating", "test_drive", "inspectionBooked", "lost"],
+  negotiating: ["test_drive", "inspectionBooked", "reserved", "lost"],
+  test_drive: ["negotiating", "inspectionBooked", "reserved", "lost"],
+  inspectionBooked: ["negotiating", "reserved", "escrow_started", "lost"],
+  reserved: ["negotiating", "escrow_started", "sold", "lost"],
+  escrow_started: ["sold", "lost"],
+  sold: [],
+  lost: ["new", "contacted", "negotiating"],
+});
+
+const toId = (value) => value?.id || value?._id || value || null;
+
+const normalizeLead = (lead) => {
+  if (!lead) return null;
+  const normalized = { ...lead };
+  normalized._id = normalized.id;
+  return normalized;
+};
+
+async function enrichLeads(leads) {
+  const rows = Array.isArray(leads) ? leads : [leads];
+  const buyerIds = [...new Set(rows.map((l) => toId(l.buyer)).filter(Boolean).map(String))];
+  const dealerIds = [...new Set(rows.map((l) => toId(l.dealer)).filter(Boolean).map(String))];
+  const vehicleIds = [...new Set(rows.map((l) => toId(l.vehicle)).filter(Boolean).map(String))];
+
+  const [buyers, dealers, vehicles] = await Promise.all([
+    buyerIds.length ? findAll("users", { filters: { id: { $in: buyerIds } }, select: "id name email phone" }) : [],
+    dealerIds.length ? findAll("users", { filters: { id: { $in: dealerIds } }, select: "id name email phone businessName" }) : [],
+    vehicleIds.length ? findAll("cars", { filters: { id: { $in: vehicleIds } }, select: "id title brand model year price images dealer" }) : [],
+  ]);
+
+  const byId = (items) => new Map(items.map((item) => [String(item.id), normalizeLead(item)]));
+  const buyerMap = byId(buyers);
+  const dealerMap = byId(dealers);
+  const vehicleMap = byId(vehicles);
+
+  return rows.map((raw) => {
+    const lead = normalizeLead(raw);
+    lead.buyer = buyerMap.get(String(toId(raw.buyer))) || raw.buyer || null;
+    lead.dealer = dealerMap.get(String(toId(raw.dealer))) || raw.dealer || null;
+    lead.vehicle = vehicleMap.get(String(toId(raw.vehicle))) || raw.vehicle || null;
+    return lead;
+  });
+}
+
+async function createLeadRecord(payload) {
+  const { data, error } = await getSupabase().rpc("kayad_create_lead_atomic", {
+    p_buyer: payload.buyer,
+    p_dealer: payload.dealer,
+    p_vehicle: payload.vehicle || null,
+    p_source: payload.source,
+    p_source_reference: payload.sourceReference || null,
+    p_estimated_value: Number(payload.estimatedValue || 0),
+  });
+  if (error) throw error;
+  return normalizeLead(data);
+}
 
 export const createLead = async (buyerId, dealerId, vehicleId, source, referenceId) => {
   try {
-    // Check if lead already exists for this combination
-    const existingLead = await findOne("leads", {
+    if (!buyerId || !dealerId || !source) throw new Error("buyerId, dealerId and source are required");
+    const existing = await findOne("leads", {
       buyer: buyerId,
       dealer: dealerId,
-      vehicle: vehicleId,
+      vehicle: vehicleId || null,
       source,
-      sourceReference: referenceId,
+      sourceReference: referenceId || null,
     });
+    if (existing) return existing;
 
-    if (existingLead) {
-      logInfo("Lead already exists", { buyerId, dealerId, vehicleId, source });
-      return existingLead;
-    }
-
-    // Get vehicle details for estimated value
     let estimatedValue = 0;
     if (vehicleId) {
       const vehicle = await findById("cars", vehicleId);
-      if (vehicle) {
-        estimatedValue = vehicle.price || 0;
-      }
+      estimatedValue = Number(vehicle?.price || 0);
     }
 
-    const lead = await create("leads", {
-      buyer: buyerId,
-      dealer: dealerId,
-      vehicle: vehicleId,
-      source,
-      sourceReference: referenceId,
-      estimatedValue,
-      lastActivityAt: new Date(),
-    });
+    let lead;
+    let created = false;
+    try {
+      const result = await createLeadRecord({
+        buyer: buyerId,
+        dealer: dealerId,
+        vehicle: vehicleId,
+        source,
+        sourceReference: referenceId,
+        estimatedValue,
+      });
+      lead = result.lead || result;
+      created = Boolean(result.created);
+    } catch (err) {
+      // The unique business key makes concurrent create attempts safe.
+      const concurrent = await findOne("leads", {
+        buyer: buyerId,
+        dealer: dealerId,
+        vehicle: vehicleId || null,
+        source,
+        sourceReference: referenceId || null,
+      });
+      if (!concurrent) throw err;
+      lead = concurrent;
+    }
 
-    // Add creation activity
-    await addTimelineEvent(lead.id, "lead_created", buyerId, "buyer", `Lead created from ${source}`, {
-      source,
-      referenceId,
-    });
-
-    logInfo("Lead created", { leadId: lead.id, buyerId, dealerId, source });
+    if (lead && created) {
+      await addTimelineEvent(lead.id, "lead_created", buyerId, "buyer", `Lead created from ${source}`, {
+        source,
+        referenceId: referenceId || null,
+      });
+    }
+    logInfo("Lead created", { leadId: lead?.id, buyerId, dealerId, source });
     return lead;
   } catch (err) {
     logError("Failed to create lead", err, { buyerId, dealerId, source });
@@ -62,360 +136,200 @@ export const createLead = async (buyerId, dealerId, vehicleId, source, reference
   }
 };
 
-// =============================
-// 🔄 UPDATE LEAD STAGE
-// =============================
-
 export const updateLeadStage = async (leadId, newStage, actorId) => {
-  try {
-    const lead = await findById("leads", leadId);
-    if (!lead) {
-      throw new Error("Lead not found");
-    }
-
-    await lead.updateStage(newStage, actorId);
-    logInfo("Lead stage updated", { leadId, newStage, actorId });
-    return lead;
-  } catch (err) {
-    logError("Failed to update lead stage", err, { leadId, newStage });
-    throw err;
-  }
+  if (!LEAD_STAGES.includes(newStage)) throw new Error(`Invalid lead stage: ${newStage}`);
+  const { data, error } = await getSupabase().rpc("kayad_transition_lead_atomic", {
+    p_lead_id: leadId,
+    p_new_stage: newStage,
+    p_actor_id: actorId,
+  });
+  if (error) throw error;
+  logInfo("Lead stage updated", { leadId, newStage, actorId });
+  return normalizeLead(data);
 };
 
-// =============================
-// ➕ ADD LEAD ACTIVITY
-// =============================
-
-export const addLeadActivity = async (leadId, type, actorId, details) => {
-  try {
-    const lead = await findById("leads", leadId);
-    if (!lead) {
-      throw new Error("Lead not found");
-    }
-
-    await lead.addActivity(type, actorId, "dealer", details.description, details.metadata);
-
-    if (details.totalMessages) {
-      lead.totalMessages = details.totalMessages;
-      await lead.save();
-    }
-
-    logInfo("Lead activity added", { leadId, type, actorId });
-    return lead;
-  } catch (err) {
-    logError("Failed to add lead activity", err, { leadId, type });
-    throw err;
+export const addLeadActivity = async (leadId, type, actorId, details = {}) => {
+  const lead = await findById("leads", leadId);
+  if (!lead) throw new Error("Lead not found");
+  const activity = await addTimelineEvent(
+    leadId,
+    type,
+    actorId,
+    details.actorType || "dealer",
+    details.description || type,
+    details.metadata || {},
+  );
+  if (details.totalMessages !== undefined) {
+    await update("leads", leadId, { totalMessages: Math.max(0, Number(details.totalMessages) || 0) });
   }
+  return { ...(normalizeLead(lead)), activity };
 };
-
-// =============================
-// 📋 GET DEALER LEADS
-// =============================
 
 export const getDealerLeads = async (dealerId, filters = {}) => {
-  try {
-    const leads = await Lead.getDealerLeads(dealerId, filters);
-    return leads;
-  } catch (err) {
-    logError("Failed to get dealer leads", err, { dealerId });
-    throw err;
-  }
-};
+  const clean = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined));
+  const page = Math.max(1, Number(clean.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(clean.limit) || 50));
+  delete clean.page; delete clean.limit;
+  const search = clean.search;
+  delete clean.search;
+  const dbFilters = { dealer: dealerId, ...clean };
+  if (dbFilters.archived === undefined) dbFilters.archived = false;
 
-// =============================
-// 🔍 GET LEAD BY ID
-// =============================
+  if (search) {
+    const all = await findAll("leads", { filters: dbFilters, orderBy: "lastActivityAt", ascending: false });
+    const enrichedAll = await enrichLeads(all);
+    const q = String(search).trim().toLowerCase();
+    const matched = enrichedAll.filter((lead) => {
+      const buyer = lead.buyer || {};
+      const vehicle = lead.vehicle || {};
+      return [buyer.name, buyer.email, buyer.phone, vehicle.title, vehicle.brand, vehicle.model]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(q));
+    });
+    const items = matched.slice((page - 1) * limit, page * limit);
+    return { items, count: matched.length, page, limit, pages: Math.ceil(matched.length / limit) };
+  }
+
+  const result = await findAll("leads", {
+    filters: dbFilters,
+    orderBy: "lastActivityAt",
+    limit,
+    offset: (page - 1) * limit,
+    count: true,
+  });
+  const enriched = await enrichLeads(result.data);
+  return { items: enriched, count: result.count || 0, page, limit, pages: Math.ceil((result.count || 0) / limit) };
+};
 
 export const getLeadById = async (leadId) => {
-  try {
-    const lead = await findById("leads", leadId)
-       /* .populate("buyer", "name email phone") - TODO: use separate query */
-       /* .populate("dealer", "name email businessName") - TODO: use separate query */
-       /* .populate("vehicle", "title brand model year price images") - TODO: use separate query */;
-
-    if (!lead) {
-      throw new Error("Lead not found");
-    }
-
-    return lead;
-  } catch (err) {
-    logError("Failed to get lead by id", err, { leadId });
-    throw err;
-  }
+  const lead = await findById("leads", leadId);
+  if (!lead) throw new Error("Lead not found");
+  return (await enrichLeads(lead))[0];
 };
-
-// =============================
-// 📦 ARCHIVE LEAD
-// =============================
 
 export const archiveLead = async (leadId, actorId) => {
-  try {
-    const lead = await findById("leads", leadId);
-    if (!lead) {
-      throw new Error("Lead not found");
-    }
-
-    await lead.archive(actorId);
-    logInfo("Lead archived", { leadId, actorId });
-    return lead;
-  } catch (err) {
-    logError("Failed to archive lead", err, { leadId });
-    throw err;
-  }
+  const lead = await findById("leads", leadId);
+  if (!lead) throw new Error("Lead not found");
+  const updated = await update("leads", leadId, { archived: true, lastActivityAt: new Date().toISOString() });
+  await addTimelineEvent(leadId, "lead_archived", actorId, "dealer", "Lead archived");
+  return (await enrichLeads(updated))[0];
 };
-
-// =============================
-// 🔥 MARK LEAD AS HOT
-// =============================
 
 export const markLeadAsHot = async (leadId, actorId) => {
-  try {
-    const lead = await findById("leads", leadId);
-    if (!lead) {
-      throw new Error("Lead not found");
-    }
-
-    await lead.markAsHot(actorId);
-    logInfo("Lead hot status updated", { leadId, actorId });
-    return lead;
-  } catch (err) {
-    logError("Failed to mark lead as hot", err, { leadId });
-    throw err;
-  }
+  const lead = await findById("leads", leadId);
+  if (!lead) throw new Error("Lead not found");
+  const next = !Boolean(lead.isHot);
+  const updated = await update("leads", leadId, { isHot: next, lastActivityAt: new Date().toISOString() });
+  await addTimelineEvent(leadId, next ? "lead_marked_hot" : "lead_unmarked_hot", actorId, "dealer", next ? "Lead marked hot" : "Lead removed from hot leads");
+  return (await enrichLeads(updated))[0];
 };
 
-// =============================
-// 📊 CALCULATE CONVERSION RATE
-// =============================
+export const addLeadNote = async (leadId, actorId, note) => {
+  const clean = String(note || "").trim();
+  if (!clean) throw new Error("Note is required");
+  const updated = await update("leads", leadId, { notes: clean, lastActivityAt: new Date().toISOString() });
+  await addTimelineEvent(leadId, "note_added", actorId, "dealer", "Note added", { note: clean });
+  return (await enrichLeads(updated))[0];
+};
+
+
+export const getDealerLeadRecords = async (dealerId, { archived } = {}) => {
+  const filters = { dealer: dealerId };
+  if (archived !== undefined) filters.archived = archived;
+  return findAll("leads", { filters, orderBy: "lastActivityAt", ascending: false });
+};
+
+export const updateLeadFields = async (leadId, actorId, fields = {}) => {
+  const lead = await findById("leads", leadId);
+  if (!lead) throw new Error("Lead not found");
+  const updates = {};
+  if (fields.estimatedValue !== undefined) {
+    const value = Number(fields.estimatedValue);
+    if (!Number.isFinite(value) || value < 0) throw new Error("estimatedValue must be a non-negative number");
+    updates.estimatedValue = value;
+  }
+  if (fields.archived !== undefined) updates.archived = Boolean(fields.archived);
+  if (Object.keys(updates).length) {
+    updates.lastActivityAt = new Date().toISOString();
+    await update("leads", leadId, updates);
+  }
+  if (fields.archived !== undefined) await addTimelineEvent(leadId, fields.archived ? "lead_archived" : "lead_unarchived", actorId, "dealer", fields.archived ? "Lead archived" : "Lead restored");
+  return getLeadById(leadId);
+};
 
 export const calculateConversionRate = async (dealerId, startDate, endDate) => {
-  try {
-    const matchQuery = {
-      dealer: dealerId,
-      createdAt: {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      },
-    };
-
-    const totalLeads = await count("leads", matchQuery);
-    const soldLeads = await count("leads", {
-      ...matchQuery,
-      stage: "sold",
-    });
-
-    const conversionRate = totalLeads > 0 ? (soldLeads / totalLeads) * 100 : 0;
-
-    return {
-      totalLeads,
-      soldLeads,
-      conversionRate,
-    };
-  } catch (err) {
-    logError("Failed to calculate conversion rate", err, { dealerId });
-    throw err;
-  }
+  const matchQuery = { dealer: dealerId, createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) } };
+  const totalLeads = await count("leads", matchQuery);
+  const soldLeads = await count("leads", { ...matchQuery, stage: "sold" });
+  return { totalLeads, soldLeads, conversionRate: totalLeads ? (soldLeads / totalLeads) * 100 : 0 };
 };
-
-// =============================
-// ⏱️ CALCULATE RESPONSE TIME
-// =============================
 
 export const calculateResponseTime = async (dealerId, startDate, endDate) => {
-  try {
-    const leads = await findAll("leads", { 
-      filters: {
-        dealer: dealerId,
-        createdAt: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate),
-        },
-        firstResponseTime: { $gt: 0 },
-      }
-    });
-
-    if (leads.length === 0) {
-      return {
-        averageResponseTime: 0,
-        totalLeads: 0,
-      };
-    }
-
-    const totalResponseTime = leads.reduce((sum, lead) => sum + lead.firstResponseTime, 0);
-    const averageResponseTime = totalResponseTime / leads.length;
-
-    return {
-      averageResponseTime,
-      totalLeads: leads.length,
-    };
-  } catch (err) {
-    logError("Failed to calculate response time", err, { dealerId });
-    throw err;
-  }
+  const leads = await findAll("leads", { filters: {
+    dealer: dealerId,
+    createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
+    firstResponseTime: { $gt: 0 },
+  }});
+  const totalResponseTime = leads.reduce((sum, lead) => sum + Number(lead.firstResponseTime || 0), 0);
+  return { averageResponseTime: leads.length ? totalResponseTime / leads.length : 0, totalLeads: leads.length };
 };
-
-// =============================
-// 📊 GET LEAD PIPELINE
-// =============================
 
 export const getLeadPipeline = async (dealerId) => {
-  try {
-    const pipeline = await Lead.getLeadPipeline(dealerId);
-    return pipeline;
-  } catch (err) {
-    logError("Failed to get lead pipeline", err, { dealerId });
-    throw err;
-  }
+  const leads = await findAll("leads", { filters: { dealer: dealerId, archived: false } });
+  return LEAD_STAGES.map((stage) => {
+    const stageLeads = leads.filter((lead) => lead.stage === stage);
+    return {
+      stage,
+      count: stageLeads.length,
+      value: stageLeads.reduce((sum, lead) => sum + Number(lead.estimatedValue || 0), 0),
+    };
+  });
 };
-
-// =============================
-// 📈 GET LEAD ANALYTICS
-// =============================
 
 export const getLeadAnalytics = async (dealerId, startDate, endDate) => {
-  try {
-    const matchQuery = {
-      dealer: dealerId,
-      createdAt: {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      },
-    };
-
-    // Total leads by source
-    const leadsBySource = await aggregate("leads", [{ $match: matchQuery },
-      {
-        $group: {
-          _id: "$source",
-          count: { $sum: 1 },
-          totalValue: { $sum: "$estimatedValue" },
-        },
-      },]);
-
-    // Total leads by stage
-    const leadsByStage = await aggregate("leads", [{ $match: matchQuery },
-      {
-        $group: {
-          _id: "$stage",
-          count: { $sum: 1 },
-          totalValue: { $sum: "$estimatedValue" },
-        },
-      },]);
-
-    // Conversion metrics
-    const conversionMetrics = await calculateConversionRate(dealerId, startDate, endDate);
-
-    // Response time metrics
-    const responseTimeMetrics = await calculateResponseTime(dealerId, startDate, endDate);
-
-    // Hot leads
-    const hotLeadsCount = await count("leads", {
-      ...matchQuery,
-      isHot: true,
-    });
-
-    return {
-      leadsBySource,
-      leadsByStage,
-      conversionMetrics,
-      responseTimeMetrics,
-      hotLeadsCount,
-    };
-  } catch (err) {
-    logError("Failed to get lead analytics", err, { dealerId });
-    throw err;
-  }
+  const matchQuery = { dealer: dealerId, createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) } };
+  const [leadsBySource, leadsByStage, conversionMetrics, responseTimeMetrics, hotLeadsCount] = await Promise.all([
+    aggregate("leads", [{ $match: matchQuery }, { $group: { _id: "$source", count: { $sum: 1 }, totalValue: { $sum: "$estimatedValue" } } }]),
+    aggregate("leads", [{ $match: matchQuery }, { $group: { _id: "$stage", count: { $sum: 1 }, totalValue: { $sum: "$estimatedValue" } } }]),
+    calculateConversionRate(dealerId, startDate, endDate),
+    calculateResponseTime(dealerId, startDate, endDate),
+    count("leads", { ...matchQuery, isHot: true }),
+  ]);
+  return { leadsBySource, leadsByStage, conversionMetrics, responseTimeMetrics, hotLeadsCount };
 };
-
-// =============================
-// 🔄 FIND OR CREATE LEAD FROM CHAT
-// =============================
 
 export const findOrCreateLeadFromChat = async (chatId) => {
-  try {
-    const chat = await findById("chats", chatId) /* .populate("car") - TODO: use separate query */;
-    if (!chat) {
-      throw new Error("Chat not found");
-    }
-
-    const buyerId = chat.participants.find((p) => p.toString() !== chat.car?.dealer?.toString());
-    const dealerId = chat.car?.dealer;
-    const vehicleId = chat.car?._id;
-
-    if (!buyerId || !dealerId) {
-      throw new Error("Invalid chat participants");
-    }
-
-    return await createLead(buyerId, dealerId, vehicleId, "chat", chatId);
-  } catch (err) {
-    logError("Failed to find or create lead from chat", err, { chatId });
-    throw err;
-  }
+  const chat = await findById("chats", chatId);
+  if (!chat) throw new Error("Chat not found");
+  const participants = Array.isArray(chat.participants) ? chat.participants.map(String) : [];
+  const vehicleId = toId(chat.car);
+  const vehicle = vehicleId ? await findById("cars", vehicleId) : null;
+  const dealerId = toId(vehicle?.dealer);
+  const buyerId = participants.find((id) => id !== String(dealerId));
+  if (!buyerId || !dealerId) throw new Error("Invalid chat participants");
+  return createLead(buyerId, dealerId, vehicleId, "chat", chatId);
 };
-
-// =============================
-// 🔄 FIND OR CREATE LEAD FROM AUCTION
-// =============================
 
 export const findOrCreateLeadFromAuction = async (auctionId, buyerId) => {
-  try {
-    const vehicle = await findById("cars", auctionId);
-    if (!vehicle || !["live", "ended"].includes(vehicle.auctionStatus)) {
-      throw new Error("Auction not found");
-    }
-    if (!vehicle) {
-      throw new Error("Vehicle not found");
-    }
-
-    const dealerId = vehicle.dealer;
-
-    return await createLead(buyerId, dealerId, vehicle.id, "auction", auctionId);
-  } catch (err) {
-    logError("Failed to find or create lead from auction", err, { auctionId });
-    throw err;
-  }
+  const vehicle = await findById("cars", auctionId);
+  if (!vehicle || !["live", "ended"].includes(vehicle.auctionStatus)) throw new Error("Auction not found");
+  if (!vehicle.dealer) throw new Error("Auction vehicle has no dealer");
+  return createLead(buyerId, vehicle.dealer, vehicle.id, "auction", auctionId);
 };
 
-// =============================
-// 🔄 FIND OR CREATE LEAD FROM ESCROW
-// =============================
-
 export const findOrCreateLeadFromEscrow = async (escrowId) => {
-  try {
-    const escrow = await findById("escrows", escrowId) /* .populate("car") - TODO: use separate query */;
-    if (!escrow) {
-      throw new Error("Escrow not found");
-    }
-
-    const buyerId = escrow.buyer;
-    const dealerId = escrow.seller;
-    const vehicleId = escrow.car?._id;
-
-    const lead = await createLead(buyerId, dealerId, vehicleId, "chat", null);
-
-    // Update lead stage to escrow_started
-    await updateLeadStage(lead.id, "escrow_started", dealerId);
-
-    return lead;
-  } catch (err) {
-    logError("Failed to find or create lead from escrow", err, { escrowId });
-    throw err;
-  }
+  const escrow = await findById("escrows", escrowId);
+  if (!escrow) throw new Error("Escrow not found");
+  const vehicleId = toId(escrow.car);
+  const source = escrow.source || "escrow";
+  const lead = await createLead(escrow.buyer, escrow.seller, vehicleId, source, escrowId);
+  if (lead.stage !== "escrow_started") await updateLeadStage(lead.id, "escrow_started", escrow.seller);
+  return getLeadById(lead.id);
 };
 
 export default {
-  createLead,
-  updateLeadStage,
-  addLeadActivity,
-  getDealerLeads,
-  getLeadById,
-  archiveLead,
-  markLeadAsHot,
-  calculateConversionRate,
-  calculateResponseTime,
-  getLeadPipeline,
-  getLeadAnalytics,
-  findOrCreateLeadFromChat,
-  findOrCreateLeadFromAuction,
-  findOrCreateLeadFromEscrow,
+  createLead, updateLeadStage, addLeadActivity, addLeadNote, getDealerLeads, getDealerLeadRecords, updateLeadFields, getLeadById,
+  archiveLead, markLeadAsHot, calculateConversionRate, calculateResponseTime,
+  getLeadPipeline, getLeadAnalytics, findOrCreateLeadFromChat, findOrCreateLeadFromAuction,
+  findOrCreateLeadFromEscrow, LEAD_STAGES,
 };

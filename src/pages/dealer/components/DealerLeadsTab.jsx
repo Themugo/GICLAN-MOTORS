@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { dealerAPI } from '../../../api/api';
+import leadApi from '../../../services/leadApi';
 import { MessageSquare, Mail, Phone, Search, X, Archive } from 'lucide-react';
 import { timeAgo } from './DashboardWidgets';
 
@@ -28,7 +28,7 @@ export default function DealerLeadsTab({ toast }) {
     const params = {};
     if (filter) params.stage = filter;
     if (search) params.search = search;
-    dealerAPI.leads(params)
+    leadApi.list(params)
       .then(res => { setLeads(res.leads || []); })
       .catch(() => toast('Failed to load leads', 'error'))
       .finally(() => setLoading(false));
@@ -40,7 +40,7 @@ export default function DealerLeadsTab({ toast }) {
 
   const handleStageChange = async (leadId, stage) => {
     try {
-      await dealerAPI.updateLeadStage(leadId, { stage });
+      await leadApi.updateStage(leadId, stage);
       setLeads(p => p.map(l => l._id === leadId ? { ...l, stage } : l));
       toast(`Moved to ${STAGE_CONFIG[stage]?.label || stage}`, 'success');
     } catch {
@@ -51,7 +51,7 @@ export default function DealerLeadsTab({ toast }) {
   const handleArchive = async (leadId) => {
     if (!confirm('Archive this lead?')) return;
     try {
-      await dealerAPI.archiveLead(leadId);
+      await leadApi.archive(leadId);
       setLeads(p => p.filter(l => l._id !== leadId));
       toast('Lead archived', 'info');
     } catch {
