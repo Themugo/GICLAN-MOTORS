@@ -16,6 +16,9 @@ import { listDealerReviews } from '../services/review.service.js';
 import { createCar, updateCar, deleteCar } from "./carController.js";
 import { logError } from "../utils/logger.js";
 import { getDealerEntitlement } from "../services/dealerSubscription.service.js";
+import { create, findAll, findOne, update } from "../db/index.js";
+import { logAuditEvent } from "../services/auditService.js";
+import crypto from "crypto";
 
 // ============================================================
 // DEALER DASHBOARD
@@ -313,11 +316,37 @@ export async function updateLead(req, res) {
 }
 
 export async function addLeadNote(req, res) {
-  return res.status(501).json({ success: false, code: "DEALER_CRM_NOTE_UNAVAILABLE", message: "Dealer lead notes are not available because the canonical schema does not define a dealer-scoped lead note contract." });
+  const lead = await Lead.findById(req.params.leadId);
+  if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
+  if (lead.dealer !== req.user.id) return res.status(403).json({ success: false, message: "Not authorized to access this lead" });
+  const text = String(req.body?.note || req.body?.description || "").trim();
+  if (text.length < 1 || text.length > 4000) return res.status(400).json({ success: false, message: "Note must be between 1 and 4000 characters" });
+  const row = await create("lead_activities", { lead: lead.id, type: "note", actor: req.user.id, actorType: "dealer", description: text, metadata: {} });
+  await Lead.findByIdAndUpdate(lead.id, { lastActivityAt: new Date().toISOString() }, { new: true });
+  await logAuditEvent({ action: "dealer_lead_note_created", actor: req.user.id, actorRole: req.user.role, actorName: req.user.name, actorEmail: req.user.email, target: lead.id, targetModel: "Lead", details: { activityId: row.id }, ipAddress: req.ip, userAgent: req.get("user-agent"), requestId: req.id });
+  return res.status(201).json({ success: true, data: row });
+}
+
+export async function getLeadActivities(req, res) {
+  const lead = await Lead.findById(req.params.leadId);
+  if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
+  if (lead.dealer !== req.user.id) return res.status(403).json({ success: false, message: "Not authorized to access this lead" });
+  const rows = await findAll("lead_activities", { filters: { lead: lead.id }, orderBy: "createdAt", ascending: false, limit: 100 });
+  return res.json({ success: true, data: { items: rows } });
 }
 
 export async function createTask(req, res) {
-  return res.status(501).json({ success: false, code: "DEALER_CRM_TASK_UNAVAILABLE", message: "Dealer lead tasks are not available because the canonical schema does not define a dealer-scoped lead task contract." });
+  const lead = await Lead.findById(req.params.leadId);
+  if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
+  if (lead.dealer !== req.user.id) return res.status(403).json({ success: false, message: "Not authorized to access this lead" });
+  const title = String(req.body?.title || req.body?.task || "").trim();
+  if (title.length < 2 || title.length > 200) return res.status(400).json({ success: false, message: "Task title must be between 2 and 200 characters" });
+  const dueAt = req.body?.dueAt ? new Date(req.body.dueAt) : null;
+  if (dueAt && Number.isNaN(dueAt.getTime())) return res.status(400).json({ success: false, message: "Invalid due date" });
+  const row = await create("lead_activities", { lead: lead.id, type: "task", actor: req.user.id, actorType: "dealer", description: title, metadata: { dueAt: dueAt?.toISOString() || null, priority: ["low","normal","high"].includes(req.body?.priority) ? req.body.priority : "normal", status: "open" } });
+  await Lead.findByIdAndUpdate(lead.id, { lastActivityAt: new Date().toISOString() }, { new: true });
+  await logAuditEvent({ action: "dealer_lead_task_created", actor: req.user.id, actorRole: req.user.role, actorName: req.user.name, actorEmail: req.user.email, target: lead.id, targetModel: "Lead", details: { activityId: row.id }, ipAddress: req.ip, userAgent: req.get("user-agent"), requestId: req.id });
+  return res.status(201).json({ success: true, data: row });
 }
 
 // ============================================================
@@ -388,11 +417,40 @@ export async function getSalesPipeline(req, res) {
 // type, budget, status, start date) is genuinely persisted via a new
 // real table.
 export async function getMarketingCampaigns(req, res) {
-  return res.status(501).json({ success: false, code: "DEALER_MARKETING_UNAVAILABLE", message: "Dealer marketing is not available because the canonical migration chain does not define a marketing campaign contract." });
+  const campaigns = await findAll("marketing_campaigns", { filters: { dealer: req.user.id }, orderBy: "createdAt", ascending: false, limit: 100 });
+  const stats = { total: campaigns.length, draft: 0, scheduled: 0, active: 0, paused: 0, completed: 0, archived: 0, budget: 0 };
+  for (const campaign of campaigns) {
+    if (stats[campaign.status] !== undefined) stats[campaign.status] += 1;
+    stats.budget += Number(campaign.budget || 0);
+  }
+  return res.json({ success: true, data: { items: campaigns, stats, metricsSource: "campaign_configuration_only" } });
 }
 
 export async function createCampaign(req, res) {
-  return res.status(501).json({ success: false, code: "DEALER_MARKETING_UNAVAILABLE", message: "Dealer marketing is not available because the canonical migration chain does not define a marketing campaign contract." });
+  const name = String(req.body?.name || "").trim();
+  const campaignType = String(req.body?.campaignType || "promotion").trim();
+  const allowedTypes = new Set(["promotion", "listing", "brand", "event", "social"]);
+  if (name.length < 2 || name.length > 160) return res.status(400).json({ success: false, message: "Campaign name must be between 2 and 160 characters" });
+  if (!allowedTypes.has(campaignType)) return res.status(400).json({ success: false, message: "Invalid campaign type" });
+  const budget = Number(req.body?.budget || 0);
+  if (!Number.isFinite(budget) || budget < 0) return res.status(400).json({ success: false, message: "Budget must be a non-negative number" });
+  const status = ["draft","scheduled","active","paused","completed","archived"].includes(req.body?.status) ? req.body.status : "draft";
+  const row = await create("marketing_campaigns", { dealer: req.user.id, name, campaignType, budget, status, startDate: req.body?.startDate || null, endDate: req.body?.endDate || null, description: String(req.body?.description || "").trim().slice(0, 2000), metadata: {} });
+  await logAuditEvent({ action: "dealer_marketing_campaign_created", actor: req.user.id, actorRole: req.user.role, actorName: req.user.name, actorEmail: req.user.email, target: row.id, targetModel: "MarketingCampaign", details: { name, campaignType }, ipAddress: req.ip, userAgent: req.get("user-agent"), requestId: req.id });
+  return res.status(201).json({ success: true, data: row });
+}
+
+export async function updateCampaign(req, res) {
+  const existing = await findOne("marketing_campaigns", { id: req.params.campaignId, dealer: req.user.id });
+  if (!existing) return res.status(404).json({ success: false, message: "Campaign not found" });
+  const updates = {};
+  for (const field of ["name","description","startDate","endDate"]) if (req.body?.[field] !== undefined) updates[field] = String(req.body[field]).trim();
+  if (req.body?.budget !== undefined) { const budget = Number(req.body.budget); if (!Number.isFinite(budget) || budget < 0) return res.status(400).json({ success: false, message: "Budget must be a non-negative number" }); updates.budget = budget; }
+  if (req.body?.status !== undefined) { if (!["draft","scheduled","active","paused","completed","archived"].includes(req.body.status)) return res.status(400).json({ success: false, message: "Invalid campaign status" }); updates.status = req.body.status; }
+  if (Object.keys(updates).length === 0) return res.status(400).json({ success: false, message: "No valid campaign changes supplied" });
+  const row = await update("marketing_campaigns", existing.id, updates);
+  await logAuditEvent({ action: "dealer_marketing_campaign_updated", actor: req.user.id, actorRole: req.user.role, actorName: req.user.name, actorEmail: req.user.email, target: row.id, targetModel: "MarketingCampaign", oldValue: existing, newValue: row, ipAddress: req.ip, userAgent: req.get("user-agent"), requestId: req.id });
+  return res.json({ success: true, data: row });
 }
 
 export async function getDealerAnalytics(req, res) {
@@ -453,7 +511,19 @@ export async function getDealerAnalytics(req, res) {
 
 
 export async function getAIRecommendations(req, res) {
-  return res.status(501).json({ success: false, code: "DEALER_AI_RECOMMENDATIONS_UNAVAILABLE", message: "Dealer AI recommendations are not available because no authoritative intelligence contract is defined for this deployment." });
+  const dealerId = req.user.id;
+  const [listings, leads, entitlement] = await Promise.all([Car.find({ dealer: dealerId }), Lead.find({ dealer: dealerId }), getDealerEntitlement(dealerId)]);
+  const recommendations = [];
+  const slow = listings.filter((car) => Number(car.views || 0) < 5 && ["available","active"].includes(car.status));
+  const hot = leads.filter((lead) => lead.isHot && !["sold","lost"].includes(lead.stage));
+  const stale = leads.filter((lead) => { const at = new Date(lead.lastActivityAt || lead.createdAt || 0); return at.getTime() && Date.now() - at.getTime() > 7 * 86400000 && !["sold","lost"].includes(lead.stage); });
+  if (slow.length) recommendations.push({ key: "slow_inventory", priority: "high", title: "Review slow-moving inventory", reason: `${slow.length} active listing(s) have fewer than 5 recorded views.`, evidence: { listingIds: slow.slice(0,10).map(x => x.id) } });
+  if (hot.length) recommendations.push({ key: "hot_leads", priority: "high", title: "Follow up hot leads", reason: `${hot.length} hot lead(s) remain open.`, evidence: { leadIds: hot.slice(0,10).map(x => x.id) } });
+  if (stale.length) recommendations.push({ key: "stale_leads", priority: "medium", title: "Refresh stale leads", reason: `${stale.length} open lead(s) have had no recorded activity for more than 7 days.`, evidence: { leadIds: stale.slice(0,10).map(x => x.id) } });
+  const max = Number(entitlement?.entitlement?.listingLimit ?? entitlement?.listingLimit ?? 0);
+  const active = listings.filter((car) => ["available","active"].includes(car.status)).length;
+  if (max > 0 && active >= max) recommendations.push({ key: "listing_capacity", priority: "medium", title: "Review listing capacity", reason: `Active inventory is at or above the current subscription limit (${active}/${max}).`, evidence: { activeListings: active, listingLimit: max } });
+  return res.json({ success: true, data: recommendations, source: "dealer_operational_records", generatedAt: new Date().toISOString() });
 }
 
 // ============================================================
@@ -461,30 +531,53 @@ export async function getAIRecommendations(req, res) {
 // ============================================================
 
 export async function getTeamMembers(req, res) {
-  // dealer_teams is referenced by legacy routes/models but is not defined
-  // by the authoritative migration chain. Keep the endpoint explicit
-  // rather than returning invented members or making an unbacked query.
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_TEAM_UNAVAILABLE",
-    message: "Dealer team management is not available because no canonical dealer-scoped team data contract exists yet.",
-  });
+  const rows = await findAll("dealer_teams", { filters: { dealer: req.user.id }, orderBy: "createdAt", ascending: false, limit: 200 });
+  const memberIds = rows.map(r => r.member).filter(Boolean);
+  const users = memberIds.length ? await User.find({ id: { $in: memberIds } }) : [];
+  const byId = new Map(users.map(u => [u.id, u]));
+  return res.json({ success: true, data: { items: rows.map(r => ({ ...r, memberProfile: r.member ? { id: r.member, name: byId.get(r.member)?.name || null, email: byId.get(r.member)?.email || r.inviteEmail } : null })), stats: { total: rows.length, active: rows.filter(r => r.status === "active").length, invited: rows.filter(r => r.status === "invited").length, suspended: rows.filter(r => r.status === "suspended").length } } });
 }
 
 export async function inviteTeamMember(req, res) {
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_TEAM_UNAVAILABLE",
-    message: "Dealer team invitations are not available because no canonical dealer-scoped team data contract exists yet.",
-  });
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const role = String(req.body?.role || "sales_agent");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ success: false, message: "Valid email is required" });
+  if (!["manager","sales_agent","lot_agent","finance_officer","viewer"].includes(role)) return res.status(400).json({ success: false, message: "Invalid team role" });
+  const existing = await findOne("dealer_teams", { dealer: req.user.id, inviteEmail: email });
+  if (existing && existing.status !== "removed") return res.status(409).json({ success: false, message: "An active or pending invitation already exists for this email" });
+  const token = crypto.randomBytes(32).toString("hex");
+  const hash = crypto.createHash("sha256").update(token).digest("hex");
+  const row = existing ? await update("dealer_teams", existing.id, { member: null, role, permissions: {}, status: "invited", inviteEmail: email, inviteTokenHash: hash, inviteExpiresAt: new Date(Date.now() + 7 * 86400000).toISOString(), invitedBy: req.user.id }) : await create("dealer_teams", { dealer: req.user.id, role, permissions: {}, status: "invited", inviteEmail: email, inviteTokenHash: hash, inviteExpiresAt: new Date(Date.now() + 7 * 86400000).toISOString(), invitedBy: req.user.id });
+  await logAuditEvent({ action: "dealer_team_invitation_created", actor: req.user.id, actorRole: req.user.role, actorName: req.user.name, actorEmail: req.user.email, target: row.id, targetModel: "DealerTeam", details: { email, role }, ipAddress: req.ip, userAgent: req.get("user-agent"), requestId: req.id });
+  return res.status(201).json({ success: true, data: { ...row, inviteToken: token } });
 }
 
 export async function updateTeamMember(req, res) {
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_TEAM_UNAVAILABLE",
-    message: "Dealer team management is not available because no canonical dealer-scoped team data contract exists yet.",
-  });
+  const existing = await findOne("dealer_teams", { id: req.params.memberId, dealer: req.user.id });
+  if (!existing) return res.status(404).json({ success: false, message: "Team member not found" });
+  const updates = {};
+  if (req.body?.role !== undefined) { if (!["manager","sales_agent","lot_agent","finance_officer","viewer"].includes(req.body.role)) return res.status(400).json({ success: false, message: "Invalid team role" }); updates.role = req.body.role; }
+  if (req.body?.status !== undefined) { if (!["invited","active","suspended","removed"].includes(req.body.status)) return res.status(400).json({ success: false, message: "Invalid team status" }); updates.status = req.body.status; }
+  if (req.body?.permissions !== undefined) { if (!req.body.permissions || typeof req.body.permissions !== "object" || Array.isArray(req.body.permissions)) return res.status(400).json({ success: false, message: "Permissions must be an object" }); updates.permissions = req.body.permissions; }
+  if (!Object.keys(updates).length) return res.status(400).json({ success: false, message: "No valid team changes supplied" });
+  const row = await update("dealer_teams", existing.id, updates);
+  await logAuditEvent({ action: "dealer_team_member_updated", actor: req.user.id, actorRole: req.user.role, actorName: req.user.name, actorEmail: req.user.email, target: row.id, targetModel: "DealerTeam", oldValue: existing, newValue: row, ipAddress: req.ip, userAgent: req.get("user-agent"), requestId: req.id });
+  return res.json({ success: true, data: row });
+}
+
+export async function acceptTeamInvite(req, res) {
+  const token = String(req.body?.token || "").trim();
+  if (token.length !== 64) return res.status(400).json({ success: false, message: "Invalid invitation token" });
+  const hash = crypto.createHash("sha256").update(token).digest("hex");
+  const row = await findOne("dealer_teams", { inviteTokenHash: hash, status: "invited" });
+  if (!row) return res.status(404).json({ success: false, message: "Invitation not found or already used" });
+  if (row.inviteExpiresAt && new Date(row.inviteExpiresAt) <= new Date()) return res.status(410).json({ success: false, message: "Invitation has expired" });
+  if (String(req.user.email || "").trim().toLowerCase() !== String(row.inviteEmail || "").trim().toLowerCase()) return res.status(403).json({ success: false, message: "Invitation email does not match the authenticated account" });
+  const activeMembership = await findOne("dealer_teams", { dealer: row.dealer, member: req.user.id, status: "active" });
+  if (activeMembership) return res.status(409).json({ success: false, message: "You are already an active member of this dealer team" });
+  const updated = await update("dealer_teams", row.id, { member: req.user.id, status: "active", inviteTokenHash: null, inviteExpiresAt: null });
+  await logAuditEvent({ action: "dealer_team_invitation_accepted", actor: req.user.id, actorRole: req.user.role, actorName: req.user.name, actorEmail: req.user.email, target: updated.id, targetModel: "DealerTeam", details: { dealerId: row.dealer }, ipAddress: req.ip, userAgent: req.get("user-agent"), requestId: req.id });
+  return res.json({ success: true, data: updated });
 }
 
 // ============================================================
@@ -501,7 +594,18 @@ export async function getSubscription(req, res) {
 // ============================================================
 
 export async function askDealerCopilot(req, res) {
-  return res.status(501).json({ success: false, code: "DEALER_COPILOT_UNAVAILABLE", message: "Dealer AI recommendations are not enabled because no authoritative intelligence contract is defined for this deployment." });
+  const question = String(req.body?.question || "").trim();
+  if (question.length < 3 || question.length > 1000) return res.status(400).json({ success: false, message: "Question must be between 3 and 1000 characters" });
+  const dealerId = req.user.id;
+  const [listings, leads, escrows, entitlement] = await Promise.all([Car.find({ dealer: dealerId }), Lead.find({ dealer: dealerId }), Escrow.find({ seller: dealerId, status: "released" }), getDealerEntitlement(dealerId)]);
+  const q = question.toLowerCase();
+  let answer;
+  if (q.includes("listing") || q.includes("inventory")) answer = { type: "inventory", totalListings: listings.length, activeListings: listings.filter(x => ["available","active"].includes(x.status)).length, totalViews: listings.reduce((n,x) => n + Number(x.views || 0), 0) };
+  else if (q.includes("lead")) answer = { type: "leads", total: leads.length, open: leads.filter(x => !["sold","lost"].includes(x.stage)).length, hot: leads.filter(x => x.isHot && !["sold","lost"].includes(x.stage)).length };
+  else if (q.includes("revenue") || q.includes("sales")) answer = { type: "sales", releasedDeals: escrows.length, revenue: escrows.reduce((n,x) => n + Number(x.sellerAmount || x.amount || 0), 0) };
+  else if (q.includes("subscription") || q.includes("plan") || q.includes("limit")) answer = { type: "subscription", subscription: entitlement.subscription, entitlement: entitlement.entitlement };
+  else answer = { type: "supported_topics", topics: ["inventory", "leads", "sales/revenue", "subscription/limits"], message: "Ask about one of the supported operational topics; responses are derived from your dealer records." };
+  return res.json({ success: true, data: { question, answer, source: "dealer_operational_records", generatedAt: new Date().toISOString() } });
 }
 
 // ============================================================
@@ -621,15 +725,10 @@ export async function getAuctionInventory(req, res) {
 // ============================================================
 
 export async function getFinanceApplications(req, res) {
-  // The repository's authoritative migration chain does not define a
-  // loan_applications table. Do not query the compatibility model here:
-  // doing so would turn an unavailable capability into a misleading 500
-  // or, worse, fabricated dealer finance records.
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_FINANCE_UNAVAILABLE",
-    message: "Dealer finance is not available because no canonical dealer-scoped finance data contract exists yet.",
-  });
+  const applications = await findAll("loan_applications", { filters: { dealer: req.user.id }, orderBy: "createdAt", ascending: false, limit: 100 });
+  const stats = { total: applications.length, submitted: 0, under_review: 0, approved: 0, declined: 0, disbursed: 0 };
+  for (const application of applications) if (stats[application.status] !== undefined) stats[application.status] += 1;
+  return res.json({ success: true, data: { items: applications, stats, source: "loan_applications" } });
 }
 
 // ============================================================

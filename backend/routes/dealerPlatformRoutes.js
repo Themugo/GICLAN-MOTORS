@@ -20,12 +20,14 @@ import {
   getLeads,
   updateLead,
   addLeadNote,
+  getLeadActivities,
   createTask,
   // Pipeline
   getSalesPipeline,
   // Marketing
   getMarketingCampaigns,
   createCampaign,
+  updateCampaign,
   // Analytics
   getDealerAnalytics,
   getAIRecommendations,
@@ -33,6 +35,7 @@ import {
   getTeamMembers,
   inviteTeamMember,
   updateTeamMember,
+  acceptTeamInvite,
   // Subscription
   getSubscription,
   // AI Copilot
@@ -69,7 +72,8 @@ router.post("/inventory/bulk", protect, dealerOnly, createLimiter, asyncHandler(
 // Leads (CRM)
 router.get("/leads", protect, dealerOnly, asyncHandler(getLeads));
 router.put("/leads/:leadId", protect, dealerOnly, asyncHandler(updateLead));
-router.post("/leads/:leadId/notes", protect, dealerOnly, asyncHandler(addLeadNote));
+router.get("/leads/:leadId/activities", protect, dealerOnly, asyncHandler(getLeadActivities));
+router.post("/leads/:leadId/notes", protect, dealerOnly, createLimiter, asyncHandler(addLeadNote));
 router.post("/leads/:leadId/tasks", protect, dealerOnly, asyncHandler(createTask));
 
 // Sales Pipeline
@@ -77,7 +81,8 @@ router.get("/pipeline", protect, dealerOnly, asyncHandler(getSalesPipeline));
 
 // Marketing
 router.get("/marketing", protect, dealerOnly, asyncHandler(getMarketingCampaigns));
-router.post("/marketing", protect, dealerOnly, asyncHandler(createCampaign));
+router.post("/marketing", protect, dealerOnly, createLimiter, asyncHandler(createCampaign));
+router.put("/marketing/:campaignId", protect, dealerOnly, createLimiter, asyncHandler(updateCampaign));
 
 // Analytics
 router.get("/analytics", protect, dealerOnly, asyncHandler(getDealerAnalytics));
@@ -86,7 +91,8 @@ router.get("/analytics/recommendations", protect, dealerOnly, asyncHandler(getAI
 // Team
 router.get("/team", protect, dealerOnly, asyncHandler(getTeamMembers));
 router.post("/team/invite", protect, dealerOnly, asyncHandler(inviteTeamMember));
-router.put("/team/:memberId", protect, dealerOnly, asyncHandler(updateTeamMember));
+router.put("/team/:memberId", protect, dealerOnly, createLimiter, asyncHandler(updateTeamMember));
+router.post("/team/accept", protect, asyncHandler(acceptTeamInvite));
 
 // Subscription
 router.get("/subscription", protect, dealerOnly, asyncHandler(getSubscription));
