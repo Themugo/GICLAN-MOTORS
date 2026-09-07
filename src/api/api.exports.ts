@@ -273,15 +273,6 @@ export const disputeAPI = {
   reviewAppeal: (id: string, body: any) => api.post(`/disputes/${id}/appeal/review`, body).then(unwrap),
 };
 
-// ── NOTIFICATIONS ─────────────────────────────────────
-export const notifAPI = {
-  list:        (params: any) => api.get('/notifications', { params }).then(unwrap),
-  markRead:    (id: string)     => api.post(`/notifications/${id}/read`).then(unwrap),
-  markAllRead: ()       => api.post('/notifications/read-all').then(unwrap),
-  remove:      (id: string)     => api.delete(`/notifications/${id}`).then(unwrap),
-  createReminder: (body: any) => api.post('/notifications/reminders', body).then(unwrap),
-};
-
 // ── FAVORITES ─────────────────────────────────────────
 export const favoritesAPI = {
   list:   ()      => api.get('/favorites').then(unwrap),

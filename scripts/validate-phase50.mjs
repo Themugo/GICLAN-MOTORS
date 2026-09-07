@@ -11,7 +11,7 @@ pass('MarketplaceContext no longer exposes local notification methods', !marketp
 pass('bid flow no longer fabricates local notification records', !marketplace.includes('Bid Placed Successfully'));
 pass('escrow flow no longer fabricates local notification records', !marketplace.includes('Escrow Initiated'));
 pass('price alert flow no longer fabricates local notification records', !marketplace.includes('Price Alert Set'));
-pass('NotificationContext owns authoritative notification records', notification.includes('notifAPI.list') && notification.includes('setNotifications(list)'));
+pass('NotificationContext owns authoritative notification records', notification.includes('../services/notificationApi') && notification.includes('setNotifications(list)'));
 pass('NotificationPanel consumes NotificationContext', panel.includes('useNotifications') && !panel.includes('useMarketplace'));
 pass('NotificationPanel uses backend notification read action', panel.includes('markAsRead(notif._id)'));
 pass('App mounts SocketProvider and NotificationProvider under AuthProvider', app.includes('<SocketProvider>') && app.includes('<NotificationProvider>') && app.includes('<AuthProvider>'));

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { notifAPI } from '../api/api';
+import { listNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../services/notificationApi';
 import { useAuth } from './AuthContext';
 import { useSocket } from './SocketContext';
 
@@ -47,10 +47,10 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     if (!isAuth) { setNotifications([]); setUnreadCount(0); return; }
     setLoading(true);
     try {
-      const d = await notifAPI.list({ limit: 50, ...params });
+      const d = await listNotifications({ limit: 50, ...(params as { page?: number; limit?: number }) });
       const list = (d.notifications || []).map(normalizeNotification);
       setNotifications(list);
-      setUnreadCount(list.filter(n => !n.read).length);
+      setUnreadCount(Number(d.unreadCount || 0));
     } catch (error) {
       console.warn('Unable to fetch notifications', error);
     } finally { setLoading(false); }
@@ -73,7 +73,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   const markAsRead = useCallback(async (id: string) => {
     try {
-      await notifAPI.markRead(id);
+      await markNotificationRead(id);
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
       setUnreadCount(c => Math.max(0, c - 1));
     } catch (error) {
@@ -83,7 +83,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   const markAllRead = useCallback(async () => {
     try {
-      await notifAPI.markAllRead();
+      await markAllNotificationsRead();
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
@@ -93,7 +93,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   const deleteNotif = useCallback(async (id: string) => {
     try {
-      await notifAPI.remove(id);
+      await deleteNotification(id);
       setNotifications(prev => {
         const removed = prev.find(n => n._id === id);
         if (removed && !removed.read) setUnreadCount(c => Math.max(0, c - 1));

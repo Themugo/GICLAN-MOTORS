@@ -1,6 +1,5 @@
 // backend/controllers/chatController.js
 
-import crypto from "node:crypto";
 import { findById, create, update, remove } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
 import { getIO } from "../utils/io.js";
@@ -26,14 +25,14 @@ const CHAT_FIELDS = "id, participants, car, lastMessage, lastMessageAt, isBlocke
 // =============================
 export const startChat = async (req, res) => {
   try {
-    const { participantId, carId } = req.body;
+    const { recipientId, carId, message } = req.body;
 
-    if (!participantId) {
-      return res.status(400).json({ success: false, message: "participantId required" });
+    if (!recipientId) {
+      return res.status(400).json({ success: false, message: "recipientId required" });
     }
 
-    const participants = [req.user.id, participantId].sort();
-    if (String(participantId) === String(req.user.id)) return res.status(400).json({ success: false, message: "Cannot start a chat with yourself" });
+    const participants = [req.user.id, recipientId].sort();
+    if (String(recipientId) === String(req.user.id)) return res.status(400).json({ success: false, message: "Cannot start a chat with yourself" });
 
     const sb = getSupabase();
     let query = sb.from("chats").select(CHAT_FIELDS).contains("participants", participants);
@@ -44,15 +43,65 @@ export const startChat = async (req, res) => {
     let chat = existing?.find((c) => c.participants?.length === participants.length) || null;
 
     if (!chat) {
-      chat = await create("chats", {
-        participants,
-        car: carId || null,
-      });
+      try {
+        chat = await create("chats", {
+          participants,
+          car: carId || null,
+        });
+      } catch (createError) {
+        // A concurrent startChat request may win the unique conversation key.
+        // Re-read the canonical row instead of creating a second conversation.
+        if (createError?.code !== "23505") throw createError;
+        const { data: recovered } = await sb.from("chats").select(CHAT_FIELDS)
+          .contains("participants", participants);
+        chat = recovered?.find((c) =>
+          c.participants?.length === participants.length && String(c.car || "") === String(carId || "")
+        ) || null;
+        if (!chat) throw createError;
+      }
 
       try {
         await findOrCreateLeadFromChat(chat.id);
       } catch (leadErr) {
         console.warn("⚠️ Failed to create lead from chat:", leadErr.message);
+      }
+    }
+
+    if (message) {
+      const { data: messageResult, error: messageError } = await sb.rpc("kayad_append_chat_message", {
+        p_chat_id: chat.id,
+        p_sender_id: req.user.id,
+        p_text: message,
+        p_attachments: [],
+      });
+      if (messageError) throw messageError;
+      chat.lastMessage = messageResult?.text || message;
+      chat.lastMessageAt = messageResult?.createdAt || new Date().toISOString();
+
+      const initialMessagePayload = {
+        ...messageResult,
+        chatId: chat.id,
+        sender: req.user.id,
+        message: messageResult?.text || message,
+        seen: false,
+        seenBy: messageResult?.seenBy || [],
+        attachments: messageResult?.attachments || [],
+      };
+      if (getIO()) getIO().to(`chat_${chat.id}`).emit("newMessage", initialMessagePayload);
+      const otherUserId = chat.participants.find((p) => String(p) !== String(req.user.id));
+      if (otherUserId) {
+        try {
+          const { sendNotification } = await import("../services/notification.service.js");
+          await sendNotification({
+            userId: otherUserId,
+            title: "New message",
+            message,
+            type: "chat",
+            data: { chatId: chat.id, messageId: messageResult?.id },
+          });
+        } catch (notificationError) {
+          console.warn("Initial chat message notification failed:", notificationError.message);
+        }
       }
     }
 
@@ -157,17 +206,36 @@ export const sendMessage = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not authorized" });
     }
 
-    const messageId = crypto.randomUUID();
-    const messageData = { id: messageId, sender: req.user.id, text: msgText, createdAt: new Date().toISOString(), seenBy: [] };
-    if (attachments && Array.isArray(attachments)) {
-      messageData.attachments = attachments.map((a) => ({
-        url: a.url,
-        type: a.type || "image",
-      }));
+    const normalizedAttachments = attachments && Array.isArray(attachments)
+      ? attachments.map((a) => typeof a === "string" ? ({ url: a, type: "image" }) : ({ url: a.url, type: a.type || "image" }))
+      : [];
+
+    const { data: messageData, error: messageError } = await getSupabase().rpc("kayad_append_chat_message", {
+      p_chat_id: chatId,
+      p_sender_id: req.user.id,
+      p_text: msgText,
+      p_attachments: normalizedAttachments,
+    });
+    if (messageError) {
+      if (messageError.code === "P0001" && messageError.message === "CHAT_BLOCKED") {
+        return res.status(423).json({ success: false, code: "CHAT_BLOCKED", message: "This conversation is blocked" });
+      }
+      if (messageError.code === "P0001" && messageError.message === "CHAT_FORBIDDEN") {
+        return res.status(403).json({ success: false, message: "Not authorized" });
+      }
+      throw messageError;
     }
 
-    const messages = [...(chat.messages || []), messageData];
-    await update("chats", chatId, { messages });
+    const messageId = messageData.id;
+    const emittedMessage = {
+      ...messageData,
+      chatId,
+      sender: req.user.id,
+      message: messageData.text,
+      seen: false,
+      seenBy: messageData.seenBy || [],
+      attachments: messageData.attachments || [],
+    };
 
     // Add lead activity for message sent
     try {
@@ -191,15 +259,7 @@ export const sendMessage = async (req, res) => {
       getIO()
         .to(`chat_${chatId}`)
         .emit("newMessage", {
-          id: messageId,
-          chatId,
-          sender: req.user.id,
-          text: msgText,
-          message: msgText,
-          createdAt: messageData.createdAt,
-          seen: false,
-          seenBy: [],
-          attachments: messageData.attachments || [],
+          ...emittedMessage,
         });
     }
 
@@ -215,7 +275,7 @@ export const sendMessage = async (req, res) => {
       ...messageData,
       message: msgText,
       seen: false,
-      seenBy: [],
+      seenBy: messageData.seenBy || [],
     });
   } catch (error) {
     logError("❌ SEND MESSAGE ERROR:", error);
@@ -274,14 +334,11 @@ export const markAsSeen = async (req, res) => {
 
     if (!chat.participants.some((p) => String(p) === String(req.user.id))) return res.status(403).json({ success: false, message: "Not authorized" });
 
-    const messages = (chat.messages || []).map((m) => {
-      if (m.sender !== req.user.id && (!m.seenBy || !m.seenBy.includes(req.user.id))) {
-        return { ...m, seenBy: [...(m.seenBy || []), req.user.id] };
-      }
-      return m;
+    const { error: seenError } = await getSupabase().rpc("kayad_mark_chat_seen", {
+      p_chat_id: chatId,
+      p_user_id: req.user.id,
     });
-
-    await update("chats", chatId, { messages });
+    if (seenError) throw seenError;
 
     if (getIO()) {
       getIO().to(`chat_${chatId}`).emit("messagesSeen", { chatId, userId: req.user.id });

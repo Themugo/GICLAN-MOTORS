@@ -1,7 +1,7 @@
 // backend/controllers/notificationController.js
 import { findAll, count, create, updateMany, removeMany, findById } from "../db/index.js";
-import { getIO } from "../utils/io.js";
 import { logError, logInfo } from "../utils/logger.js";
+import { createNotification as createNotificationService } from "../services/notification.service.js";
 
 const mapNotification = (n) => ({
   ...n,
@@ -80,18 +80,5 @@ export const deleteNotification = async (req, res) => {
   }
 };
 
-export const createNotification = async ({ user, title, message, type = "info", data = {}, link }) => {
-  try {
-    const notif = await create("notifications", { user, title, message, type, read: false, data, link });
-    const payload = mapNotification(notif);
-    const io = getIO();
-    if (io) {
-      io.to(`user_${user}`).emit("notification", payload);
-      io.to(String(user)).emit("notification", payload);
-    }
-    return notif;
-  } catch (err) {
-    logError("Failed to create notification:", { error: err.message, user });
-    return null;
-  }
-};
+export const createNotification = createNotificationService;
+

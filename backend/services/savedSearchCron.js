@@ -1,4 +1,4 @@
-import { createNotification } from "../controllers/notificationController.js";
+import { createNotification } from "./notification.service.js";
 import { sendSavedSearchAlertEmail } from "./email.service.js";
 import { sendSMS } from "../utils/sms.js";
 import { logInfo, logWarn } from "../utils/logger.js";
