@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { bidsAPI, formatKES } from '../../api/api';
+import { formatKES } from '../../api/api';
+import { fetchAdminBids, fetchSuspiciousBids, setBidWinner } from '../../services/bidApi';
 import { useToast } from '../../context/ToastContext';
 import { timeAgo } from '../../utils/helpers';
 
@@ -28,10 +29,10 @@ export default function AdminBids() {
     try {
       const params = { page, limit: 20 };
       if (search) params.search = search;
-      if (paidFilter !== 'all') params.mpesaPaid = paidFilter === 'paid';
+      if (paidFilter !== 'all') params.status = paidFilter === 'paid' ? 'paid' : 'pending';
       const [allRes, suspRes] = await Promise.all([
-        bidsAPI.adminAll(params),
-        bidsAPI.adminSuspicious().catch(() => ({ bids: [] })),
+        fetchAdminBids(params),
+        fetchSuspiciousBids().catch(() => ({ bids: [] })),
       ]);
       setBids(allRes.bids || allRes.data || []);
       setTotal(allRes.pagination?.total || allRes.total || 0);
@@ -46,7 +47,7 @@ export default function AdminBids() {
     if (!window.confirm(`Set ${bid.user?.name || 'this bidder'} (${formatKES(bid.amount)}) as winner?`)) return;
     setActionId(bid._id);
     try {
-      await bidsAPI.adminSetWinner(bid._id);
+      await setBidWinner(bid._id);
       toast('🏆 Winner set! Escrow initiated.', 'success');
       setSelected(null);
       load();
@@ -59,8 +60,8 @@ export default function AdminBids() {
   const totalPages = Math.ceil(total / 20);
 
   // Summary stats
-  const paidTotal   = bids.filter(b => b.mpesaPaid).reduce((s, b) => s + (b.amount || 0), 0);
-  const unpaidCount = bids.filter(b => !b.mpesaPaid).length;
+  const paidTotal   = bids.filter(b => b.status === 'paid').reduce((s, b) => s + (b.amount || 0), 0);
+  const unpaidCount = bids.filter(b => b.status !== 'paid').length;
 
   return (
     <div className="page">

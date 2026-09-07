@@ -1,3 +1,6 @@
+
+> **Current auction-domain override (2026-09-07):** The historical references below to `backend/realtime/auctionEngine.js`, mock-only auction UI, or a separate `auctions` table describe earlier repository states and are superseded by `docs/AUCTION_DOMAIN_INTEGRITY.md`. The current authoritative implementation stores auction state on `cars`, uses `auctionLifecycle.service.js` + atomic Supabase RPCs for lifecycle transitions, `auctionClose.service.js` for settlement, and the canonical frontend `auctionService.ts` / `bidApi.ts` transports.
+
 # KAYAD_PRODUCTION_BASELINE.md
 **Phase 0 - Production Baseline and Feature Freeze**
 

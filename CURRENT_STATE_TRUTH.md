@@ -1,3 +1,6 @@
+
+> **Current auction-domain override (2026-09-07):** The historical references below to `backend/realtime/auctionEngine.js`, mock-only auction UI, or a separate `auctions` table describe earlier repository states and are superseded by `docs/AUCTION_DOMAIN_INTEGRITY.md`. The current authoritative implementation stores auction state on `cars`, uses `auctionLifecycle.service.js` + atomic Supabase RPCs for lifecycle transitions, `auctionClose.service.js` for settlement, and the canonical frontend `auctionService.ts` / `bidApi.ts` transports.
+
 # KAYAD — CURRENT STATE TRUTH AUDIT (PHASE 0)
 
 **Scope of this document:** a technical inventory of what exists in this repository right now, what is real vs. mock vs. orphaned, and where the known conflicts and risks are. No fixes, no features, no deletions were made while producing this document.

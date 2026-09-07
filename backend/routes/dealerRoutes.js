@@ -1,4 +1,5 @@
 import express from "express";
+import { startAuction, extendAuction, closeAuction } from "../services/auctionLifecycle.service.js";
 import { protect, dealerOnly, requireApproved } from "../middleware/auth.js";
 import { requireDealerVerification } from "../middleware/dealerVerification.js";
 import asyncHandler from "../middleware/asyncHandler.js";
@@ -882,7 +883,6 @@ router.post(
 // =============================
 // Canonical engine only: auction state lives on the cars row, closing
 // goes through services/auctionClose.service.js.
-import { closeAuction } from "../services/auctionClose.service.js";
 
 // 🚀 Start auction on dealer's own car
 router.post(
@@ -891,63 +891,28 @@ router.post(
   invalidateCache("dealer"),
   asyncHandler(async (req, res) => {
     const { durationMs, startingBid, reservePrice, reserveMode } = req.body;
-    if (!durationMs) return res.status(400).json({ success: false, message: "durationMs required" });
-
-    // ⏱ Minimum 24h auction duration
-    const MIN_DURATION = 24 * 60 * 60 * 1000;
-    if (durationMs < MIN_DURATION) {
-      return res.status(400).json({
-        success: false,
-        message: `Minimum auction duration is 24 hours (${(durationMs / 3600000).toFixed(0)}h provided)`,
-      });
-    }
-
     const car = await findOne("cars", { id: req.params.id, dealer: req.user.id });
     if (!car) return res.status(404).json({ success: false, message: "Car not found" });
 
-    if (car.auctionStatus === "live") {
-      return res.status(400).json({ success: false, message: "Auction already live" });
-    }
-
     const dealer = await findById("users", car.dealer, "commissionBalance,listingsLocked");
-    if (dealer && dealer.listingsLocked && dealer.commissionBalance > 0) {
-      return res.status(403).json({
-        success: false,
-        message: "Cannot start auction — outstanding commission balance and listings are locked.",
+    if (dealer?.listingsLocked && Number(dealer.commissionBalance || 0) > 0) {
+      return res.status(403).json({ success: false, message: "Cannot start auction — outstanding commission balance and listings are locked." });
+    }
+
+    try {
+      const result = await startAuction({
+        carId: req.params.id,
+        durationMs: Number(durationMs),
+        startingBid: Number(startingBid),
+        reservePrice: reservePrice == null || reservePrice === "" ? null : Number(reservePrice),
+        reserveMode: reserveMode || "none",
+        req,
       });
+      res.json({ success: true, message: "Auction started", endTime: result.auction_end, reservePrice: result.reserve_price, result });
+    } catch (err) {
+      const status = /already live|cannot be restarted|duration|starting bid|reserve price|reserve mode/i.test(err.message) ? 400 : 500;
+      res.status(status).json({ success: false, message: err.message || "Failed to start auction" });
     }
-
-    const startingBidVal = Number(startingBid) || 0;
-    if (startingBidVal < 1000) {
-      return res.status(400).json({ success: false, message: "Starting bid must be at least KES 1,000" });
-    }
-
-    const reserveVal = reservePrice ? Number(reservePrice) : null;
-    if (reserveVal !== null && reserveVal < startingBidVal) {
-      return res.status(400).json({ success: false, message: "Reserve price must be >= starting bid" });
-    }
-
-    // Server-authoritative schedule: the server sets both timestamps.
-    const endTime = new Date(Date.now() + durationMs);
-
-    const updated = await update("cars", req.params.id, {
-      auctionStatus: "live",
-      allowBid: true,
-      startingBid: startingBidVal,
-      currentBid: startingBidVal,
-      reservePrice: reserveVal,
-      reserveMode: reserveMode || "none",
-      auctionStartTime: new Date().toISOString(),
-      auctionEnd: endTime.toISOString(),
-    });
-
-    await logActionFromReq(req, "auction_start", {
-      target: req.params.id,
-      targetModel: "Car",
-      details: { startingBid: startingBidVal, reservePrice: reserveVal, durationMs },
-    });
-
-    res.json({ success: true, message: "Auction started", endTime, reservePrice: reserveVal });
   }),
 );
 
@@ -975,44 +940,22 @@ router.post(
   }),
 );
 
-// ⏱ Extend auction (max 3 extensions per auction)
+// ⏱ Extend auction
 router.post(
   "/cars/:id/auction/extend",
   invalidateCache("dealer"),
   asyncHandler(async (req, res) => {
     const { hours } = req.body;
-    if (!hours) return res.status(400).json({ success: false, message: "hours required" });
-
-    if (hours < 1 || hours > 72) {
-      return res.status(400).json({ success: false, message: "Extension must be between 1 and 72 hours" });
-    }
-
     const car = await findOne("cars", { id: req.params.id, dealer: req.user.id, auctionStatus: "live" });
     if (!car) return res.status(404).json({ success: false, message: "Car not found or auction not live" });
 
-    const MAX_EXTENSIONS = 3;
-    const extensionCount = car.extensionCount || 0;
-    if (extensionCount >= MAX_EXTENSIONS) {
-      return res
-        .status(400)
-        .json({ success: false, message: `Maximum ${MAX_EXTENSIONS} extensions per auction reached` });
+    try {
+      const result = await extendAuction({ carId: req.params.id, extraMs: Number(hours) * 60 * 60 * 1000, req, reason: "auction_extend" });
+      res.json({ success: true, newEndTime: result.auction_end, extensionCount: result.extension_count, result });
+    } catch (err) {
+      const status = /extension|live/i.test(err.message) ? 400 : 500;
+      res.status(status).json({ success: false, message: err.message || "Failed to extend auction" });
     }
-
-    const currentEnd = new Date(car.auctionEnd).getTime();
-    const newEnd = new Date(Math.max(currentEnd, Date.now()) + hours * 60 * 60 * 1000).toISOString();
-
-    const updated = await update("cars", req.params.id, {
-      auctionEnd: newEnd,
-      extensionCount: extensionCount + 1,
-    });
-
-    await logActionFromReq(req, "auction_extend", {
-      target: req.params.id,
-      targetModel: "Car",
-      details: { hours, extensionsUsed: extensionCount + 1, newEndTime: updated.auctionEnd },
-    });
-
-    res.json({ success: true, newEndTime: updated.auctionEnd, extensionsUsed: extensionCount + 1 });
   }),
 );
 

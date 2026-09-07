@@ -47,6 +47,28 @@ export async function atomicAutoBid(carId) {
   return data;
 }
 
+
+export async function atomicStartAuction({ carId, durationMs, startingBid, reservePrice = null, reserveMode = "none" }) {
+  const { data, error } = await getSupabase().rpc("kayad_start_auction_atomic", {
+    p_car_id: carId,
+    p_duration_ms: durationMs,
+    p_starting_bid: startingBid,
+    p_reserve_price: reservePrice,
+    p_reserve_mode: reserveMode,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function atomicExtendAuction({ carId, extraMs }) {
+  const { data, error } = await getSupabase().rpc("kayad_extend_auction_atomic", {
+    p_car_id: carId,
+    p_extra_ms: extraMs,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function atomicCloseAuction(carId, winnerBidId = null) {
   const { data, error } = await getSupabase().rpc("kayad_close_auction_atomic", {
     p_car_id: carId,

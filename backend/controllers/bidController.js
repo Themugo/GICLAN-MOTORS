@@ -249,7 +249,7 @@ export const placeBid = async (req, res) => {
       carId,
       type: "bid",
       amount: 1,
-      phone,
+      phone: bidder.phone,
       metadata: { bidAmount: amount },
     });
 

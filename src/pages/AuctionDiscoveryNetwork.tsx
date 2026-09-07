@@ -30,8 +30,9 @@ import {
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { getCars, getCarById, BackendCar } from '../services/vehicleApi';
+import { getCars, BackendCar } from '../services/vehicleApi';
 import { placeBid, BidApiError } from '../services/bidApi';
+import { fetchAuction } from '../services/auctionService';
 import type { UserProfile } from '../types';
 
 // Fixed: this entire page previously ran on MOCK_AUCTIONS/
@@ -389,8 +390,11 @@ const WatchLiveModal: React.FC<{
       // one arbitrary car, essentially never the actual auction being
       // watched, then searching for it in that single-item result.
       // getCarById fetches the real, specific car directly.
-      const car = await getCarById(auctionId);
-      if (car) setAuction(mapCarToAuction(car));
+      const auctionRecord = await fetchAuction(auctionId);
+      if (auctionRecord?.car) {
+        const car = auctionRecord.car as BackendCar;
+        setAuction(mapCarToAuction(car));
+      }
     } catch {
       // A refresh failure keeps showing the last known real state
       // rather than clearing it - only the initial load surfaces an
@@ -407,10 +411,10 @@ const WatchLiveModal: React.FC<{
     // Fixed: simplified to fetch this specific car directly, same as
     // refresh() above, rather than fetching up to 50 live auctions
     // and searching for this one among them.
-    getCarById(auctionId)
-      .then((car) => {
+    fetchAuction(auctionId)
+      .then((auctionRecord) => {
         if (cancelled) return;
-        if (car) setAuction(mapCarToAuction(car));
+        if (auctionRecord?.car) setAuction(mapCarToAuction(auctionRecord.car as BackendCar));
         else setError('This auction could not be found.');
       })
       .catch(() => {

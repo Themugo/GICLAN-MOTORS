@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { carsAPI, auctionAdminAPI, formatKES } from '../../api/api';
+import { carsAPI, formatKES } from '../../api/api';
+import { startDealerAuction, endDealerAuction, extendDealerAuction } from '../../services/auctionService';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -73,7 +74,10 @@ export default function EditCarPage() {
     if (!form.auctionEnd) { toast('Set an auction end time first', 'error'); return; }
     setAuctionAction('starting');
     try {
-      await auctionAdminAPI.start(id, { auctionEnd: form.auctionEnd });
+      const endTime = new Date(form.auctionEnd).getTime();
+      const durationMs = endTime - Date.now();
+      const startingBid = Number(form.startingBid || form.currentBid || form.price || 0);
+      await startDealerAuction(id, { durationMs, startingBid: Math.max(startingBid, 1000) });
       toast('🔴 Auction is now LIVE!', 'success');
       setCar(prev => ({ ...prev, auctionStatus: 'live' }));
     } catch (err) { toast(err.response?.data?.message || 'Failed', 'error'); }
@@ -84,7 +88,7 @@ export default function EditCarPage() {
     if (!confirm('End this auction now?')) return;
     setAuctionAction('ending');
     try {
-      await auctionAdminAPI.end(id);
+      await endDealerAuction(id);
       toast('Auction ended.', 'info');
       setCar(prev => ({ ...prev, auctionStatus: 'ended' }));
     } catch { toast('Failed', 'error'); }
@@ -94,7 +98,7 @@ export default function EditCarPage() {
   const handleExtend = async () => {
     setAuctionAction('extending');
     try {
-      await auctionAdminAPI.extend(id, { hours: extendHours });
+      await extendDealerAuction(id, Number(extendHours));
       toast(`Auction extended by ${extendHours}h`, 'success');
     } catch { toast('Failed', 'error'); }
     finally { setAuctionAction(null); }

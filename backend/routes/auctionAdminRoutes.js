@@ -11,7 +11,7 @@ import Bid from "../models/Bid.js";
 
 // Canonical engine only: auction state lives on the cars row, closing
 // goes through services/auctionClose.service.js.
-import { closeAuction } from "../services/auctionClose.service.js";
+import { startAuction, extendAuction, closeAuction } from "../services/auctionLifecycle.service.js";
 
 const router = express.Router();
 
@@ -29,43 +29,26 @@ router.post(
   requirePermission(PERM.MANAGE_AUCTIONS),
   validateObjectId,
   asyncHandler(async (req, res) => {
-    const { startingBid = 0, durationMs } = req.body;
+    const { startingBid = 0, durationMs, reservePrice = null, reserveMode = "none" } = req.body;
+    if (!durationMs) return res.status(400).json({ success: false, message: "durationMs required" });
 
     const car = await Car.findById(req.params.carId);
+    if (!car) return res.status(404).json({ success: false, message: "Car not found" });
 
-    if (!car) {
-      return res.status(404).json({ success: false, message: "Car not found" });
-    }
-
-    // 🚫 Listing lock check — block if dealer has outstanding commission
     const dealer = await User.findById(car.dealer).select("commissionBalance listingsLocked");
-
-    if (dealer && dealer.listingsLocked && dealer.commissionBalance > 0) {
-      return res.status(403).json({
-        success: false,
-        message: "Cannot start auction — dealer has outstanding commission balance and listings are locked.",
-      });
+    if (dealer?.listingsLocked && Number(dealer.commissionBalance || 0) > 0) {
+      return res.status(403).json({ success: false, message: "Cannot start auction — dealer has outstanding commission balance and listings are locked." });
     }
 
-    if (!durationMs) {
-      return res.status(400).json({ success: false, message: "Duration required" });
-    }
-
-    // Server-authoritative schedule: the server sets both timestamps.
-    car.auctionStatus = "live";
-    car.allowBid = true;
-    car.startingBid = startingBid;
-    car.currentBid = startingBid;
-    car.auctionStartTime = new Date();
-    car.auctionEnd = new Date(Date.now() + durationMs);
-
-    await car.save();
-
-    res.json({
-      success: true,
-      message: "Auction started",
-      endTime: car.auctionEnd,
+    const result = await startAuction({
+      carId: req.params.carId,
+      durationMs: Number(durationMs),
+      startingBid: Number(startingBid),
+      reservePrice: reservePrice == null || reservePrice === "" ? null : Number(reservePrice),
+      reserveMode,
+      req,
     });
+    res.json({ success: true, message: "Auction started", endTime: result.auction_end, result });
   }),
 );
 
@@ -95,7 +78,7 @@ router.post(
 );
 
 // =============================
-// ⏱ EXTEND AUCTION (ANTI-SNIPE)
+// ⏱ EXTEND AUCTION
 // =============================
 router.post(
   "/:carId/extend",
@@ -103,32 +86,9 @@ router.post(
   validateObjectId,
   asyncHandler(async (req, res) => {
     const { extraMs } = req.body;
-
-    if (!extraMs) {
-      return res.status(400).json({
-        success: false,
-        message: "extraMs required",
-      });
-    }
-
-    const car = await Car.findById(req.params.carId);
-
-    if (!car) {
-      return res.status(404).json({
-        success: false,
-        message: "Car not found",
-      });
-    }
-
-    const currentEnd = new Date(car.auctionEnd).getTime();
-    car.auctionEnd = new Date(Math.max(currentEnd, Date.now()) + extraMs);
-
-    await car.save();
-
-    res.json({
-      success: true,
-      newEndTime: car.auctionEnd,
-    });
+    if (!extraMs) return res.status(400).json({ success: false, message: "extraMs required" });
+    const result = await extendAuction({ carId: req.params.carId, extraMs: Number(extraMs), req, reason: "auction_extend_admin" });
+    res.json({ success: true, newEndTime: result.auction_end, result });
   }),
 );
 

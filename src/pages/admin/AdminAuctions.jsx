@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { carsAPI, auctionAdminAPI, bidsAPI, formatKES } from '../../api/api';
+import { getCars } from '../../services/vehicleApi';
+import { fetchAdminAuctionBids, startAuction, endAuction, extendAuction, setAuctionWinner } from '../../services/auctionService';
+import { formatKES } from '../../api/api';
 import { useToast } from '../../context/ToastContext';
 import { CountdownDisplay } from '../../hooks/useCountdown';
 
@@ -20,14 +22,14 @@ export default function AdminAuctions() {
     setLoading(true);
     try {
       const [live, draft, ended] = await Promise.all([
-        carsAPI.list({ auctionStatus: 'live',  limit: 50 }),
-        carsAPI.list({ auctionStatus: 'draft', limit: 50 }),
-        carsAPI.list({ auctionStatus: 'ended', limit: 50 }),
+        getCars({ auctionStatus: 'live', limit: 50 }),
+        getCars({ auctionStatus: 'draft', limit: 50 }),
+        getCars({ auctionStatus: 'ended', limit: 50 }),
       ]);
       const all = [
-        ...(live.cars  || []).map(c => ({ ...c, _tab: 'live' })),
-        ...(draft.cars || []).map(c => ({ ...c, _tab: 'draft' })),
-        ...(ended.cars || []).map(c => ({ ...c, _tab: 'ended' })),
+        ...(live.data || live.cars || []).map(c => ({ ...c, _tab: 'live' })),
+        ...(draft.data || draft.cars || []).map(c => ({ ...c, _tab: 'draft' })),
+        ...(ended.data || ended.cars || []).map(c => ({ ...c, _tab: 'ended' })),
       ];
       setCars(all);
     } catch { toast('Failed to load auctions', 'error'); }
@@ -41,7 +43,7 @@ export default function AdminAuctions() {
   const loadBids = async (carId) => {
     if (bids[carId]) return bids[carId];
     try {
-      const data = await auctionAdminAPI.bidHistory(carId);
+      const data = await fetchAdminAuctionBids(carId);
       const b = data.bids || data.data || [];
       setBids(prev => ({ ...prev, [carId]: b }));
       return b;
@@ -54,7 +56,7 @@ export default function AdminAuctions() {
     try {
       const endAt = new Date(Date.now() + Number(startForm.hours) * 3600000).toISOString();
       const durationMs = Number(startForm.hours) * 3600000;
-      await auctionAdminAPI.start(selected._id, { durationMs, startingBid: 0 });
+      await startAuction(selected._id, { durationMs, startingBid: Math.max(Number(selected.startingBid || selected.currentBid || selected.price || 1000), 1000) });
       toast('🔴 Auction is now LIVE!', 'success');
       setSelected(null);
       load();
@@ -67,7 +69,7 @@ export default function AdminAuctions() {
     if (!window.confirm('End this auction now?')) return;
     setActionId(carId);
     try {
-      await auctionAdminAPI.end(carId);
+      await endAuction(carId);
       toast('Auction ended.', 'success');
       load();
     } catch (err) {
@@ -79,7 +81,7 @@ export default function AdminAuctions() {
     setActionId(carId + '-ext');
     try {
       const hours = Number(extendForm.hours);
-      await auctionAdminAPI.extend(carId, { extraMs: hours * 3600000 });
+      await extendAuction(carId, hours * 3600000);
       toast(`Auction extended by ${hours}h`, 'success');
       load();
     } catch (err) {
@@ -96,7 +98,7 @@ export default function AdminAuctions() {
     if (!winnerModal) return;
     setActionId(bidId);
     try {
-      await auctionAdminAPI.setWinner(winnerModal.car._id, bidId);
+      await setAuctionWinner(winnerModal.car._id, bidId);
       toast('🏆 Winner set! Escrow initiated.', 'success');
       setWinnerModal(null);
       load();

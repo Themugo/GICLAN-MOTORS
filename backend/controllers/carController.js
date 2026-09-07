@@ -930,48 +930,4 @@ export const getCar = async (req, res) => {
   }
 };
 
-// =============================
-// ⚡ PLACE BID
-// =============================
-export const placeBid = async (req, res) => {
-  try {
-    const { amount } = req.body;
-
-    const car = await Car.findById(req.params.id);
-
-    if (!car || !car.allowBid) {
-      return res.status(400).json({ success: false, message: "Car not available for bidding" });
-    }
-
-    if (Number(amount) <= (car.currentBid || 0)) {
-      return res.status(400).json({
-        success: false,
-        message: "Bid too low",
-      });
-    }
-
-    car.currentBid = Number(amount);
-    car.bidsCount += 1;
-
-    await car.save();
-
-    await logActionFromReq(req, "place_bid", {
-      target: car._id,
-      targetModel: "Car",
-      details: { amount: Number(amount), bidsCount: car.bidsCount },
-    });
-
-    res.json({
-      success: true,
-      data: {
-        currentBid: car.currentBid,
-        bidsCount: car.bidsCount,
-      },
-    });
-  } catch (err) {
-    logError("BID ERROR", { error: err.message });
-    res.status(500).json({ success: false, message: "Bid failed" });
-  }
-};
-
 // (getDemoCars removed — demo data eliminated)
