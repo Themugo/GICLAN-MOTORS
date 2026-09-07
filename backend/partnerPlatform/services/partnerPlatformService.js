@@ -370,11 +370,12 @@ class PartnerPlatformService {
         created_at: new Date(),
       });
 
-      // Update webhook stats
+      // Queue only: the delivery worker is the component that performs outbound HTTP.
+      // Never mark a queued delivery as delivered before an external response exists.
       await db.update('webhook_configs', webhook.id, {
-        delivery_attempts: webhook.delivery_attempts + 1,
+        delivery_attempts: Number(webhook.delivery_attempts || 0) + 1,
         last_delivery_at: new Date(),
-        last_delivery_status: 'delivered',
+        last_delivery_status: 'queued',
       });
 
       logInfo('Webhook delivered', { deliveryCode, eventType });

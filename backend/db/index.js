@@ -357,3 +357,9 @@ export const paginate = async (table, options = {}) => {
 export const rawQuery = async () => {
   throw new Error("rawQuery is disabled for security. Use findAll/findOne/create/update instead.");
 };
+
+// Compatibility facade for legacy services that import the database module as a
+// default object. Keep this mapped to the same parameterized primitives above;
+// never reintroduce arbitrary SQL execution.
+export const find = findAll;
+export default { find, findAll, findById, findOne, create, update, updateMany, remove, count, upsert, upsertMany, paginate, distinct, aggregate, rawQuery };
