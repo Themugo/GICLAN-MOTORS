@@ -36,7 +36,6 @@ vi.mock('../../api/api', () => {
       forDealer: vi.fn().mockResolvedValue({ reviews: [] }),
       create: vi.fn(),
     },
-    chatAPI: { start: vi.fn() },
     ntsaAPI: { status: vi.fn().mockRejectedValue({}) },
     favoritesAPI: { list: vi.fn().mockResolvedValue({}), toggle: vi.fn(), setPriceAlert: vi.fn() },
     bidsAPI: { getForCar: vi.fn().mockResolvedValue({ bids: [] }), place: vi.fn() },

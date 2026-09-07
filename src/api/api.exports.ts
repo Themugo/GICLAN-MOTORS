@@ -287,18 +287,6 @@ export const favoritesAPI = {
   setPriceAlert: (carId: string, notify: boolean) => api.put(`/favorites/${carId}/price-alert`, { notifyOnPriceDrop: notify }).then(unwrap),
 };
 
-// ── CHAT ──────────────────────────────────────────────
-export const chatAPI = {
-  inbox:    (params?: any)       => api.get('/chat', { params }).then(unwrap),
-  unread:   ()               => api.get('/chat/unread').then(unwrap),
-  start:    (body: any)           => api.post('/chat', body).then(unwrap),
-  messages: (chatId: string, params: any) => api.get(`/chat/${chatId}/messages`, { params }).then(unwrap),
-  send:     (chatId: string, body: any)   => api.post(`/chat/${chatId}/message`, body).then(unwrap),
-  seen:     (chatId: string)         => api.post(`/chat/${chatId}/seen`).then(unwrap),
-  leave:    (chatId: string)         => api.delete(`/chat/${chatId}`).then(unwrap),
-  confirmDelivery: (chatId: string, body: any) => api.post(`/chat/${chatId}/confirm-delivery`, body).then(unwrap),
-};
-
 // ── SAVED SEARCHES ────────────────────────────────────
 export const savedSearchAPI = {
   list:   ()             => api.get('/saved-searches').then(unwrap),

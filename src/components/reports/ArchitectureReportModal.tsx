@@ -102,7 +102,7 @@ export const ArchitectureReportModal: React.FC<ArchitectureReportModalProps> = (
 │   ├── dealer/           # DealerProfilePage, InventoryGrid, ReviewList
 │   ├── admin/            # AdminPage, ModerationQueue, ComplianceAudit
 │   ├── support/          # SupportPage, FAQAccordion, AIAdvisorChat
-│   ├── chat/             # ChatDrawer, BuyerDealerThread
+│   ├── UnifiedCommunicationHub.tsx # canonical chat/communication surface
 │   └── auth/             # AuthModal, RoleSelection
 ├── context/              # AuthContext, ThemeContext, MarketplaceContext
 ├── data/                 # Vehicle & Auction Seed Catalog
