@@ -303,6 +303,47 @@ export async function getReconciliationReport({ startDate, endDate }) {
   return { entries, summary };
 }
 
+export async function getUserLedgerSummary(userId) {
+  const result = await getLedgerEntries({ user_id: userId, page: 1, limit: 1000 });
+  const summary = { totalIn: 0, totalOut: 0, netBalance: 0, bySource: {}, recentTransactions: result.entries.slice(0, 10) };
+  for (const entry of result.entries) {
+    const amount = Number(entry.amount || 0);
+    const destination = String(entry.destination || "").toLowerCase();
+    const source = String(entry.source || "unknown");
+    if (destination === "buyer" || destination === "user" || destination === "seller") summary.totalIn += amount;
+    else summary.totalOut += amount;
+    summary.bySource[source] = (summary.bySource[source] || 0) + amount;
+  }
+  summary.totalIn = formatCurrency(summary.totalIn);
+  summary.totalOut = formatCurrency(summary.totalOut);
+  summary.netBalance = formatCurrency(summary.totalIn - summary.totalOut);
+  return summary;
+}
+
+export async function verifyLedgerIntegrity(startDate) {
+  const sb = getSupabase();
+  let query = sb.from("ledger_entries").select("id,transaction_id,amount,entries,status,created_at").order("created_at", { ascending: true });
+  if (startDate) query = query.gte("created_at", new Date(startDate).toISOString());
+  const { data: entries, error } = await query;
+  if (error) throw error;
+  const problems = [];
+  const seen = new Set();
+  let balanced = 0;
+  for (const entry of entries || []) {
+    if (seen.has(entry.transaction_id)) problems.push({ id: entry.id, type: "duplicate_transaction_id" });
+    seen.add(entry.transaction_id);
+    const debit = (entry.entries || []).reduce((sum, line) => sum + Number(line.debit || 0), 0);
+    const credit = (entry.entries || []).reduce((sum, line) => sum + Number(line.credit || 0), 0);
+    if (Math.abs(debit - credit) > 0.01 || Math.abs(debit - Number(entry.amount || 0)) > 0.01) {
+      problems.push({ id: entry.id, type: "unbalanced_entry", debit, credit, amount: Number(entry.amount || 0) });
+    } else {
+      balanced += 1;
+    }
+    if (entry.status !== "completed") problems.push({ id: entry.id, type: "non_completed_entry", status: entry.status });
+  }
+  return { totalEntries: (entries || []).length, balancedEntries: balanced, problemCount: problems.length, healthy: problems.length === 0, problems };
+}
+
 export async function seedAccounts() {
   return ensureAccounts();
 }

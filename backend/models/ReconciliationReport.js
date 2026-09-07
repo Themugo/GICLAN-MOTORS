@@ -1,2 +1,8 @@
 import { createModel } from "./_base.js";
-export default createModel("ReconciliationReport");
+
+const model = createModel("ReconciliationReport");
+
+model.generateReportId = () =>
+  `REC-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
+export default model;
