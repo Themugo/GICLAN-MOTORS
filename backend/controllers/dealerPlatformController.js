@@ -14,6 +14,10 @@ import Escrow from "../models/Escrow.js";
 import MarketingCampaign from "../models/MarketingCampaign.js";
 import { createCar, updateCar, deleteCar } from "./carController.js";
 import { logError } from "../utils/logger.js";
+import crypto from "node:crypto";
+import { getSupabase } from "../utils/supabase.js";
+
+const dealerId = (req) => req.dealerId || req.user.id;
 
 // ============================================================
 // DEALER DASHBOARD
@@ -24,7 +28,7 @@ import { logError } from "../utils/logger.js";
 // etc.) - identical for every dealer who ever calls it, regardless
 // of who they are or what's actually in the database. Rebuilt around
 // real, computed data: the real, signed-in dealer's own real
-// listings (Car.find, scoped to req.user.id, matching the same
+// listings (Car.find, scoped to dealerId(req), matching the same
 // secure pattern as getMyListings elsewhere in this project), real
 // per-listing view counts, real leads from the real leads table
 // (found already fully defined in the schema but never actually
@@ -32,7 +36,7 @@ import { logError } from "../utils/logger.js";
 // dealer's own real, released escrow deals - not invented.
 export async function getDealerDashboard(req, res) {
   try {
-    const dealerId = req.user.id;
+    const dealerId = dealerId(req);
     const [listings, leads, releasedEscrows] = await Promise.all([
       Car.find({ dealer: dealerId }),
       getDealerLeadRecords(dealerId),
@@ -191,7 +195,7 @@ export async function getInventory(req, res) {
     const { status, page = 1, limit = 20 } = req.query;
     const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
     const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 20));
-    const filter = { dealer: req.user.id };
+    const filter = { dealer: dealerId(req) };
     if (status) filter.status = status;
     const all = await Car.find(filter).sort({ createdAt: -1 });
     const total = all.length;
@@ -222,7 +226,7 @@ export async function bulkUpdateListings(req, res) {
     if (action !== "status") return res.status(400).json({ success: false, message: "Only status bulk updates are supported" });
     const status = req.body?.data?.status;
     if (!allowedStatuses.has(status)) return res.status(400).json({ success: false, message: "Invalid listing status" });
-    const owned = await Car.find({ id: { $in: ids }, dealer: req.user.id });
+    const owned = await Car.find({ id: { $in: ids }, dealer: dealerId(req) });
     if (owned.length !== ids.length) return res.status(403).json({ success: false, message: "One or more listings are not owned by this dealer" });
     for (const car of owned) {
       car.status = status;
@@ -248,7 +252,7 @@ export async function bulkUpdateListings(req, res) {
 // all despite existing in the schema).
 export async function getLeads(req, res) {
   try {
-    const result = await getDealerLeads(req.user.id, {
+    const result = await getDealerLeads(dealerId(req), {
       stage: req.query.stage,
       search: req.query.search,
       page: req.query.page,
@@ -265,16 +269,16 @@ export async function getLeads(req, res) {
 export async function updateLead(req, res) {
   try {
     const { leadId } = req.params;
-    const existing = await getDealerLeadRecords(req.user.id);
+    const existing = await getDealerLeadRecords(dealerId(req));
     const lead = existing.find((item) => String(item.id) === String(leadId));
     if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
     const body = req.body || {};
     let updated = lead;
-    if (body.stage !== undefined) updated = await updateLeadStage(leadId, body.stage, req.user.id);
+    if (body.stage !== undefined) updated = await updateLeadStage(leadId, body.stage, dealerId(req));
     if (body.isHot !== undefined && Boolean(body.isHot) !== Boolean(updated.isHot)) {
-      updated = await markLeadAsHot(leadId, req.user.id);
+      updated = await markLeadAsHot(leadId, dealerId(req));
     }
-    updated = await updateLeadFields(leadId, req.user.id, { estimatedValue: body.estimatedValue, archived: body.archived });
+    updated = await updateLeadFields(leadId, dealerId(req), { estimatedValue: body.estimatedValue, archived: body.archived });
     res.json({ success: true, data: updated });
   } catch (err) {
     logError("Error updating lead:", err);
@@ -287,9 +291,9 @@ export async function addLeadNote(req, res) {
   try {
     const note = String(req.body?.note || "").trim();
     if (!note) return res.status(400).json({ success: false, message: "note is required" });
-    const existing = await getDealerLeadRecords(req.user.id);
+    const existing = await getDealerLeadRecords(dealerId(req));
     if (!existing.some((lead) => String(lead.id) === String(req.params.leadId))) return res.status(404).json({ success: false, message: "Lead not found" });
-    res.json({ success: true, data: await serviceAddLeadNote(req.params.leadId, req.user.id, note) });
+    res.json({ success: true, data: await serviceAddLeadNote(req.params.leadId, dealerId(req), note) });
   } catch (err) {
     logError("Error adding lead note:", err);
     res.status(500).json({ success: false, message: "Failed to add lead note" });
@@ -306,7 +310,7 @@ export async function createTask(req, res) {
 
 export async function getSalesPipeline(req, res) {
   try {
-    const dealerId = req.user.id;
+    const dealerId = dealerId(req);
     const [leads, releasedEscrows] = await Promise.all([
       getDealerLeadRecords(dealerId),
       Escrow.find({ seller: dealerId, status: "released" }),
@@ -377,7 +381,7 @@ export async function createCampaign(req, res) {
 
 export async function getDealerAnalytics(req, res) {
   try {
-    const dealerId = req.user.id;
+    const dealerId = dealerId(req);
     const [listings, leads, releasedEscrows] = await Promise.all([
       Car.find({ dealer: dealerId }),
       getDealerLeadRecords(dealerId),
@@ -441,30 +445,88 @@ export async function getAIRecommendations(req, res) {
 // ============================================================
 
 export async function getTeamMembers(req, res) {
-  // dealer_teams is referenced by legacy routes/models but is not defined
-  // by the authoritative migration chain. Keep the endpoint explicit
-  // rather than returning invented members or making an unbacked query.
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_TEAM_UNAVAILABLE",
-    message: "Dealer team management is not available because no canonical dealer-scoped team data contract exists yet.",
-  });
+  const sb = getSupabase();
+  const { page = 1, limit = 50 } = req.query;
+  const pageNum = Math.max(1, Number.parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 50));
+  const from = (pageNum - 1) * limitNum;
+  const to = from + limitNum - 1;
+  const { data, error, count } = await sb.from("dealer_teams")
+    .select("*,member:users(id,name,email,phone,role,avatar)", { count: "exact" })
+    .eq("dealer", dealerId(req)).order("created_at", { ascending: false }).range(from, to);
+  if (error) throw error;
+  res.json({ success: true, members: data || [], pagination: { page: pageNum, limit: limitNum, total: count || 0, pages: Math.ceil((count || 0) / limitNum) } });
 }
 
 export async function inviteTeamMember(req, res) {
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_TEAM_UNAVAILABLE",
-    message: "Dealer team invitations are not available because no canonical dealer-scoped team data contract exists yet.",
-  });
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const allowedRoles = new Set(["manager", "sales_agent", "lot_agent", "finance_officer", "viewer"]);
+  const role = allowedRoles.has(req.body?.role) ? req.body.role : "sales_agent";
+  if (!email || !email.includes("@")) return res.status(400).json({ success: false, message: "Valid email required" });
+  if (email === String(req.user.email || "").toLowerCase()) return res.status(400).json({ success: false, message: "The dealer owner cannot be invited as a team member" });
+  const sb = getSupabase();
+  const { data: existingUser } = await sb.from("users").select("id,email").eq("email", email).limit(1);
+  const permissions = {
+    canListCars: role !== "viewer" && role !== "finance_officer", canEditCars: ["manager","sales_agent","lot_agent"].includes(role),
+    canDeleteCars: role === "manager", canViewEarnings: ["manager","finance_officer"].includes(role),
+    canManageTeam: role === "manager", canApproveDeals: role === "manager", canChatBuyers: ["manager","sales_agent"].includes(role), canEditSettings: role === "manager",
+    ...(req.body?.permissions || {}),
+  };
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: member, error } = await sb.from("dealer_teams").upsert({
+    dealer: dealerId(req), member: existingUser?.[0]?.id || null, role, permissions, status: "invited", inviteEmail: email, invite_token_hash: crypto.createHash("sha256").update(token).digest("hex"), invite_expires_at: expiresAt, invited_by: req.user.id,
+  }, { onConflict: "dealer,inviteEmail" }).select().single();
+  if (error) throw error;
+  try {
+    const { sendTeamInviteEmail } = await import("../services/email.service.js");
+    if (typeof sendTeamInviteEmail === "function") await sendTeamInviteEmail(email, req.user.name, role, token);
+  } catch (e) { console.warn("Team invite email failed:", e.message); }
+  res.status(201).json({ success: true, member });
 }
 
 export async function updateTeamMember(req, res) {
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_TEAM_UNAVAILABLE",
-    message: "Dealer team management is not available because no canonical dealer-scoped team data contract exists yet.",
-  });
+  const sb = getSupabase();
+  const { data: existing, error: lookupError } = await sb.from("dealer_teams").select("*").eq("id", req.params.memberId).eq("dealer", dealerId(req)).limit(1);
+  if (lookupError) throw lookupError;
+  if (!existing?.[0]) return res.status(404).json({ success: false, message: "Team member not found" });
+  const current = existing[0];
+  if (String(current.member || "") === String(req.user.id) && (req.body?.role || req.body?.status)) {
+    return res.status(403).json({ success: false, message: "A team member cannot change their own role or status" });
+  }
+  const allowedRoles = new Set(["manager", "sales_agent", "lot_agent", "finance_officer", "viewer"]);
+  const patch = {};
+  if (req.body?.role && allowedRoles.has(req.body.role)) patch.role = req.body.role;
+  if (req.body?.permissions && typeof req.body.permissions === "object") patch.permissions = { ...(current.permissions || {}), ...req.body.permissions };
+  if (req.body?.status && ["invited","active","suspended","removed"].includes(req.body.status)) patch.status = req.body.status;
+  if (!Object.keys(patch).length) return res.status(400).json({ success: false, message: "No valid team changes supplied" });
+  const { data: updated, error } = await sb.from("dealer_teams").update(patch).eq("id", current.id).eq("dealer", dealerId(req)).select().single();
+  if (error) throw error;
+  res.json({ success: true, member: updated });
+}
+
+export async function removeTeamMember(req, res) {
+  const sb = getSupabase();
+  const { data: existing, error: lookupError } = await sb.from("dealer_teams").select("id,member,invite_email").eq("id", req.params.memberId).eq("dealer", dealerId(req)).limit(1);
+  if (lookupError) throw lookupError;
+  if (!existing?.[0]) return res.status(404).json({ success: false, message: "Team member not found" });
+  const { error } = await sb.from("dealer_teams").update({ status: "removed", invite_token_hash: null, invite_expires_at: null }).eq("id", existing[0].id).eq("dealer", dealerId(req));
+  if (error) throw error;
+  res.json({ success: true, message: "Team member removed" });
+}
+
+export async function acceptTeamInvite(req, res) {
+  const token = String(req.body?.token || "").trim();
+  if (!token) return res.status(400).json({ success: false, message: "Invitation token required" });
+  const sb = getSupabase();
+  const { data: invite, error } = await sb.from("dealer_teams").select("*").eq("invite_token_hash", crypto.createHash("sha256").update(token).digest("hex")).eq("status", "invited").limit(1);
+  if (error) throw error;
+  const record = invite?.[0];
+  if (!record || (record.invite_expires_at && new Date(record.invite_expires_at) < new Date())) return res.status(400).json({ success: false, message: "Invitation is invalid or expired" });
+  if (String(req.user.email || "").toLowerCase() !== String(record.inviteEmail).toLowerCase()) return res.status(403).json({ success: false, message: "Invitation email does not match the signed-in account" });
+  const { data: updated, error: updateError } = await sb.from("dealer_teams").update({ member: req.user.id, status: "active", invite_token_hash: null, invite_expires_at: null }).eq("id", record.id).eq("status", "invited").select().single();
+  if (updateError) throw updateError;
+  res.json({ success: true, member: updated, dealerId: record.dealer });
 }
 
 // ============================================================
@@ -501,7 +563,7 @@ export async function askDealerCopilot(req, res) {
 // project's schema.
 export async function getCustomers(req, res) {
   try {
-    const dealerId = req.user.id;
+    const dealerId = dealerId(req);
     const releasedEscrows = await Escrow.find({ seller: dealerId, status: "released" })
       .populate("buyer", "name email phone")
       .populate("car", "title");
@@ -544,7 +606,7 @@ export async function getCustomers(req, res) {
 export async function getCustomerTimeline(req, res) {
   try {
     const { customerId } = req.params;
-    const dealerId = req.user.id;
+    const dealerId = dealerId(req);
     const escrows = await Escrow.find({ seller: dealerId, buyer: customerId })
       .populate("car", "title")
       .sort({ createdAt: -1 });
@@ -570,7 +632,7 @@ export async function getCustomerTimeline(req, res) {
 
 export async function getAuctionInventory(req, res) {
   try {
-    const dealerId = req.user.id;
+    const dealerId = dealerId(req);
     const cars = await Car.find({ dealer: dealerId, auctionStatus: { $ne: "none" } }).sort({ auctionEnd: 1 });
     const items = cars.map((car) => {
       const end = car.auctionEnd ? new Date(car.auctionEnd) : null;
@@ -621,7 +683,7 @@ export async function getFinanceApplications(req, res) {
 
 export async function getInspectionOrders(req, res) {
   try {
-    const dealerId = req.user.id;
+    const dealerId = dealerId(req);
     const cars = await Car.find({ dealer: dealerId });
     const carIds = cars.map((car) => car.id);
     if (!carIds.length) {
@@ -663,7 +725,7 @@ export async function getInspectionOrders(req, res) {
 
 export async function getReputation(req, res) {
   try {
-    const reviews = await Review.find({ dealer: req.user.id }).populate("buyer", "name").populate("car", "title").sort({ createdAt: -1 });
+    const reviews = await Review.find({ dealer: dealerId(req) }).populate("buyer", "name").populate("car", "title").sort({ createdAt: -1 });
     const ratings = reviews.map((r) => Number(r.rating)).filter((n) => Number.isFinite(n));
     const overall = ratings.length ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : null;
     res.json({ success: true, data: { overall: { rating: overall, totalReviews: reviews.length }, recentReviews: reviews.slice(0, 10).map((r) => ({ id: r.id, name: r.buyer?.name || "Buyer", rating: Number(r.rating), text: r.comment || r.review || null, vehicle: r.car?.title || null, date: r.createdAt || null })) } });

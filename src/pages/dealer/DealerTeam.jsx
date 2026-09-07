@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { dealerAPI } from '../../api/api';
+import { getTeamMembers, inviteTeamMember, updateTeamMember, removeTeamMember } from '../../services/dealerPlatformApi';
 import { useToast } from '../../context/ToastContext';
 import { Users, Mail, Shield, ChevronDown, Trash2, Plus, RefreshCw, Settings, Eye, Edit3, DollarSign, MessageCircle } from 'lucide-react';
 
@@ -59,7 +59,7 @@ export default function DealerTeam() {
 
   const load = () => {
     setLoading(true);
-    dealerAPI.getTeam().then(d => setMembers(d.members || [])).catch(() => {}).finally(() => setLoading(false));
+    getTeamMembers().then(d => setMembers(d.members || [])).catch(() => {}).finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
@@ -68,7 +68,7 @@ export default function DealerTeam() {
     if (!invite.email) { toast('Enter an email address', 'error'); return; }
     setInviting(true);
     try {
-      await dealerAPI.inviteMember({ email: invite.email, role: invite.role, permissions: customPerms });
+      await inviteTeamMember({ email: invite.email, role: invite.role, permissions: customPerms });
       toast(`Invite sent to ${invite.email}`, 'success');
       setInvite({ email: '', role: 'sales_agent' });
       setCustomPerms({});
@@ -81,24 +81,24 @@ export default function DealerTeam() {
 
   const handleRoleChange = async (memberId, newRole) => {
     try {
-      await dealerAPI.updateMember(memberId, { role: newRole, permissions: ROLE_DEFAULTS[newRole] });
-      setMembers(p => p.map(m => m._id === memberId ? { ...m, role: newRole, permissions: ROLE_DEFAULTS[newRole] } : m));
+      await updateTeamMember(memberId, { role: newRole, permissions: ROLE_DEFAULTS[newRole] });
+      setMembers(p => p.map(m => m.id === memberId ? { ...m, role: newRole, permissions: ROLE_DEFAULTS[newRole] } : m));
       toast('Role updated', 'success');
     } catch { toast('Failed', 'error'); }
   };
 
   const handlePermToggle = async (memberId, permKey, current) => {
     try {
-      await dealerAPI.updateMember(memberId, { permissions: { [permKey]: !current } });
-      setMembers(p => p.map(m => m._id === memberId ? { ...m, permissions: { ...m.permissions, [permKey]: !current } } : m));
+      await updateTeamMember(memberId, { permissions: { [permKey]: !current } });
+      setMembers(p => p.map(m => m.id === memberId ? { ...m, permissions: { ...m.permissions, [permKey]: !current } } : m));
     } catch { toast('Failed', 'error'); }
   };
 
   const handleRemove = async (memberId, name) => {
     if (!confirm(`Remove ${name} from your team?`)) return;
     try {
-      await dealerAPI.removeMember(memberId);
-      setMembers(p => p.filter(m => m._id !== memberId));
+      await removeTeamMember(memberId);
+      setMembers(p => p.filter(m => m.id !== memberId));
       toast('Removed from team', 'info');
     } catch { toast('Failed', 'error'); }
   };
@@ -106,8 +106,8 @@ export default function DealerTeam() {
   const handleSuspend = async (memberId, current) => {
     try {
       const next = current === 'active' ? 'suspended' : 'active';
-      await dealerAPI.updateMember(memberId, { status: next });
-      setMembers(p => p.map(m => m._id === memberId ? { ...m, status: next } : m));
+      await updateTeamMember(memberId, { status: next });
+      setMembers(p => p.map(m => m.id === memberId ? { ...m, status: next } : m));
       toast(next === 'suspended' ? 'Member suspended' : 'Member reinstated', 'info');
     } catch { toast('Failed', 'error'); }
   };
@@ -220,11 +220,11 @@ export default function DealerTeam() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {members.map(m => {
-              const isEditing = editingId === m._id;
+              const isEditing = editingId === m.id;
               const memberUser = m.member || {};
               const name = memberUser.name || m.inviteEmail || 'Invited User';
               return (
-                <div key={m._id} style={{ background: '#0C0C0C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+                <div key={m.id} style={{ background: '#0C0C0C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s' }}>
                   {/* Member row */}
                   <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
                     {/* Avatar */}
@@ -244,7 +244,7 @@ export default function DealerTeam() {
 
                     {/* Role selector */}
                     <div style={{ position: 'relative' }}>
-                      <select value={m.role} onChange={e => handleRoleChange(m._id, e.target.value)}
+                      <select value={m.role} onChange={e => handleRoleChange(m.id, e.target.value)}
                         style={{ padding: '7px 28px 7px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: '#111', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none', appearance: 'none' }}>
                         {ROLES.map(r => <option key={r.id} value={r.id} style={{ background: '#111' }}>{r.label}</option>)}
                       </select>
@@ -254,15 +254,15 @@ export default function DealerTeam() {
 
                     {/* Actions */}
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <button onClick={() => setEditingId(isEditing ? null : m._id)}
+                      <button onClick={() => setEditingId(isEditing ? null : m.id)}
                         style={{ padding: '7px 14px', borderRadius: 8, background: isEditing ? 'rgba(212,196,168,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isEditing ? 'rgba(212,196,168,0.3)' : 'rgba(255,255,255,0.09)'}`, color: isEditing ? 'var(--gold)' : 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                         {isEditing ? 'Done' : 'Permissions'}
                       </button>
-                      <button onClick={() => handleSuspend(m._id, m.status)}
+                      <button onClick={() => handleSuspend(m.id, m.status)}
                         style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: m.status === 'active' ? 'rgba(249,115,22,0.75)' : '#22c55e', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                         {m.status === 'active' ? 'Suspend' : 'Reinstate'}
                       </button>
-                      <button onClick={() => handleRemove(m._id, name)}
+                      <button onClick={() => handleRemove(m.id, name)}
                         style={{ padding: '7px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.14)', color: 'rgba(239,68,68,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <Trash2 size={13} />
                       </button>
@@ -277,7 +277,7 @@ export default function DealerTeam() {
                         {PERMISSIONS.map(p => {
                           const on = m.permissions?.[p.key] ?? false;
                           return (
-                            <div key={p.key} onClick={() => handlePermToggle(m._id, p.key, on)}
+                            <div key={p.key} onClick={() => handlePermToggle(m.id, p.key, on)}
                               style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 12px', borderRadius: 8, border: `1px solid ${on ? 'rgba(212,196,168,0.22)' : 'rgba(255,255,255,0.06)'}`, background: on ? 'rgba(212,196,168,0.06)' : 'transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
                               <div style={{ width: 15, height: 15, borderRadius: 4, background: on ? 'var(--gold)' : 'rgba(255,255,255,0.08)', border: `1px solid ${on ? 'var(--gold)' : 'rgba(255,255,255,0.12)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 {on && <span style={{ color: '#000', fontSize: 9, fontWeight: 900 }}>✓</span>}

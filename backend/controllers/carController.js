@@ -314,7 +314,7 @@ export const getMyListings = async (req, res) => {
 // =============================
 export const createCar = async (req, res) => {
   try {
-    const seller = await User.findById(req.user.id).select(
+    const seller = await User.findById((req.dealerId || req.user.id)).select(
       "+trialStartedAt +trialListingsUsed +firstVehicleUsed dealerPackage packageListingMax packageExpiresAt listingCount role status",
     );
 
@@ -332,7 +332,7 @@ export const createCar = async (req, res) => {
 
     const isDealer = seller.role === "dealer";
     const isSeller = seller.role === "individual_seller";
-    const currentListingCount = await Car.countDocuments({ dealer: req.user.id });
+    const currentListingCount = await Car.countDocuments({ dealer: (req.dealerId || req.user.id) });
 
     // Determine if user is allowed to create a listing (without incrementing yet)
     let shouldIncrementListingCount = false;
@@ -368,7 +368,7 @@ export const createCar = async (req, res) => {
 
         // Set trial start date on first listing
         if (!seller.trialStartedAt) {
-          await User.findByIdAndUpdate(req.user.id, { trialStartedAt: now });
+          await User.findByIdAndUpdate((req.dealerId || req.user.id), { trialStartedAt: now });
         }
       } else if (!pkg.isFree) {
         if (seller.packageExpiresAt && now > new Date(seller.packageExpiresAt)) {
@@ -431,7 +431,7 @@ export const createCar = async (req, res) => {
 
     const body = {
       ...req.body,
-      dealer: req.user.id,
+      dealer: (req.dealerId || req.user.id),
       views: 0,
       bidsCount: 0,
       trustScore: 0,
@@ -500,7 +500,7 @@ export const createCar = async (req, res) => {
       if (isSeller && !seller.firstVehicleUsed) {
         updateOps.firstVehicleUsed = true;
       }
-      await User.findByIdAndUpdate(req.user.id, updateOps);
+      await User.findByIdAndUpdate((req.dealerId || req.user.id), updateOps);
     }
 
     await cacheDelPattern("cars:list:*");
@@ -528,11 +528,11 @@ export const createCar = async (req, res) => {
             price: car.price,
             mileage: car.mileage,
           },
-          req.user.id,
+          (req.dealerId || req.user.id),
         );
 
         if (detectionData.hasDuplicates) {
-          await flagDuplicate(car._id, detectionData, req.user.id);
+          await flagDuplicate(car._id, detectionData, (req.dealerId || req.user.id));
         }
       } catch (err) {
         // Duplicate detection failure should not affect listing creation
@@ -586,7 +586,7 @@ export const updateCar = async (req, res) => {
 
     const isStaff = STAFF_ROLES.includes(req.user.role);
     const isDealer = DEALER_ROLES.includes(req.user.role);
-    const isOwner = car.dealer?.toString() === req.user.id;
+    const isOwner = car.dealer?.toString() === (req.dealerId || req.user.id);
 
     // Permission rules: owners, staff, or the appropriate authorized seller/dealer may edit.
     const canEdit = isOwner || isStaff;
@@ -726,12 +726,12 @@ export const deleteCar = async (req, res) => {
 
     const isStaff = STAFF_ROLES.includes(req.user.role);
     const isDealer = DEALER_ROLES.includes(req.user.role);
-    const isOwner = car.dealer?.toString() === req.user.id;
+    const isOwner = car.dealer?.toString() === (req.dealerId || req.user.id);
     if (!isOwner && !isStaff) {
       return res.status(403).json({ success: false, message: "Not authorized to delete this listing" });
     }
 
-    await Car.softDelete(req.params.id, req.user.id);
+    await Car.softDelete(req.params.id, req.dealerId || req.user.id);
 
     // Decrement listing counts
     if (car.dealer) {
