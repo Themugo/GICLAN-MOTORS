@@ -1,38 +1,32 @@
-// Enterprise Control Plane API boundary.
-// The authoritative Supabase migration chain does not currently provide the
-// incident/alert/health/telemetry warehouse required by this surface. All
-// endpoints therefore fail closed instead of reporting fabricated health,
-// security, performance, deployment, capacity or recovery results.
-
-function notConfigured(res, domain = "Enterprise control plane") {
-  return res.status(501).json({
-    success: false,
-    error: `${domain} data is not configured in the authoritative database schema`,
-    code: "CONTROL_PLANE_NOT_CONFIGURED",
-  });
-}
-
-export async function getExecutiveDashboard(req, res) { return notConfigured(res); }
-export async function getSystemHealth(req, res) { return notConfigured(res, "System health telemetry"); }
-export async function checkServiceHealth(req, res) { return notConfigured(res, "Service health checks"); }
-export async function getBusinessHealth(req, res) { return notConfigured(res, "Business health telemetry"); }
-export async function getIncidents(req, res) { return notConfigured(res, "Incident management"); }
-export async function getIncident(req, res) { return notConfigured(res, "Incident management"); }
-export async function createIncident(req, res) { return notConfigured(res, "Incident management"); }
-export async function updateIncident(req, res) { return notConfigured(res, "Incident management"); }
-export async function resolveIncident(req, res) { return notConfigured(res, "Incident management"); }
-export async function getAlerts(req, res) { return notConfigured(res, "Alert management"); }
-export async function createAlert(req, res) { return notConfigured(res, "Alert management"); }
-export async function acknowledgeAlert(req, res) { return notConfigured(res, "Alert management"); }
-export async function getSelfHealingActions(req, res) { return notConfigured(res, "Self-healing"); }
-export async function executeSelfHealing(req, res) { return notConfigured(res, "Self-healing"); }
-export async function getSelfHealingRules(req, res) { return notConfigured(res, "Self-healing"); }
-export async function getRootCauseAnalysis(req, res) { return notConfigured(res, "Root-cause analysis"); }
-export async function getPerformanceMetrics(req, res) { return notConfigured(res, "Performance telemetry"); }
-export async function getSecurityStatus(req, res) { return notConfigured(res, "Security telemetry"); }
-export async function getCapacityPlanning(req, res) { return notConfigured(res, "Capacity telemetry"); }
-export async function getComplianceStatus(req, res) { return notConfigured(res, "Control-plane compliance telemetry"); }
-export async function getAuditLogs(req, res) { return notConfigured(res, "Control-plane audit telemetry"); }
-export async function askOperationsQuestion(req, res) { return notConfigured(res, "Operations copilot"); }
-export async function getDeployments(req, res) { return notConfigured(res, "Deployment telemetry"); }
-export async function getDisasterRecovery(req, res) { return notConfigured(res, "Disaster-recovery telemetry"); }
+import * as ecp from "../services/ecpService.js";
+const actor = req => req.user?.id || req.user?._id;
+const ok = (res, data) => res.json(data?.success === undefined ? { success: true, data } : data);
+const fail = (res, err) => res.status(err.status || 500).json({ success:false, error: err.message || "Enterprise control plane request failed", code: err.code || "ECP_ERROR" });
+const wrap = fn => async (req,res) => { try { return ok(res, await fn(req)); } catch (e) { return fail(res,e); } };
+export const getExecutiveDashboard = wrap(() => ecp.getExecutiveDashboard());
+export const getSystemHealth = wrap(() => ecp.getSystemHealth());
+export const checkServiceHealth = wrap(req => ecp.checkServiceHealth(req.params.serviceId || req.params.id));
+export const getBusinessHealth = wrap(() => ecp.getBusinessHealth());
+export const getIncidents = wrap(req => ecp.getIncidents(req.query));
+export const getIncident = wrap(req => ecp.getIncident(req.params.id));
+export const createIncident = wrap(req => ecp.createIncidentRecord(req.body, actor(req), req));
+export const updateIncident = wrap(req => ecp.updateIncidentRecord(req.params.id, req.body, actor(req), req));
+export const deleteIncident = wrap(req => ecp.deleteIncidentRecord(req.params.id, actor(req), req));
+export const resolveIncident = wrap(req => ecp.updateIncidentRecord(req.params.id, { status:"resolved" }, actor(req), req));
+export const getAlerts = wrap(req => ecp.getAlerts(req.query));
+export const createAlert = wrap(req => ecp.createAlertRecord(req.body, actor(req), req));
+export const acknowledgeAlert = wrap(req => ecp.acknowledgeAlert(req.params.id, actor(req), req));
+export const resolveAlert = wrap(req => ecp.resolveAlert(req.params.id, actor(req), req));
+export const getSelfHealingActions = wrap(() => ecp.getSelfHealingActions());
+export const executeSelfHealing = wrap(req => ecp.executeSelfHealing(req.body, actor(req), req));
+export const executeSelfHealingAction = executeSelfHealing;
+export const getSelfHealingRules = wrap(() => ecp.getSelfHealingRules());
+export const getRootCauseAnalysis = wrap(req => ecp.getRootCauseAnalysis(req.params.incidentId || req.params.id));
+export const getPerformanceMetrics = wrap(() => ecp.getPerformanceMetrics());
+export const getSecurityStatus = wrap(() => ecp.getSecurityStatus());
+export const getCapacityPlanning = wrap(() => ecp.getCapacityPlanning());
+export const getComplianceStatus = wrap(() => ecp.getComplianceStatus());
+export const getAuditLogs = wrap(req => ecp.getAuditLogs(req.query));
+export const askOperationsQuestion = wrap(req => ecp.askOperationsQuestion(req.body?.question));
+export const getDeployments = wrap(() => ecp.getDeployments());
+export const getDisasterRecovery = wrap(() => ecp.getDisasterRecovery());

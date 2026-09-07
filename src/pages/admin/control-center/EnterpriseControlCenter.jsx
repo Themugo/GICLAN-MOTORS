@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Server, ShoppingCart, Database, Shield, Zap, AlertTriangle,
   CheckCircle, X, Plus, RefreshCw, Search, Filter, Eye, Settings, Bell,
   Activity, TrendingUp, TrendingDown, Users, DollarSign, Car, Gavel,
-  ClipboardCheck, Calculator, Megaphone, Clock, ChevronRight, Play, Pause,
+  ClipboardCheck, Calculator, Megaphone, Clock, ChevronRight, Play, Pause, Building2,
   RotateCcw, Wrench, EyeOff, Lock, Globe, Cloud, Wifi, Cpu, HardDrive,
   Send, Lightbulb, BarChart3, LineChart, PieChart, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
