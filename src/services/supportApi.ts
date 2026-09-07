@@ -8,16 +8,14 @@ import { request, HttpRequestError } from '../api/httpRequest';
  * requires auth for every /api/support endpoint - confirmed via
  * `protect` middleware on every route in backend/routes/supportRoutes.js).
  *
- * Built specifically for what the real support PAGE needs
- * (create + list-my-own) - the admin-side ticket-management endpoints
- * (assign/escalate/message-thread/status-change) are real too but were
- * not wrapped here, since this client's scope is the buyer/seller-
- * facing support form, not an admin console.
+ * This is the canonical frontend transport for both customer and
+ * support-agent ticket operations.
  */
 
 
 export interface SupportTicket {
   id: string;
+  ticketNumber?: string;
   category?: string;
   priority?: string;
   subject: string;
@@ -77,4 +75,35 @@ export async function createSupportTicket(
 /** GET /api/support/my-tickets - the caller's own tickets. */
 export async function getMySupportTickets(): Promise<{ success: boolean; tickets: SupportTicket[] }> {
   return supportFetch('/api/support/my-tickets', { method: 'GET' });
+}
+
+export interface SupportTicketListParams { status?: string; priority?: string; category?: string; assignedTo?: string; search?: string; page?: number; limit?: number; }
+
+export async function getSupportTicket(id: string): Promise<{ success: boolean; ticket: SupportTicket }> {
+  return supportFetch(`/api/support/${id}`, { method: 'GET' });
+}
+
+export async function addSupportTicketMessage(id: string, payload: { content: string; isInternal?: boolean; attachments?: unknown[] }): Promise<{ success: boolean; ticket: SupportTicket }> {
+  return supportFetch(`/api/support/${id}/messages`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function updateSupportTicketStatus(id: string, payload: { status: string; assignedTo?: string | null; escalatedTo?: string | null; priority?: string; resolutionNotes?: string }): Promise<{ success: boolean; ticket: SupportTicket }> {
+  return supportFetch(`/api/admin/support-tickets/${id}/status`, { method: 'PATCH', body: JSON.stringify(payload) });
+}
+
+export async function assignSupportTicket(id: string, assignedTo: string | null): Promise<{ success: boolean; ticket: SupportTicket }> {
+  return supportFetch(`/api/admin/support-tickets/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ assignedTo }) });
+}
+
+export async function addAdminSupportTicketMessage(id: string, payload: { content: string; isInternal?: boolean }): Promise<{ success: boolean; ticket: SupportTicket }> {
+  return supportFetch(`/api/admin/support-tickets/${id}/messages`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function getAdminSupportTickets(params: SupportTicketListParams = {}): Promise<{ success: boolean; tickets: SupportTicket[]; pagination?: { page: number; limit: number; total: number; pages: number } }> {
+  const query = new URLSearchParams(); Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') query.set(k, String(v)); });
+  return supportFetch(`/api/admin/support-tickets${query.toString() ? `?${query}` : ''}`, { method: 'GET' });
+}
+
+export async function getSupportTicketStats(): Promise<{ success: boolean; stats?: unknown; total?: number; resolvedToday?: number }> {
+  return supportFetch('/api/admin/support-tickets/stats', { method: 'GET' });
 }

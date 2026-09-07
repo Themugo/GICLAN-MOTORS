@@ -437,16 +437,6 @@ export const supportAPI = {
   create:        (body: any)    => api.post('/support', body).then(unwrap),
 };
 
-// ── SUPPORT TICKET ADMIN ──────────────────────────────
-export const supportTicketAdminAPI = {
-  stats:      ()            => api.get('/admin/support-tickets/stats').then(unwrap),
-  list:       (params?: any) => api.get('/admin/support-tickets', { params }).then(unwrap),
-  get:        (id: string)  => api.get(`/admin/support-tickets/${id}`).then(unwrap),
-  updateStatus: (id: string, body: any) => api.patch(`/admin/support-tickets/${id}/status`, body).then(unwrap),
-  assign:     (id: string, body: any) => api.patch(`/admin/support-tickets/${id}/assign`, body).then(unwrap),
-  addMessage: (id: string, body: any) => api.post(`/admin/support-tickets/${id}/messages`, body).then(unwrap),
-};
-
 // ── REPORTS ───────────────────────────────────────────
 export const reportAPI = {
   submit:      (body: any) => api.post('/reports/submit', body).then(unwrap),

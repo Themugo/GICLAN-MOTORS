@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supportTicketAdminAPI } from '../../api/api';
+import { getAdminSupportTickets, updateSupportTicketStatus } from '../../services/supportApi';
 import { timeAgo } from '../../utils/helpers';
 import { useToast } from '../../context/ToastContext';
 
@@ -16,7 +16,7 @@ export default function AdminSupportTickets() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supportTicketAdminAPI.list().then(data => {
+    getAdminSupportTickets().then(data => {
       setTickets(data.tickets || data.data || []);
     }).catch(() => toast('Failed to load tickets', 'error'))
     .finally(() => setLoading(false));
@@ -24,7 +24,7 @@ export default function AdminSupportTickets() {
 
   const handleStatus = async (id, status) => {
     try {
-      await supportTicketAdminAPI.updateStatus(id, { status });
+      await updateSupportTicketStatus(id, { status });
       toast(`Ticket ${status}`, 'success');
       setTickets(prev => prev.map(t => t._id === id ? { ...t, status } : t));
     } catch {
