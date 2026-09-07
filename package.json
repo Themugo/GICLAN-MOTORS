@@ -29,7 +29,8 @@
     "validate:transaction-integrity": "node scripts/validate-transaction-integrity.mjs",
     "validate:inspection-marketplace": "node scripts/validate-inspection-marketplace.mjs",
     "validate:dispute-integrity": "node scripts/validate-dispute-integrity.mjs",
-    "validate:code-splitting": "node scripts/validate-code-splitting.mjs"
+    "validate:code-splitting": "node scripts/validate-code-splitting.mjs",
+    "validate:dealer-modal-convergence": "node scripts/validate-dealer-modal-convergence.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",
