@@ -6,8 +6,8 @@ export const getInnovationDashboard = () => api.get('/improvement/dashboard');
 
 // Improvements
 export const getImprovementOpportunities = () => api.get('/improvement/opportunities');
-export const createImprovement = (data) => api.post('/improvements', data);
-export const updateImprovement = (id, data) => api.put(`/improvements/${id}`, data);
+export const createImprovement = (data) => api.post('/improvement/improvements', data);
+export const updateImprovement = (id, data) => api.put(`/improvement/improvements/${id}`, data);
 
 // AI Recommendations
 export const getAIRecommendations = () => api.get('/improvement/recommendations');

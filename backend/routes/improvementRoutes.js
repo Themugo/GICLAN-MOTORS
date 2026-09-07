@@ -1,6 +1,7 @@
 import express from "express";
 import { protect, allowRoles } from "../middleware/auth.js";
 import asyncHandler from "../middleware/asyncHandler.js";
+import { createLimiter } from "../middleware/rateLimiter.js";
 import {
   // Dashboard
   getInnovationDashboard,
@@ -53,7 +54,7 @@ router.get("/dashboard", asyncHandler(getInnovationDashboard));
 
 // Improvements
 router.get("/opportunities", asyncHandler(getImprovementOpportunities));
-router.post("/improvements", allowRoles("admin", "superadmin", "manager"), asyncHandler(createImprovement));
+router.post("/improvements", createLimiter, allowRoles("admin", "superadmin", "manager"), asyncHandler(createImprovement));
 router.put("/improvements/:improvementId", allowRoles("admin", "superadmin"), asyncHandler(updateImprovement));
 
 // AI Recommendations
@@ -70,7 +71,7 @@ router.get("/performance", asyncHandler(getPerformanceMetrics));
 
 // Experiments
 router.get("/experiments", asyncHandler(getExperiments));
-router.post("/experiments", allowRoles("admin", "superadmin", "manager"), asyncHandler(createExperiment));
+router.post("/experiments", createLimiter, allowRoles("admin", "superadmin", "manager"), asyncHandler(createExperiment));
 router.put("/experiments/:experimentId", allowRoles("admin", "superadmin"), asyncHandler(updateExperiment));
 router.post("/experiments/:experimentId/start", allowRoles("admin", "superadmin"), asyncHandler(startExperiment));
 router.post("/experiments/:experimentId/stop", allowRoles("admin", "superadmin"), asyncHandler(stopExperiment));
@@ -80,8 +81,8 @@ router.get("/health", asyncHandler(getProductHealthScores));
 
 // Innovation Pipeline
 router.get("/ideas", asyncHandler(getInnovationIdeas));
-router.post("/ideas", asyncHandler(createInnovationIdea));
-router.post("/ideas/:ideaId/vote", asyncHandler(voteIdea));
+router.post("/ideas", createLimiter, asyncHandler(createInnovationIdea));
+router.post("/ideas/:ideaId/vote", createLimiter, asyncHandler(voteIdea));
 router.put("/ideas/:ideaId/status", allowRoles("admin", "superadmin", "manager"), asyncHandler(updateIdeaStatus));
 
 // Roadmap
