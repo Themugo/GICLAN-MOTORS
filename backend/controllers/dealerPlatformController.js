@@ -15,6 +15,7 @@ import { listDealerReviews } from '../services/review.service.js';
 
 import { createCar, updateCar, deleteCar } from "./carController.js";
 import { logError } from "../utils/logger.js";
+import { getDealerEntitlement } from "../services/dealerSubscription.service.js";
 
 // ============================================================
 // DEALER DASHBOARD
@@ -491,11 +492,8 @@ export async function updateTeamMember(req, res) {
 // ============================================================
 
 export async function getSubscription(req, res) {
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_SUBSCRIPTION_UNAVAILABLE",
-    message: "Dealer subscription management is not available because the authoritative migration chain does not define a dealer subscription contract.",
-  });
+  const entitlement = await getDealerEntitlement(req.user.id);
+  return res.json({ success: true, subscription: entitlement.subscription, entitlement });
 }
 
 // ============================================================

@@ -10,6 +10,7 @@ import * as path from "path";
 import { STAFF_ROLES, SELLER_ROLES } from "../config/roles.js";
 import { detectDuplicates, flagDuplicate } from "../services/duplicateVehicleService.js";
 import { logVehicleCreated, logVehicleEdited, logVehicleDeleted } from "../services/auditService.js";
+import { getDealerEntitlement } from "../services/dealerSubscription.service.js";
 
 const DEALER_ROLES = SELLER_ROLES; // backward compat
 
@@ -326,53 +327,42 @@ export const createCar = async (req, res) => {
     if (monetisationOff) {
       // Free-for-all launch mode — allow the listing, still track count for analytics.
       shouldIncrementListingCount = true;
-    } else if (isDealer && pkg) {
-      const now = new Date();
+    } else if (isDealer) {
+      const entitlement = await getDealerEntitlement(req.user.id);
 
-      if (pkg.isFree && pkg.trialDays > 0) {
-        const trialStart = seller.trialStartedAt || now;
-        const trialEnd = new Date(trialStart.getTime() + pkg.trialDays * 86400000);
-
-        if (now > trialEnd) {
-          return res.status(402).json({
-            success: false,
-            message: `Your free trial ended on ${trialEnd.toLocaleDateString("en-KE")}. Please upgrade to a paid plan to continue listing.`,
-            code: "TRIAL_EXPIRED",
-          });
-        }
-
-        const trialMax = pkg.trialListingMax || pkg.listingMax || 3;
-        if (currentListingCount >= trialMax) {
-          return res.status(402).json({
-            success: false,
-            message: `Trial limit reached (${trialMax} listings). Upgrade to a paid plan to list more.`,
-            code: "TRIAL_LIMIT_REACHED",
-          });
-        }
-
-        shouldIncrementListingCount = true;
-
-        // Set trial start date on first listing
-        if (!seller.trialStartedAt) {
-          await User.findByIdAndUpdate(req.user.id, { trialStartedAt: now });
-        }
-      } else if (!pkg.isFree) {
-        if (seller.packageExpiresAt && now > new Date(seller.packageExpiresAt)) {
-          return res.status(402).json({
-            success: false,
-            message: "Your listing package has expired. Please renew to continue listing.",
-            code: "PACKAGE_EXPIRED",
-          });
-        }
-        if (pkg.listingMax > 0 && currentListingCount >= pkg.listingMax) {
-          return res.status(402).json({
-            success: false,
-            message: `You've reached your plan limit of ${pkg.listingMax} listings. Upgrade to list more.`,
-            code: "LISTING_LIMIT_REACHED",
-          });
-        }
-        shouldIncrementListingCount = true;
+      if (entitlement.status === "none") {
+        return res.status(402).json({
+          success: false,
+          message: "An active dealer subscription is required to list vehicles. Choose a plan and complete M-Pesa payment.",
+          code: "SUBSCRIPTION_REQUIRED",
+        });
       }
+
+      if (entitlement.locked) {
+        return res.status(403).json({
+          success: false,
+          message: "Dealer listings are currently locked. Contact platform support.",
+          code: "LISTINGS_LOCKED",
+        });
+      }
+
+      if (entitlement.expiresAt && new Date(entitlement.expiresAt) <= new Date()) {
+        return res.status(402).json({
+          success: false,
+          message: "Your dealer subscription has expired. Renew your plan to continue listing.",
+          code: "SUBSCRIPTION_EXPIRED",
+        });
+      }
+
+      if (entitlement.listingMax > 0 && entitlement.listingsUsed >= entitlement.listingMax) {
+        return res.status(402).json({
+          success: false,
+          message: `You've reached your plan limit of ${entitlement.listingMax} listings. Upgrade to list more.`,
+          code: "LISTING_LIMIT_REACHED",
+        });
+      }
+
+      shouldIncrementListingCount = true;
     }
 
     if (!monetisationOff && isSeller) {

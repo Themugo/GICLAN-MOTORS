@@ -6,6 +6,7 @@ import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { atomicSettleBidPayment, atomicSettlePurchasePayment } from "../utils/atomicTransactions.js";
 import { recordPaymentEvent, recordWebhookReceipt, markWebhookProcessed, markAttemptByCheckout } from "./paymentFinancialLifecycle.service.js";
 import { assertPaymentTransition } from "./paymentStateMachine.js";
+import { activateDealerSubscriptionFromPayment } from "./dealerSubscription.service.js";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
@@ -202,30 +203,24 @@ export const handleMpesaCallback = async (callbackData) => {
       return payment;
     }
 
+    let subscriptionActivation = null;
+    if (payment.type === "package_upgrade") {
+      subscriptionActivation = await activateDealerSubscriptionFromPayment(payment);
+      logInfo("Dealer subscription activated from verified payment", {
+        userId: payment.user,
+        paymentId: payment.id,
+        subscriptionId: subscriptionActivation?.id,
+        planId: subscriptionActivation?.planId,
+      });
+    }
+
     await sendNotification({
       userId: payment.user,
-      title: "Payment Successful",
-      message: `KES ${payment.amount} received successfully. Receipt: ${receipt}`,
+      title: payment.type === "package_upgrade" ? "Subscription Activated" : "Payment Successful",
+      message: payment.type === "package_upgrade"
+        ? `Your ${subscriptionActivation?.planId || "dealer"} plan is active until ${subscriptionActivation?.expiresAt ? new Date(subscriptionActivation.expiresAt).toLocaleDateString("en-KE") : "the plan expiry date"}. Receipt: ${receipt}`
+        : `KES ${payment.amount} received successfully. Receipt: ${receipt}`,
     });
-
-    if (payment.type === "package_upgrade") {
-      const planId = payment.metadata?.planId;
-      const PLANS = {
-        starter:    { limit: 10,  name: "Starter" },
-        growth:     { limit: 30,  name: "Growth" },
-        elite:      { limit: 100, name: "Elite" },
-        enterprise: { limit: 0,   name: "Enterprise" },
-      };
-      const plan = PLANS[planId];
-      if (plan) {
-        await update("users", payment.user, {
-          dealerPackage: planId,
-          packageListingMax: plan.limit,
-          packageExpiresAt: new Date(Date.now() + 30 * 86400000),
-        });
-        logInfo("Package upgraded via payment", { userId: payment.user, planId });
-      }
-    }
 
     const io = getIO();
     if (io) {

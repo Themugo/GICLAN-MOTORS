@@ -17,7 +17,7 @@ const TABLE_MAP = {
   SupportTicket: "support_tickets", FeatureFlag: "feature_flags", AdSlot: "ad_slots", HeroSlide: "hero_slides", LoanApplication: "loan_applications", MarketingCampaign: "marketing_campaigns",
   PlatformConfig: "platform_config", Announcement: "announcements",
   SavedSearch: "saved_searches", Report: "reports",
-  Transaction: "transactions", Subscription: "subscriptions",
+  Transaction: "transactions", Subscription: "subscriptions", DealerSubscription: "dealer_subscriptions",
   MarketData: "market_data", MarketPricing: "market_pricing",
   BrandDepreciation: "brand_depreciation", MileageImpact: "mileage_impact",
   VehicleValuation: "vehicle_valuations",

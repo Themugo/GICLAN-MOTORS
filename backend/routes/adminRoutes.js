@@ -31,6 +31,8 @@ import FraudDetection from "../models/FraudDetection.js";
 import DealerVerification from "../models/DealerVerification.js";
 import { stkPush } from "../services/mpesaService.js";
 import { sendNotification } from "../services/notification.service.js";
+import { getDealerPlans } from "../services/dealerSubscription.service.js";
+import { getSupabase } from "../utils/supabase.js";
 
 let adminEmailService = {};
 try {
@@ -1314,39 +1316,54 @@ router.get(
 );
 
 // =============================
-// 📦 ASSIGN DEALER PACKAGE
+// 📦 ASSIGN / REVOKE DEALER SUBSCRIPTION
 // =============================
 router.patch(
   "/dealers/:id/package",
   protect,
   adminOnly,
   asyncHandler(async (req, res) => {
-    const { dealerPackage, packageListingMax, packageFeatures, durationDays, packageAutoRenew } = req.body;
-    const PACKAGES = {
-      starter: { listingMax: 10, features: [] },
-      growth: { listingMax: 30, features: ["priority_search"] },
-      elite: { listingMax: 100, features: ["priority_search", "featured_homepage"] },
-      enterprise: { listingMax: 0, features: ["priority_search", "featured_homepage", "dedicated_support"] },
-      none: { listingMax: 0, features: [] },
-    };
-    const pkg = PACKAGES[dealerPackage] || PACKAGES.none;
-    const expiry = durationDays ? new Date(Date.now() + Number(durationDays) * 86400000) : null;
+    const { dealerPackage, durationDays = 30 } = req.body || {};
+    const dealerId = req.params.id;
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        dealerPackage,
-        packageListingMax: packageListingMax ?? pkg.listingMax,
-        packageFeatures: packageFeatures ?? pkg.features,
-        packageExpiresAt: expiry,
-        packageAutoRenew: packageAutoRenew ?? false,
-        subscriptionStatus: dealerPackage === "none" ? "none" : "active",
-      },
-      { new: true },
-    ).select(ADMIN_USER_FIELDS);
+    if (!dealerPackage) return res.status(400).json({ success: false, message: "dealerPackage is required" });
+    const days = Number(durationDays);
+    if (!Number.isInteger(days) || days < 1 || days > 3660) {
+      return res.status(400).json({ success: false, message: "durationDays must be an integer between 1 and 3660" });
+    }
 
-    if (!user) return res.status(404).json({ success: false, message: "Dealer not found" });
-    res.json({ success: true, user });
+    const user = await User.findById(dealerId).select("id role");
+    if (!user || user.role !== "dealer") return res.status(404).json({ success: false, message: "Dealer not found" });
+
+    const sb = getSupabase();
+    let result;
+    if (dealerPackage === "none") {
+      const rpc = await sb.rpc("kayad_revoke_dealer_subscription_atomic", {
+        p_dealer: dealerId,
+        p_reason: "admin_revoke",
+      });
+      if (rpc.error) throw rpc.error;
+      result = rpc.data;
+    } else {
+      const plans = await getDealerPlans();
+      if (!plans.some((p) => p.id === dealerPackage)) {
+        return res.status(400).json({ success: false, message: "Invalid dealer plan" });
+      }
+      const rpc = await sb.rpc("kayad_grant_dealer_subscription_atomic", {
+        p_dealer: dealerId,
+        p_plan_id: dealerPackage,
+        p_duration_days: days,
+        p_reason: "admin_grant",
+      });
+      if (rpc.error) throw rpc.error;
+      result = rpc.data;
+    }
+
+    const updated = await User.findById(dealerId)
+      .select("id name email role phone avatar status approved dealerPackage packageListingMax packageFeatures packageExpiresAt packageAutoRenew subscriptionStatus")
+      .lean();
+
+    res.json({ success: true, subscription: result, user: updated });
   }),
 );
 

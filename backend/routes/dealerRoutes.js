@@ -9,16 +9,10 @@ import { cacheDealerData, cacheAnalytics, invalidateCache } from "../middleware/
 import { initiatePayment } from "../services/paymentService.js";
 import { getPricingRecommendations } from "../services/pricingRecommendationService.js";
 
-const PLANS = {
-  starter:    { price: 2500,  limit: 10,  name: "Starter" },
-  growth:     { price: 6500,  limit: 30,  name: "Growth" },
-  elite:      { price: 14000, limit: 100, name: "Elite" },
-  enterprise: { price: 0,     limit: 0,   name: "Enterprise" },
-};
-
 import { findAll, findById, findOne, create, update, remove, paginate, count } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
 import { sendNotification } from "../services/notification.service.js";
+import { initiateDealerUpgrade } from "../services/dealerSubscription.service.js";
 
 // Email service — top-level, no-ops if unavailable
 let dealerEmailService = {};
@@ -1022,51 +1016,26 @@ router.post(
 router.post(
   "/upgrade",
   asyncHandler(async (req, res) => {
-    const { planId, phone } = req.body;
-
-    const plan = PLANS[planId];
-    if (!plan) {
-      return res.status(400).json({ success: false, message: "Invalid plan" });
+    const { planId, phone } = req.body || {};
+    if (!planId) return res.status(400).json({ success: false, message: "planId is required" });
+    if (!/^2547\d{8}$/.test(String(phone || ""))) {
+      return res.status(400).json({ success: false, message: "Phone must be a valid Kenyan number in 2547XXXXXXXX format" });
     }
 
-    if (planId === "enterprise") {
-      return res.status(400).json({ success: false, message: "Contact sales for Enterprise plan" });
-    }
-
-    const user = await findById("users", req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    // Check if already on this plan
-    if (user.dealerPackage === planId && user.packageExpiresAt && new Date(user.packageExpiresAt) > new Date()) {
-      return res.status(400).json({ success: false, message: "Already on this plan" });
-    }
-
-    if (!phone) {
-      return res.status(400).json({ success: false, message: "M-Pesa phone number required" });
-    }
-
-    // Initiate M-Pesa payment
-    const result = await initiatePayment({
-      userId: req.user.id,
-      type: "package_upgrade",
-      amount: plan.price,
-      phone,
-      metadata: { planId, planName: plan.name },
+    const result = await initiateDealerUpgrade({
+      dealerId: req.user.id,
+      planId: String(planId),
+      phone: String(phone),
+      initiatePayment,
     });
 
-    if (!result.success) {
-      return res.status(502).json({ success: false, message: result.message || "Payment initiation failed" });
-    }
-
-    // Signal frontend to poll for payment completion
-    res.json({
+    res.status(202).json({
       success: true,
-      checkoutRequestID: result.checkoutRequestID,
-      mode: result.mode,
+      checkoutRequestID: result.payment.checkoutRequestID,
+      mode: result.payment.mode,
       message: "STK push sent. Enter PIN on your phone.",
-      paymentId: result.payment.id,
+      paymentId: result.payment.payment?.id || result.payment.id,
+      plan: result.plan,
     });
   }),
 );

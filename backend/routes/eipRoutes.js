@@ -1,6 +1,7 @@
 import express from "express";
 import { protect, allowRoles } from "../middleware/auth.js";
 import asyncHandler from "../middleware/asyncHandler.js";
+import { validateObjectId } from "../middleware/validate.js";
 import {
   // Dashboard
   getIntegrationDashboard,
@@ -67,10 +68,10 @@ router.get("/apis/:apiId", asyncHandler(getAPIDetails));
 
 // Partners
 router.get("/partners", asyncHandler(getPartners));
-router.get("/partners/:id", asyncHandler(getPartner));
+router.get("/partners/:id", validateObjectId, asyncHandler(getPartner));
 router.post("/partners", allowRoles("admin", "superadmin"), asyncHandler(createPartner));
-router.put("/partners/:id", allowRoles("admin", "superadmin"), asyncHandler(updatePartner));
-router.delete("/partners/:id", allowRoles("admin", "superadmin"), asyncHandler(deletePartner));
+router.put("/partners/:id", validateObjectId, allowRoles("admin", "superadmin"), asyncHandler(updatePartner));
+router.delete("/partners/:id", validateObjectId, allowRoles("admin", "superadmin"), asyncHandler(deletePartner));
 
 // API Keys
 router.get("/api-keys", asyncHandler(getAPIKeys));
@@ -79,23 +80,23 @@ router.post("/api-keys/:id/revoke", allowRoles("admin", "superadmin"), asyncHand
 
 // Webhooks
 router.get("/webhooks", asyncHandler(getWebhooks));
-router.get("/webhooks/:id", asyncHandler(getWebhook));
+router.get("/webhooks/:id", validateObjectId, asyncHandler(getWebhook));
 router.post("/webhooks", allowRoles("admin", "superadmin"), asyncHandler(createWebhook));
-router.put("/webhooks/:id", allowRoles("admin", "superadmin"), asyncHandler(updateWebhook));
-router.delete("/webhooks/:id", allowRoles("admin", "superadmin"), asyncHandler(deleteWebhook));
+router.put("/webhooks/:id", validateObjectId, allowRoles("admin", "superadmin"), asyncHandler(updateWebhook));
+router.delete("/webhooks/:id", validateObjectId, allowRoles("admin", "superadmin"), asyncHandler(deleteWebhook));
 router.post("/webhooks/:id/test", asyncHandler(testWebhook));
 router.get("/webhooks/:webhookId/logs", asyncHandler(getWebhookLogs));
 
 // Plugins
 router.get("/plugins", asyncHandler(getPlugins));
-router.get("/plugins/:id", asyncHandler(getPlugin));
+router.get("/plugins/:id", validateObjectId, asyncHandler(getPlugin));
 router.post("/plugins", allowRoles("admin", "superadmin"), asyncHandler(createPlugin));
-router.put("/plugins/:id", allowRoles("admin", "superadmin"), asyncHandler(updatePlugin));
-router.delete("/plugins/:id", allowRoles("admin", "superadmin"), asyncHandler(deletePlugin));
+router.put("/plugins/:id", validateObjectId, allowRoles("admin", "superadmin"), asyncHandler(updatePlugin));
+router.delete("/plugins/:id", validateObjectId, allowRoles("admin", "superadmin"), asyncHandler(deletePlugin));
 
 // Templates
 router.get("/templates", asyncHandler(getTemplates));
-router.get("/templates/:id", asyncHandler(getTemplate));
+router.get("/templates/:id", validateObjectId, asyncHandler(getTemplate));
 
 // Analytics
 router.get("/analytics", asyncHandler(getAPIAnalytics));
