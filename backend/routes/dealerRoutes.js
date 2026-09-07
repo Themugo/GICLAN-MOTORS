@@ -961,56 +961,19 @@ router.post(
 
 // =============================
 // 📦 SELF-SERVICE PLAN UPGRADE
-// =============================
+// Canonical subscription workflow lives in dealerPlatformRoutes.
+// Keep this route only as a compatibility redirect so there is one
+// source of truth for plan pricing, limits and payment metadata.
 router.post(
   "/upgrade",
   asyncHandler(async (req, res) => {
-    const { planId, phone } = req.body;
-
-    const plan = PLANS[planId];
-    if (!plan) {
-      return res.status(400).json({ success: false, message: "Invalid plan" });
-    }
-
-    if (planId === "enterprise") {
-      return res.status(400).json({ success: false, message: "Contact sales for Enterprise plan" });
-    }
-
-    const user = await findById("users", req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    // Check if already on this plan
-    if (user.dealerPackage === planId && user.packageExpiresAt && new Date(user.packageExpiresAt) > new Date()) {
-      return res.status(400).json({ success: false, message: "Already on this plan" });
-    }
-
-    if (!phone) {
-      return res.status(400).json({ success: false, message: "M-Pesa phone number required" });
-    }
-
-    // Initiate M-Pesa payment
-    const result = await initiatePayment({
-      userId: req.user.id,
-      type: "package_upgrade",
-      amount: plan.price,
-      phone,
-      metadata: { planId, planName: plan.name },
-    });
-
-    if (!result.success) {
-      return res.status(502).json({ success: false, message: result.message || "Payment initiation failed" });
-    }
-
-    // Signal frontend to poll for payment completion
-    res.json({
-      success: true,
-      checkoutRequestID: result.checkoutRequestID,
-      mode: result.mode,
-      message: "STK push sent. Enter PIN on your phone.",
-      paymentId: result.payment.id,
-    });
+    const plans = await (await import("../services/dealerSubscription.service.js")).getDealerPlans();
+    const plan = plans.find((p) => p.id === req.body?.planId);
+    if (!plan) return res.status(400).json({ success: false, message: "Invalid plan" });
+    if (plan.contactSales || Number(plan.price || 0) <= 0) return res.status(400).json({ success: false, message: "Contact sales for this plan" });
+    if (!req.body?.phone) return res.status(400).json({ success: false, message: "M-Pesa phone number required" });
+    const result = await (await import("../services/dealerSubscription.service.js")).initiateDealerUpgrade({ dealerId: req.user.id, planId: plan.id, phone: req.body.phone, initiatePayment });
+    res.json({ success: true, checkoutRequestID: result.payment.checkoutRequestID, mode: result.payment.mode, message: "STK push sent. Enter PIN on your phone.", paymentId: result.payment.payment?.id });
   }),
 );
 

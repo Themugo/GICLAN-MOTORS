@@ -16,6 +16,8 @@ import { createCar, updateCar, deleteCar } from "./carController.js";
 import { logError } from "../utils/logger.js";
 import crypto from "node:crypto";
 import { getSupabase } from "../utils/supabase.js";
+import { getDealerPlans, getDealerSubscription, initiateDealerUpgrade } from "../services/dealerSubscription.service.js";
+import { initiatePayment } from "../services/paymentService.js";
 
 const dealerId = (req) => req.dealerId || req.user.id;
 
@@ -534,11 +536,38 @@ export async function acceptTeamInvite(req, res) {
 // ============================================================
 
 export async function getSubscription(req, res) {
-  return res.status(501).json({
-    success: false,
-    code: "DEALER_SUBSCRIPTION_UNAVAILABLE",
-    message: "Dealer subscription management is not available because the authoritative migration chain does not define a dealer subscription contract.",
-  });
+  try {
+    const dealer = dealerId(req);
+    const [subscription, plans] = await Promise.all([getDealerSubscription(dealer), getDealerPlans()]);
+    res.json({ success: true, data: { subscription, plans } });
+  } catch (err) {
+    logError("Error fetching dealer subscription:", err);
+    res.status(500).json({ success: false, message: "Failed to load dealer subscription" });
+  }
+}
+
+export async function upgradeSubscription(req, res) {
+  try {
+    const result = await initiateDealerUpgrade({
+      dealerId: dealerId(req),
+      planId: req.body?.planId,
+      phone: req.body?.phone,
+      initiatePayment,
+    });
+    res.json({
+      success: true,
+      data: {
+        plan: result.plan,
+        checkoutRequestID: result.payment.checkoutRequestID,
+        mode: result.payment.mode,
+        paymentId: result.payment.payment?.id,
+      },
+      message: "STK push sent. Enter PIN on your phone.",
+    });
+  } catch (err) {
+    const status = /invalid plan|contact sales|phone required|already on this plan|positive/i.test(err.message || "") ? 400 : /not found/i.test(err.message || "") ? 404 : 502;
+    res.status(status).json({ success: false, message: err.message || "Payment initiation failed" });
+  }
 }
 
 // ============================================================

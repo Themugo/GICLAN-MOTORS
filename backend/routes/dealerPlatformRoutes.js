@@ -37,6 +37,7 @@ import {
   removeTeamMember,
   // Subscription
   getSubscription,
+  upgradeSubscription,
   // AI Copilot
   askDealerCopilot,
   acceptTeamInvite,
@@ -95,7 +96,8 @@ router.delete("/team/:memberId", protect, dealerOrgAccess("canManageTeam"), asyn
 // Subscription
 router.post("/team/accept", protect, asyncHandler(acceptTeamInvite));
 
-router.get("/subscription", protect, dealerOnly, asyncHandler(getSubscription));
+router.get("/subscription", protect, dealerOrgAccess(), asyncHandler(getSubscription));
+router.post("/subscription/upgrade", protect, dealerOnly, requireDealerVerification, asyncHandler(upgradeSubscription));
 
 // AI Copilot
 router.post("/copilot", protect, dealerOnly, asyncHandler(askDealerCopilot));

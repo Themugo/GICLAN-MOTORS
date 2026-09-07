@@ -2,6 +2,7 @@ import { findById, findOne, findAll, create, update, updateMany } from "../db/in
 import { sendNotification } from "../services/notification.service.js";
 import { sendDigitalReceipt } from "../services/receiptService.js";
 import { getIO } from "../utils/io.js";
+import { getSupabase } from "../utils/supabase.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { atomicSettleBidPayment, atomicSettlePurchasePayment } from "../utils/atomicTransactions.js";
 import { recordPaymentEvent, recordWebhookReceipt, markWebhookProcessed, markAttemptByCheckout } from "./paymentFinancialLifecycle.service.js";
@@ -210,20 +211,20 @@ export const handleMpesaCallback = async (callbackData) => {
 
     if (payment.type === "package_upgrade") {
       const planId = payment.metadata?.planId;
-      const PLANS = {
-        starter:    { limit: 10,  name: "Starter" },
-        growth:     { limit: 30,  name: "Growth" },
-        elite:      { limit: 100, name: "Elite" },
-        enterprise: { limit: 0,   name: "Enterprise" },
-      };
-      const plan = PLANS[planId];
-      if (plan) {
-        await update("users", payment.user, {
-          dealerPackage: planId,
-          packageListingMax: plan.limit,
-          packageExpiresAt: new Date(Date.now() + 30 * 86400000),
+      const listingMax = Number(payment.metadata?.listingMax || 0);
+      const durationDays = Math.max(1, Number(payment.metadata?.durationDays || 30));
+      if (planId) {
+        const expiresAt = new Date(Date.now() + durationDays * 86400000);
+        const sb = getSupabase();
+        const { data: activation, error: activationError } = await sb.rpc("kayad_activate_dealer_subscription_atomic", {
+          p_payment_id: payment.id, p_dealer: payment.user, p_plan_id: planId,
+          p_plan_name: payment.metadata?.planName || planId, p_amount: Number(payment.amount || 0),
+          p_currency: payment.currency || "KES", p_listing_max: listingMax,
+          p_features: Array.isArray(payment.metadata?.features) ? payment.metadata.features : [],
+          p_duration_days: durationDays, p_snapshot_hash: payment.metadata?.planSnapshotHash || null,
         });
-        logInfo("Package upgraded via payment", { userId: payment.user, planId });
+        if (activationError) throw activationError;
+        logInfo("Package upgraded via payment", { userId: payment.user, planId, paymentId: payment.id });
       }
     }
 
