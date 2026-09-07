@@ -102,3 +102,22 @@ export async function updateAdSlot(id: string, updates: Partial<AdSlotInput & { 
 export async function deleteAdSlot(id: string): Promise<void> {
   await adFetch<{ success: boolean }>(`/api/ads/${id}`, { method: 'DELETE' });
 }
+
+
+/** Record a real delivery event. Best-effort from the public UI; reporting never blocks rendering. */
+export async function recordAdEvent(id: string, type: 'impression' | 'click'): Promise<void> {
+  await adFetch<{ success: boolean }>(`/api/ads/${id}/events`, {
+    method: 'POST',
+    body: JSON.stringify({ type }),
+  });
+}
+
+export interface AdStat {
+  id: string; title: string; placement: AdPlacement; status: string; isVisible: boolean;
+  impressions: number; clicks: number; ctr: number;
+}
+
+export async function getAdStats(): Promise<AdStat[]> {
+  const body = await adFetch<{ data: AdStat[] }>('/api/ads/stats');
+  return body.data || [];
+}

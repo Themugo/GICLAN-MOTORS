@@ -8,7 +8,7 @@ import FloatingAdRail from '../../../components/FloatingAdRail';
 import CarSilhouette from '../../../components/CarSilhouette';
 import { getVisibleHeroSlides, HeroSlide } from '../../../services/heroApi';
 import { getCars, mapBackendCarToVehicle, VehicleApiError, type GetCarsParams } from '../../../services/vehicleApi';
-import { getVisibleAdSlots, AdSlot } from '../../../services/adApi';
+import { getVisibleAdSlots, recordAdEvent, AdSlot } from '../../../services/adApi';
 import { useHomePageConfig, ACCENT_THEME_CLASSES } from '../hooks/useHomePageConfig';
 import HomePageAdminPanel from './HomePageAdminPanel';
 import AdManagerPanel from '../../AdManager/AdManagerPanel';
@@ -409,7 +409,7 @@ export const VehicleMarketplace: React.FC<VehicleMarketplaceProps> = ({
   useEffect(() => {
     let cancelled = false;
     getVisibleAdSlots('mid_grid')
-      .then((data) => { if (!cancelled) setMidGridAds(data); })
+      .then((data) => { if (!cancelled) { setMidGridAds(data); data.forEach((slot) => { void recordAdEvent(slot.id, 'impression').catch(() => undefined); }); } })
       .catch(() => { /* a failed ad fetch should never block the real vehicle grid */ });
     return () => { cancelled = true; };
   }, []);
@@ -423,7 +423,7 @@ export const VehicleMarketplace: React.FC<VehicleMarketplaceProps> = ({
   useEffect(() => {
     let cancelled = false;
     getVisibleAdSlots('sidebar')
-      .then((data) => { if (!cancelled) setSidebarAds(data); })
+      .then((data) => { if (!cancelled) { setSidebarAds(data); data.forEach((slot) => { void recordAdEvent(slot.id, 'impression').catch(() => undefined); }); } })
       .catch(() => { /* a failed ad fetch should never block the real filter sidebar */ });
     return () => { cancelled = true; };
   }, []);

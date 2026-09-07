@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, Trash2, Plus, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { AdSlot, AdPlacement, AdSlotInput, getAllAdSlots, createAdSlot, updateAdSlot, deleteAdSlot, AdApiError } from '../../services/adApi';
+import { AdSlot, AdPlacement, AdSlotInput, AdStat, getAllAdSlots, getAdStats, createAdSlot, updateAdSlot, deleteAdSlot, AdApiError } from '../../services/adApi';
 
 interface AdManagerPanelProps {
   onClose: () => void;
@@ -46,12 +46,13 @@ export const AdManagerPanel: React.FC<AdManagerPanelProps> = ({ onClose }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [draft, setDraft] = useState<AdSlotInput>(EMPTY_DRAFT);
   const [creating, setCreating] = useState(false);
+  const [stats, setStats] = useState<AdStat[]>([]);
 
   const loadSlots = () => {
     setLoading(true);
     setError(null);
-    getAllAdSlots()
-      .then(setSlots)
+    Promise.all([getAllAdSlots(), getAdStats()])
+      .then(([nextSlots, nextStats]) => { setSlots(nextSlots); setStats(nextStats); })
       .catch((err) => setError(err instanceof AdApiError ? err.message : 'Could not load ads.'))
       .finally(() => setLoading(false));
   };
@@ -143,6 +144,14 @@ export const AdManagerPanel: React.FC<AdManagerPanelProps> = ({ onClose }) => {
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-semibold">
               {error}
+            </div>
+          )}
+
+          {!loading && slots.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-slate-50 p-3"><div className="text-[10px] uppercase tracking-wide text-slate-500">Impressions</div><div className="text-lg font-bold text-slate-800">{stats.reduce((n, a) => n + a.impressions, 0).toLocaleString()}</div></div>
+              <div className="rounded-xl bg-slate-50 p-3"><div className="text-[10px] uppercase tracking-wide text-slate-500">Clicks</div><div className="text-lg font-bold text-slate-800">{stats.reduce((n, a) => n + a.clicks, 0).toLocaleString()}</div></div>
+              <div className="rounded-xl bg-slate-50 p-3"><div className="text-[10px] uppercase tracking-wide text-slate-500">CTR</div><div className="text-lg font-bold text-slate-800">{(() => { const i=stats.reduce((n,a)=>n+a.impressions,0); const c=stats.reduce((n,a)=>n+a.clicks,0); return i ? `${((c/i)*100).toFixed(2)}%` : '0.00%'; })()}</div></div>
             </div>
           )}
 

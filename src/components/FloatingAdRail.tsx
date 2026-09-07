@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getVisibleAdSlots, AdSlot, AdPlacement } from '../services/adApi';
+import { getVisibleAdSlots, recordAdEvent, AdSlot, AdPlacement } from '../services/adApi';
 
 interface FloatingAdRailProps {
   placement: Extract<AdPlacement, 'left_rail' | 'right_rail'>;
@@ -20,7 +20,7 @@ export const FloatingAdRail: React.FC<FloatingAdRailProps> = ({ placement }) => 
   useEffect(() => {
     let cancelled = false;
     getVisibleAdSlots(placement)
-      .then((data) => { if (!cancelled) setSlots(data); })
+      .then((data) => { if (!cancelled) { setSlots(data); data.forEach((slot) => { void recordAdEvent(slot.id, 'impression').catch(() => undefined); }); } })
       .catch(() => { /* a failed ad fetch should never block the real page around it */ })
       .finally(() => { if (!cancelled) setLoaded(true); });
     return () => { cancelled = true; };
@@ -34,6 +34,7 @@ export const FloatingAdRail: React.FC<FloatingAdRailProps> = ({ placement }) => 
         <a
           key={slot.id}
           href={slot.buttonUrl || undefined}
+          onClick={() => { if (slot.buttonUrl) void recordAdEvent(slot.id, 'click').catch(() => undefined); }}
           className="rounded-2xl p-4 flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow"
           style={{
             backgroundColor: slot.backgroundColor,
