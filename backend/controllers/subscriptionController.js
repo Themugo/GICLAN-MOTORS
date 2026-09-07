@@ -77,7 +77,7 @@ export const checkUsageLimits = async (req, res) => {
       listingMax: entitlement.listingMax,
       listingsUsed: entitlement.listingsUsed,
       listingsRemaining: entitlement.listingsRemaining,
-      canCreateListing: !entitlement.locked && entitlement.listingMax > 0 && entitlement.listingsUsed < entitlement.listingMax,
+      canCreateListing: !entitlement.locked && entitlement.status !== "none" && (entitlement.listingMax === 0 || entitlement.listingsUsed < entitlement.listingMax),
     },
     entitlement,
   });

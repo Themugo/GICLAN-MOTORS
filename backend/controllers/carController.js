@@ -467,9 +467,6 @@ export const createCar = async (req, res) => {
     // ── INCREMENT LISTING COUNT (only after successful Car.create) ──
     if (shouldIncrementListingCount) {
       const updateOps = { $inc: { listingCount: 1 } };
-      if (isDealer && pkg?.isFree && pkg?.trialDays > 0) {
-        updateOps.$inc.trialListingsUsed = 1;
-      }
       if (isSeller && !seller.firstVehicleUsed) {
         updateOps.firstVehicleUsed = true;
       }

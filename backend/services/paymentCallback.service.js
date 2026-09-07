@@ -203,24 +203,14 @@ export const handleMpesaCallback = async (callbackData) => {
       return payment;
     }
 
-    let subscriptionActivation = null;
     if (payment.type === "package_upgrade") {
-      subscriptionActivation = await activateDealerSubscriptionFromPayment(payment);
-      logInfo("Dealer subscription activated from verified payment", {
+      const activation = await activateDealerSubscriptionFromPayment(payment);
+      logInfo("Dealer subscription activated via verified payment", {
         userId: payment.user,
         paymentId: payment.id,
-        subscriptionId: subscriptionActivation?.id,
-        planId: subscriptionActivation?.planId,
+        planId: activation?.planId,
       });
     }
-
-    await sendNotification({
-      userId: payment.user,
-      title: payment.type === "package_upgrade" ? "Subscription Activated" : "Payment Successful",
-      message: payment.type === "package_upgrade"
-        ? `Your ${subscriptionActivation?.planId || "dealer"} plan is active until ${subscriptionActivation?.expiresAt ? new Date(subscriptionActivation.expiresAt).toLocaleDateString("en-KE") : "the plan expiry date"}. Receipt: ${receipt}`
-        : `KES ${payment.amount} received successfully. Receipt: ${receipt}`,
-    });
 
     const io = getIO();
     if (io) {

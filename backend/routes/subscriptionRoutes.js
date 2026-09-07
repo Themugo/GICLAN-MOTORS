@@ -1,7 +1,7 @@
 import express from "express";
 import asyncHandler from "../middleware/asyncHandler.js";
 import { protect, adminOnly } from "../middleware/auth.js";
-import { validateQuery, analyticsQuerySchema } from "../middleware/validate.js";
+import { validateQuery, subscriptionAdminQuerySchema } from "../middleware/validate.js";
 import {
   getPlans,
   getSubscription,
@@ -46,9 +46,9 @@ router.get("/usage-limits", protect, asyncHandler(checkUsageLimits));
 // =============================
 
 // Get all subscriptions (admin only)
-router.get("/all", protect, adminOnly, validateQuery(analyticsQuerySchema), asyncHandler(getAllSubscriptions));
+router.get("/all", protect, adminOnly, validateQuery(subscriptionAdminQuerySchema), asyncHandler(getAllSubscriptions));
 
 // Get subscription analytics (admin only)
-router.get("/analytics", protect, adminOnly, validateQuery(analyticsQuerySchema), asyncHandler(getSubscriptionAnalytics));
+router.get("/analytics", protect, adminOnly, validateQuery(subscriptionAdminQuerySchema), asyncHandler(getSubscriptionAnalytics));
 
 export default router;

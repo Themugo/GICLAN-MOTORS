@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
-import { dealerAPI } from "../api/api";
+import { dealerAPI, paymentsAPI } from "../api/api";
 
 export default function PostRegPackageSelect() {
   const { toast } = useToast();
@@ -11,6 +11,7 @@ export default function PostRegPackageSelect() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
 
   useEffect(() => {
     dealerAPI.getSubscriptionPlans()
@@ -37,10 +38,33 @@ export default function PostRegPackageSelect() {
     try {
       const result = await dealerAPI.upgrade({ planId: pkg.id, phone: phone.trim() });
       toast(result.message || "STK push sent. Enter your M-Pesa PIN.", "success");
+      const paymentId = result.paymentId;
+      if (!paymentId) throw new Error("Payment was initiated without a trackable payment reference");
+      setWaitingForPayment(true);
+      const deadline = Date.now() + 90_000;
+      let settled = false;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const status = await paymentsAPI.status(paymentId);
+        const normalized = String(status?.payment?.status || status?.status || "").toLowerCase();
+        if (["success", "completed", "paid"].includes(normalized)) {
+          settled = true;
+          break;
+        }
+        if (["failed", "cancelled", "canceled", "refunded"].includes(normalized)) {
+          throw new Error(status?.payment?.resultDesc || status?.message || "Subscription payment was not completed");
+        }
+      }
+      if (!settled) {
+        toast("Payment is still pending. Your subscription will activate automatically after verified M-Pesa settlement.", "success");
+        return;
+      }
+      toast("Subscription activated. You can now manage your dealer listings.", "success");
       navigate("/dealer/add-car", { replace: true });
     } catch (err) {
       toast(err?.response?.data?.message || err?.message || "Unable to start subscription payment", "error");
     } finally {
+      setWaitingForPayment(false);
       setSaving(false);
     }
   };
@@ -85,7 +109,7 @@ export default function PostRegPackageSelect() {
         <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
           <button className="btn btn-outline" onClick={() => navigate("/dealer/add-car", { replace: true })}>Continue later</button>
           <button className="btn btn-gold btn-lg" onClick={handleContinue} disabled={saving || loading || !selected}>
-            {saving ? "Starting payment..." : packages.find((p) => p.id === selected)?.contactSales ? "Contact Sales" : "Continue to Payment"}
+            {saving ? (waitingForPayment ? "Waiting for M-Pesa confirmation..." : "Starting payment...") : packages.find((p) => p.id === selected)?.contactSales ? "Contact Sales" : "Continue to Payment"}
           </button>
         </div>
       </div>

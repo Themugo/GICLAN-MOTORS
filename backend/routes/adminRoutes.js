@@ -1368,34 +1368,42 @@ router.patch(
 );
 
 // =============================
-// 🆓 ZERO-COST ONBOARDING
+// 🆓 ZERO-COST DEALER ONBOARDING
 // =============================
 router.post(
   "/zero-cost-onboarding",
   protect,
   adminOnly,
   asyncHandler(async (req, res) => {
-    const { dealerIds, durationDays = 90, listingMax = 50 } = req.body;
+    const { dealerIds, durationDays = 90 } = req.body || {};
+    const days = Number(durationDays);
+    if (!Number.isInteger(days) || days < 1 || days > 3660) {
+      return res.status(400).json({ success: false, message: "durationDays must be an integer between 1 and 3660" });
+    }
 
-    const filter =
-      dealerIds?.length > 0
-        ? { _id: { $in: dealerIds }, role: { $in: ["dealer", "individual_seller"] } }
-        : { role: { $in: ["dealer", "individual_seller"] }, approved: true };
+    const ids = Array.isArray(dealerIds) ? dealerIds.filter(Boolean).map(String) : [];
+    let dealers;
+    if (ids.length) {
+      dealers = await User.find({ _id: { $in: ids }, role: "dealer", approved: true }).select("id").lean();
+    } else {
+      dealers = await User.find({ role: "dealer", approved: true }).select("id").lean();
+    }
 
-    const result = await User.updateMany(filter, {
-      $set: {
-        dealerPackage: "starter",
-        packageListingMax: listingMax,
-        packageExpiresAt: new Date(Date.now() + Number(durationDays) * 86400000),
-        packageAutoRenew: false,
-        subscriptionStatus: "active",
-        packageFeatures: ["unlimited_images", "featured_listing", "live_auction", "analytics_dashboard"],
-        listingCount: 0,
-        listingsLocked: false,
-      },
-    });
+    const sb = getSupabase();
+    const planId = "starter";
+    let modifiedCount = 0;
+    for (const dealer of dealers) {
+      const rpc = await sb.rpc("kayad_grant_dealer_subscription_atomic", {
+        p_dealer: dealer.id,
+        p_plan_id: planId,
+        p_duration_days: days,
+        p_reason: "admin_zero_cost_onboarding",
+      });
+      if (rpc.error) throw rpc.error;
+      modifiedCount += 1;
+    }
 
-    res.json({ success: true, modifiedCount: result.modifiedCount, matchedCount: result.matchedCount });
+    res.json({ success: true, modifiedCount, matchedCount: dealers.length, planId, durationDays: days });
   }),
 );
 

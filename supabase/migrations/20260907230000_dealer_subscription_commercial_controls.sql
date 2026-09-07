@@ -66,6 +66,15 @@ BEGIN
   PERFORM pg_advisory_xact_lock(hashtext('dealer_subscription:' || p_dealer::text));
   v_expires := now() + make_interval(days => p_duration_days);
 
+  -- A dealer can have only one current entitlement. Switching plans is an
+  -- immediate commercial change, so retire the previous active entitlement
+  -- before creating the new one. Historical rows remain auditable.
+  UPDATE dealer_subscriptions
+  SET status = 'cancelled', updated_at = now(),
+      metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('supersededByPaymentId', p_payment_id)
+  WHERE dealer = p_dealer
+    AND status = 'active';
+
   INSERT INTO dealer_subscriptions(dealer,payment_id,plan_id,plan_name,amount,currency,listing_max,features,starts_at,expires_at,status,metadata)
   VALUES(p_dealer,p_payment_id,p_plan_id,p_plan_name,p_amount,COALESCE(NULLIF(p_currency,''),'KES'),p_listing_max,COALESCE(p_features,'[]'::jsonb),now(),v_expires,'active',jsonb_build_object('planSnapshotHash',p_snapshot_hash))
   ON CONFLICT (payment_id) DO UPDATE SET updated_at=now()

@@ -195,6 +195,13 @@ END; $$;
 
 REVOKE ALL ON FUNCTION public.kayad_grant_dealer_subscription_atomic(uuid,text,integer,text) FROM PUBLIC;
 
+-- Database invariant: at most one active entitlement can exist for a dealer.
+-- RPCs also serialize lifecycle mutations, while this constraint protects the
+-- invariant against accidental future service-role writes.
+CREATE UNIQUE INDEX IF NOT EXISTS dealer_subscriptions_one_active_uq
+  ON public.dealer_subscriptions(dealer)
+  WHERE status = 'active';
+
 -- Commercial entitlements are server-authoritative. Dealers may read their
 -- subscription through the API, but must never mutate plan/expiry/amount
 -- directly from the browser.

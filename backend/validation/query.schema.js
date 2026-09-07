@@ -158,3 +158,13 @@ export const disputeListQuerySchema = z.object({
   sortBy: z.enum(["createdAt", "updatedAt"]).default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
+
+// Dealer subscription administration query validation.
+export const subscriptionAdminQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  planId: z.string().trim().min(1).max(64).optional(),
+  status: z.enum(["pending", "active", "expired", "cancelled"]).optional(),
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
+});
