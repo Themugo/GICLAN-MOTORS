@@ -1,32 +1,17 @@
-// Executive Intelligence API boundary.
-// No authoritative intelligence/forecasting/benchmark/report warehouse is
-// currently present in Supabase migrations. Do not expose invented analytics.
-
-function notConfigured(res) {
-  return res.status(501).json({
-    success: false,
-    error: "Executive intelligence data services are not configured",
-    code: "INTELLIGENCE_NOT_CONFIGURED",
-  });
-}
-
-export async function getExecutiveDashboard(req, res) { return notConfigured(res); }
-export async function getMarketplaceIntelligence(req, res) { return notConfigured(res); }
-export async function getDealerIntelligence(req, res) { return notConfigured(res); }
-export async function getAuctionIntelligence(req, res) { return notConfigured(res); }
-export async function getFinanceIntelligence(req, res) { return notConfigured(res); }
-export async function getInspectionIntelligence(req, res) { return notConfigured(res); }
-export async function getMarketingIntelligence(req, res) { return notConfigured(res); }
-export async function getCustomerIntelligence(req, res) { return notConfigured(res); }
-export async function getCountryIntelligence(req, res) { return notConfigured(res); }
-export async function getRevenueIntelligence(req, res) { return notConfigured(res); }
-export async function getForecasts(req, res) { return notConfigured(res); }
-export async function getAIInsights(req, res) { return notConfigured(res); }
-export async function getBenchmarks(req, res) { return notConfigured(res); }
-export async function getReports(req, res) { return notConfigured(res); }
-export async function generateReport(req, res) { return notConfigured(res); }
-export async function downloadReport(req, res) { return notConfigured(res); }
-export async function queryIntelligence(req, res) { return notConfigured(res); }
-export async function exportData(req, res) { return notConfigured(res); }
-export async function getScheduledReports(req, res) { return notConfigured(res); }
-export async function createScheduledReport(req, res) { return notConfigured(res); }
+import * as intelligence from '../services/intelligenceService.js';
+import { logError } from '../infrastructure/logging/index.js';
+import { logAuditEvent } from '../services/auditService.js';
+const ok=(res,data)=>res.json({success:true,data,generatedAt:new Date().toISOString()});
+const fail=(res,e,msg='Intelligence request failed')=>res.status(e.statusCode||500).json({success:false,code:e.statusCode===400?'INVALID_REQUEST':'INTELLIGENCE_ERROR',message:e.message||msg});
+const days=(req)=>Math.min(Math.max(Number(req.query.days)||30,7),365);
+const audit=(req,action,target,details={})=>logAuditEvent({action,actor:req.user.id,actorRole:req.user.effectiveRole||req.user.role,actorName:req.user.name,actorEmail:req.user.email,target,targetModel:'ExecutiveIntelligence',details,ipAddress:req.ip,userAgent:req.get('user-agent'),requestId:req.id});
+export const getExecutiveDashboard=async(req,res)=>{try{return ok(res,await intelligence.dashboard(days(req)))}catch(e){logError('intelligence dashboard',e);return fail(res,e)}};
+const wrap=(fn)=>(async(req,res)=>{try{return ok(res,await fn(days(req)))}catch(e){logError('intelligence module',e);return fail(res,e)}});
+export const getMarketplaceIntelligence=wrap(intelligence.marketplace); export const getDealerIntelligence=wrap(intelligence.dealers); export const getAuctionIntelligence=wrap(intelligence.auctions); export const getFinanceIntelligence=wrap(intelligence.finance); export const getInspectionIntelligence=wrap(intelligence.inspections); export const getMarketingIntelligence=wrap(intelligence.marketing); export const getCustomerIntelligence=wrap(intelligence.customers); export const getCountryIntelligence=async(req,res)=>{try{return ok(res,await intelligence.countries())}catch(e){return fail(res,e)}}; export const getRevenueIntelligence=wrap(intelligence.revenue); export const getForecasts=wrap(intelligence.forecasts); export const getAIInsights=wrap(intelligence.insights); export const getBenchmarks=wrap(intelligence.benchmarks);
+export const getReports=async(req,res)=>{try{return ok(res,await intelligence.reports(req.query.limit))}catch(e){return fail(res,e)}};
+export const generateReport=async(req,res)=>{try{const r=await intelligence.createReport({type:req.body?.type||'executive',days:req.body?.days||30,createdBy:req.user.id,title:req.body?.title});await audit(req,'intelligence_report_generated',r.id,{type:r.type,periodDays:r.periodDays});return res.status(201).json({success:true,data:r})}catch(e){return fail(res,e)}};
+export const downloadReport=async(req,res)=>{try{const r=await intelligence.report(req.params.reportId);if(!r)return res.status(404).json({success:false,message:'Report not found'});res.setHeader('Content-Type','application/json');res.setHeader('Content-Disposition',`attachment; filename="intelligence-report-${r.id}.json"`);return res.send(JSON.stringify({success:true,report:r},null,2))}catch(e){return fail(res,e)}};
+export const queryIntelligence=async(req,res)=>{try{return ok(res,await intelligence.query(req.body?.query,req.body?.days||30))}catch(e){return fail(res,e)}};
+export const exportData=async(req,res)=>{try{const type=String(req.body?.type||'executive').toLowerCase();const data=type==='dealers'?await intelligence.dealers(days(req)):type==='finance'?await intelligence.finance(days(req)):type==='auctions'?await intelligence.auctions(days(req)):await intelligence.dashboard(days(req));await audit(req,'intelligence_data_exported',req.user.id,{type,periodDays:days(req)});res.setHeader('Content-Type','application/json');res.setHeader('Content-Disposition',`attachment; filename="kayad-intelligence-${type}-${Date.now()}.json"`);return res.send(JSON.stringify({type,periodDays:days(req),data},null,2))}catch(e){return fail(res,e)}};
+export const getScheduledReports=async(req,res)=>{try{return ok(res,await intelligence.scheduled(req.user.id))}catch(e){return fail(res,e)}};
+export const createScheduledReport=async(req,res)=>{try{const frequency=String(req.body?.frequency||'weekly').toLowerCase();if(!['daily','weekly','monthly'].includes(frequency))throw Object.assign(new Error('Unsupported schedule frequency'),{statusCode:400});const r=await intelligence.createSchedule({createdBy:req.user.id,type:req.body?.type||'executive',frequency,title:req.body?.title||'Scheduled intelligence report',active:true,nextRunAt:req.body?.nextRunAt||new Date().toISOString()});await audit(req,'intelligence_schedule_created',r.id,{frequency:r.frequency,type:r.type});return res.status(201).json({success:true,data:r})}catch(e){return fail(res,e)}};

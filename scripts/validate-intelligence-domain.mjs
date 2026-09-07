@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root=process.cwd(); const read=(p)=>fs.readFileSync(path.join(root,p),'utf8'); const checks=[];
+const ctl=read('backend/controllers/intelligenceController.js'); const svc=read('backend/services/intelligenceService.js'); const routes=read('backend/routes/intelligenceRoutes.js'); const mig=read('supabase/migrations/20260908020000_executive_intelligence_domain.sql');
+checks.push(['controller has no intelligence 501 placeholder',!ctl.includes('INTELLIGENCE_NOT_CONFIGURED')&&!ctl.includes('status(501')]);
+checks.push(['service provides dashboard/modules',svc.includes('export async function dashboard')&&svc.includes('export async function dealers')&&svc.includes('export async function finance')]);
+checks.push(['forecast methodology is explicit',svc.includes('linear-trend-on-observed-daily-released-escrow-value')]);
+checks.push(['AI insights are deterministic/live',svc.includes('deterministic rules over live operational metrics')]);
+checks.push(['reports are persisted',svc.includes("create('intelligence_reports'")]);
+checks.push(['scheduled reports persisted',svc.includes("create('intelligence_scheduled_reports'")]);
+checks.push(['intelligence routes restricted',routes.includes('allowRoles("admin", "superadmin", "executive")')]);
+checks.push(['report RLS enabled',mig.includes('alter table public.intelligence_reports enable row level security')]);
+checks.push(['schedule ownership enforced',mig.includes('created_by=auth.uid()')]);
+checks.push(['no hardcoded external benchmark claims',!svc.includes('industry average')&&!svc.includes('external benchmark')]);
+let pass=0; for(const [name,ok] of checks){console.log(`${ok?'PASS':'FAIL'} - ${name}`); if(ok)pass++;} console.log(`Intelligence domain validation: ${pass}/${checks.length} PASS`); if(pass!==checks.length)process.exit(1);

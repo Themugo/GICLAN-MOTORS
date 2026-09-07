@@ -37,6 +37,7 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(protect);
+router.use(allowRoles("admin", "superadmin", "executive"));
 
 // Dashboard
 router.get("/dashboard", asyncHandler(getExecutiveDashboard));
