@@ -21,8 +21,11 @@ for (const file of serviceFiles) {
   const p = path.join(src, 'services', file);
   if (!fs.existsSync(p)) continue;
   const s = fs.readFileSync(p, 'utf8');
-  if (/method:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/.test(s) && !s.includes('getCsrfHeaders')) {
-    failures.push(`missing CSRF helper in ${file}`);
+  if (/method:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/.test(s) &&
+      !s.includes('getCsrfHeaders') &&
+      !s.includes("from '../api/httpClient'") &&
+      !s.includes("from '../api/httpRequest'")) {
+    failures.push(`mutation transport is not routed through canonical CSRF-aware client in ${file}`);
   }
 }
 

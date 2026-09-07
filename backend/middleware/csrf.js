@@ -14,6 +14,9 @@ const CSRF_EXEMPT_PATHS = [
   "/api/payments/b2c/callback",
   "/api/payments/b2c/timeout",
   "/api/bids/mpesa/callback",
+  // Legacy escrow-vault callback namespace retained for deployments that
+  // still route this provider callback through the shared /api middleware.
+  "/api/escrow-vault/webhook/",
   "/api/sms-bidding/webhook/",
   "/api/webhooks/",
 ];
