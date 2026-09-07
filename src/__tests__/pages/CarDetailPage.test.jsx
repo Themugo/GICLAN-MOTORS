@@ -61,7 +61,6 @@ vi.mock('../../context/ToastContext', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 vi.mock('../../components/BackButton', () => ({ default: () => null }));
-vi.mock('../../components/PaymentModal', () => ({ default: () => null }));
 vi.mock('../../components/InspectionButton', () => ({ default: () => null }));
 vi.mock('../../components/TcoCalculator', () => ({ default: () => null }));
 vi.mock('../../components/MarketValuationMatrix', () => ({ default: () => null }));

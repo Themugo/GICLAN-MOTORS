@@ -31,7 +31,8 @@
     "validate:dispute-integrity": "node scripts/validate-dispute-integrity.mjs",
     "validate:code-splitting": "node scripts/validate-code-splitting.mjs",
     "validate:dealer-modal-convergence": "node scripts/validate-dealer-modal-convergence.mjs",
-    "validate:chat-convergence": "node scripts/validate-chat-surface-convergence.mjs"
+    "validate:chat-convergence": "node scripts/validate-chat-surface-convergence.mjs",
+    "validate:ui-surface-convergence": "node scripts/validate-ui-surface-convergence.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",
