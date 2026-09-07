@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Search, X, Clock } from 'lucide-react';
 import { useRecentSearches } from '../../../hooks/useRecentSearches';
+import { autocompleteSearch } from '../../../services/searchApi';
 
 const MAX_RECENT = 8;
 
@@ -30,14 +31,30 @@ export default function SearchBar({
 }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
+  const [remoteSuggestions, setRemoteSuggestions] = useState<string[]>([]);
   const { recentSearches, addRecentSearch, clearRecentSearches } = useRecentSearches();
 
   useEffect(() => {
     if (autoFocus && inputRef.current) inputRef.current.focus();
   }, [autoFocus]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const query = value.trim();
+    if (query.length < 2) { setRemoteSuggestions([]); return undefined; }
+    const timer = window.setTimeout(async () => {
+      try {
+        const results = await autocompleteSearch(query);
+        if (!cancelled) setRemoteSuggestions(results.map(item => item.text));
+      } catch {
+        if (!cancelled) setRemoteSuggestions([]);
+      }
+    }, 180);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [value]);
+
   const matched = value
-    ? suggestions.filter(s => s.toLowerCase().includes(value.toLowerCase()))
+    ? (remoteSuggestions.length ? remoteSuggestions : suggestions.filter(s => s.toLowerCase().includes(value.toLowerCase())))
     : suggestions;
   const showSuggestions = focused && matched.length > 0 && matched[0] !== value;
   const showRecent = focused && !value && recentSearches.length > 0;

@@ -4,7 +4,6 @@ import asyncHandler from "../middleware/asyncHandler.js";
 import {
   validateObjectId,
   validate,
-  validateQuery,
   createSavedSearchSchema,
   updateSavedSearchSchema,
   carListQuerySchema,
@@ -16,7 +15,6 @@ router.use(protect);
 
 router.get(
   "/",
-  validateQuery(carListQuerySchema),
   asyncHandler(async (req, res) => {
     const searches = await SavedSearch.find({ user: req.user.id }).sort({ createdAt: -1 }).lean();
     res.json({ success: true, searches });

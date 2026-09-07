@@ -36,6 +36,10 @@ export const FIELD_ALIASES = {
   bids: {
     user: "user_id",
   },
+  saved_searches: {
+    user: "user_id",
+    notify: "notify_on_new_match",
+  },
   cars: {
     // Fixed (re-applied - this project's own earlier hardening work
     // already found and fixed this exact defect; confirmed reverted

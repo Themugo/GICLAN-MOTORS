@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const read = f => fs.readFileSync(f, 'utf8');
+const service = read('backend/services/searchService.js');
+const controller = read('backend/controllers/searchController.js');
+const routes = read('backend/routes/searchRoutes.js');
+const server = read('backend/server.js');
+const saved = read('backend/routes/savedSearchRoutes.js');
+const map = read('backend/utils/fieldMap.js');
+const migration = read('supabase/migrations/20260908000000_search_discovery_domain.sql');
+const ui = read('src/components/features/common/SearchBar.tsx');
+const api = read('src/services/searchApi.ts');
+assert.match(service, /db\.findAll\('cars'/); assert.match(service, /status: 'available'/); assert.match(service, /levenshtein/);
+assert.match(controller, /trackSearch/); assert.match(routes, /\/autocomplete/); assert.match(server, /\/api\/search/);
+assert.doesNotMatch(saved, /validateQuery\(carListQuerySchema\)/); assert.match(map, /notify: "notify_on_new_match"/);
+assert.match(migration, /notify_on_new_match/); assert.match(migration, /idx_cars_search_brand_model/);
+assert.match(ui, /autocompleteSearch/); assert.match(api, /api\/search\/autocomplete/);
+console.log('Search & Discovery validator: 12/12 PASS');
