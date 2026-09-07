@@ -1,10 +1,10 @@
 -- ============================================================
-// KAYAD ENTERPRISE PARTNER PLATFORM - DATABASE SCHEMA
-// Partner integration infrastructure
+-- KAYAD ENTERPRISE PARTNER PLATFORM - DATABASE SCHEMA
+-- Partner integration infrastructure
 -- ============================================================
 
 -- ============================================================
-// PARTNER ORGANIZATIONS
+-- PARTNER ORGANIZATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS partner_organizations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -51,7 +51,7 @@ CREATE INDEX idx_partner_type ON partner_organizations(partner_type);
 CREATE INDEX idx_partner_status ON partner_organizations(status);
 
 -- ============================================================
-// PARTNER APPLICATIONS
+-- PARTNER APPLICATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS partner_applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -96,7 +96,7 @@ CREATE INDEX idx_application_partner ON partner_applications(partner_id);
 CREATE INDEX idx_application_status ON partner_applications(status);
 
 -- ============================================================
-// API CREDENTIALS
+-- API CREDENTIALS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS api_credentials (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -144,7 +144,7 @@ CREATE INDEX idx_credentials_application ON api_credentials(application_id);
 CREATE INDEX idx_credentials_status ON api_credentials(status);
 
 -- ============================================================
-// API ENDPOINTS & RATE LIMITS
+-- API ENDPOINTS & RATE LIMITS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS api_endpoints (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS api_endpoints (
 );
 
 -- ============================================================
-// WEBHOOK CONFIGURATIONS
+-- WEBHOOK CONFIGURATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS webhook_configs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -225,7 +225,7 @@ CREATE INDEX idx_webhook_application ON webhook_configs(application_id);
 CREATE INDEX idx_webhook_status ON webhook_configs(status);
 
 -- ============================================================
-// WEBHOOK DELIVERIES
+-- WEBHOOK DELIVERIES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS webhook_deliveries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -267,7 +267,7 @@ CREATE INDEX idx_delivery_webhook ON webhook_deliveries(webhook_id);
 CREATE INDEX idx_delivery_status ON webhook_deliveries(status);
 
 -- ============================================================
-// API USAGE LOGS
+-- API USAGE LOGS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS api_usage_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -300,13 +300,10 @@ CREATE TABLE IF NOT EXISTS api_usage_logs (
   -- Timestamps
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  INDEX idx_usage_credential ON api_usage_logs(credential_id);
-  INDEX idx_usage_partner ON api_usage_logs(partner_id);
-  INDEX idx_usage_time ON api_usage_logs(created_at DESC);
 );
 
 -- ============================================================
-// PARTNER PERMISSIONS
+-- PARTNER PERMISSIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS partner_permissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -330,7 +327,7 @@ CREATE TABLE IF NOT EXISTS partner_permissions (
 );
 
 -- ============================================================
-// PARTNER DOCUMENTS
+-- PARTNER DOCUMENTS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS partner_documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -356,7 +353,7 @@ CREATE TABLE IF NOT EXISTS partner_documents (
 CREATE INDEX idx_documents_partner ON partner_documents(partner_id);
 
 -- ============================================================
-// PARTNER SUPPORT TICKETS
+-- PARTNER SUPPORT TICKETS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS partner_tickets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -395,12 +392,10 @@ CREATE TABLE IF NOT EXISTS partner_tickets (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  INDEX idx_ticket_partner ON partner_tickets(partner_id);
-  INDEX idx_ticket_status ON partner_tickets(status);
 );
 
 -- ============================================================
-// PARTNER ANALYTICS
+-- PARTNER ANALYTICS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS partner_analytics (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
