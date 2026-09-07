@@ -1,630 +1,173 @@
-// ============================================================
-// KAYAD VEHICLE OWNERSHIP PLATFORM
-// OWNERSHIP SERVICE
-// ============================================================
-
 import db from '../../db/index.js';
 import { AppError } from '../../utils/AppError.js';
 import { logInfo } from '../../utils/logger.js';
 
-/**
- * Ownership Service
- * Lifelong digital companion for vehicle ownership
- */
+const ACTIVE_OWNERSHIP = 'current';
+
 class OwnershipService {
-
-  // ============================================================
-  // OWNER PROFILE
-  // ============================================================
-
-  /**
-   * Get or create owner profile
-   */
   async getOrCreateOwnerProfile(userId) {
-    let profile = await db.findOne('owner_profiles', { user_id: userId });
-    
-    if (!profile) {
-      profile = await db.create('owner_profiles', {
-        user_id: userId,
-        owner_since: new Date(),
-        total_vehicles_owned: 0,
-        notification_preferences: { email: true, sms: true, push: true },
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-      logInfo('Owner profile created', { userId });
-    }
-    
-    return profile;
+    if (!userId) throw new AppError('User is required', 400);
+    const existing = await db.findOne('owner_profiles', { user_id: userId });
+    if (existing) return existing;
+    return db.create('owner_profiles', {
+      user_id: userId,
+      owner_since: new Date().toISOString().slice(0, 10),
+      total_vehicles_owned: 0,
+      notification_preferences: { email: true, sms: true, push: true },
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
   }
 
-  /**
-   * Get full owner dashboard
-   */
   async getOwnerDashboard(userId) {
     const profile = await this.getOrCreateOwnerProfile(userId);
-    
-    const [currentVehicles, soldVehicles, favouriteVehicles, recentViews, upcomingReminders, alerts, expenses] = await Promise.all([
-      db.find('owner_vehicles', { owner_id: userId, ownership_type: 'current', status: 'active' }),
-      db.find('owner_vehicles', { owner_id: userId, ownership_type: 'sold' }),
-      db.find('owner_vehicles', { owner_id: userId, ownership_type: 'favourite' }),
-      db.find('owner_vehicles', { owner_id: userId, ownership_type: 'recently_viewed' }, { limit: 10 }),
-      this.getUpcomingReminders(userId),
-      db.find('ownership_alerts', { status: 'unread' }, { limit: 10 }),
-      this.getExpenseSummary(userId),
-    ]);
-
-    // Enrich vehicles with service data
-    const enrichedVehicles = await Promise.all(
-      currentVehicles.map(async (v) => {
-        const [services, reminders, value] = await Promise.all([
-          this.getVehicleServices(v.id),
-          this.getVehicleReminders(v.id),
-          db.findOne('value_tracking', { owner_vehicle_id: v.id }, { sort: { calculated_at: -1 } }),
-        ]);
-        return { ...v, services, reminders, currentValue: value };
-      })
-    );
-
-    return {
-      profile,
-      currentVehicles: enrichedVehicles,
-      soldVehicles,
-      favouriteVehicles,
-      recentViews,
-      upcomingReminders,
-      alerts,
-      expenseSummary: expenses,
-      totalVehiclesOwned: profile.total_vehicles_owned,
-    };
+    const currentVehicles = await db.findAll('owner_vehicles', {
+      filters: { owner_id: userId, ownership_type: ACTIVE_OWNERSHIP, status: 'active' },
+      orderBy: 'created_at',
+      ascending: false,
+    });
+    const soldVehicles = await db.findAll('owner_vehicles', {
+      filters: { owner_id: userId, ownership_type: 'sold' }, orderBy: 'sale_date', ascending: false,
+    });
+    const upcomingReminders = await this.getUpcomingReminders(userId);
+    const expenseSummary = await this.getExpenseSummary(userId);
+    const enriched = await Promise.all(currentVehicles.map((vehicle) => this.enrichVehicle(vehicle)));
+    return { profile, currentVehicles: enriched, soldVehicles, upcomingReminders, expenseSummary };
   }
 
-  // ============================================================
-  // MY GARAGE
-  // ============================================================
+  async enrichVehicle(vehicle) {
+    const [services, reminders, documents, alerts, expenses, valueHistory] = await Promise.all([
+      this.getVehicleServices(vehicle.id),
+      this.getVehicleReminders(vehicle.id),
+      this.getVehicleDocuments(vehicle.id),
+      this.getVehicleAlerts(vehicle.id),
+      this.getVehicleExpenses(vehicle.id),
+      this.getValueHistory(vehicle.id),
+    ]);
+    return { ...vehicle, services, reminders, documents, alerts, expenses, valueHistory, currentValue: valueHistory[0] || null };
+  }
 
-  /**
-   * Add vehicle to garage
-   */
+  async getVehicleForOwner(userId, vehicleId) {
+    const vehicle = await db.findOne('owner_vehicles', { id: vehicleId, owner_id: userId });
+    if (!vehicle) throw new AppError('Vehicle not found', 404);
+    return vehicle;
+  }
+
   async addVehicleToGarage(userId, vehicleData) {
-    // Check if vehicle already exists in owner's garage
-    const existing = await db.findOne('owner_vehicles', {
-      owner_id: userId,
-      vin: vehicleData.vin,
-      status: 'active',
-    });
-
-    if (existing) {
-      return existing;
+    if (!vehicleData?.vin || !vehicleData?.make || !vehicleData?.model) {
+      throw new AppError('VIN, make and model are required', 400);
     }
-
+    const existing = await db.findOne('owner_vehicles', { owner_id: userId, vin: vehicleData.vin, status: 'active' });
+    if (existing) return existing;
     const vehicle = await db.create('owner_vehicles', {
       owner_id: userId,
-      passport_id: vehicleData.passportId,
+      passport_id: vehicleData.passportId || null,
       vin: vehicleData.vin,
       make: vehicleData.make,
       model: vehicleData.model,
-      year: vehicleData.year,
-      registration_number: vehicleData.registrationNumber,
-      colour: vehicleData.colour,
-      ownership_type: vehicleData.ownershipType || 'current',
-      purchase_date: vehicleData.purchaseDate,
-      purchase_price: vehicleData.purchasePrice,
-      purchase_mileage: vehicleData.purchaseMileage,
-      current_mileage: vehicleData.purchaseMileage,
+      year: vehicleData.year || null,
+      registration_number: vehicleData.registrationNumber || null,
+      colour: vehicleData.colour || null,
+      ownership_type: 'current',
+      purchase_date: vehicleData.purchaseDate || null,
+      purchase_price: vehicleData.purchasePrice ?? null,
+      purchase_mileage: vehicleData.purchaseMileage ?? null,
+      current_mileage: vehicleData.purchaseMileage ?? null,
       status: 'active',
       created_at: new Date(),
       updated_at: new Date(),
     });
-
-    // Update owner profile
-    await db.update('owner_profiles', { user_id: userId }, {
-      total_vehicles_owned: db.raw('total_vehicles_owned + 1'),
-      updated_at: new Date(),
-    });
-
-    // Create default reminders
-    await this.createDefaultReminders(vehicle.id, vehicleData);
-
+    await this.syncOwnerCount(userId);
     logInfo('Vehicle added to garage', { userId, vehicleId: vehicle.id });
     return vehicle;
   }
 
-  /**
-   * Create default reminders for vehicle
-   */
-  async createDefaultReminders(vehicleId, vehicleData) {
-    const reminders = [
-      {
-        reminder_type: 'routine_service',
-        title: 'Routine Service Due',
-        description: 'Schedule your next routine service',
-        due_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
-        is_recurring: true,
-        recurrence_interval: '3months',
-        notify_days_before: 14,
-      },
-      {
-        reminder_type: 'insurance_renewal',
-        title: 'Insurance Renewal',
-        description: 'Your insurance policy is due for renewal',
-        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        is_recurring: true,
-        recurrence_interval: 'yearly',
-        notify_days_before: 30,
-      },
-      {
-        reminder_type: 'inspection_renewal',
-        title: 'Roadworthiness Inspection',
-        description: 'Your inspection certificate is due for renewal',
-        due_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
-        is_recurring: true,
-        recurrence_interval: 'yearly',
-        notify_days_before: 14,
-      },
-    ];
-
-    for (const reminder of reminders) {
-      await db.create('ownership_reminders', {
-        owner_vehicle_id: vehicleId,
-        ...reminder,
-        status: 'pending',
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-    }
+  async syncOwnerCount(userId) {
+    const count = await db.count('owner_vehicles', { owner_id: userId, ownership_type: 'current', status: 'active' });
+    const profile = await db.findOne('owner_profiles', { user_id: userId });
+    if (profile) await db.update('owner_profiles', profile.id, { total_vehicles_owned: count, updated_at: new Date() });
   }
 
-  /**
-   * Get vehicle details with full history
-   */
-  async getVehicleDetails(vehicleId) {
-    const vehicle = await db.findById('owner_vehicles', vehicleId);
-    if (!vehicle) {
-      throw new AppError('Vehicle not found', 404);
-    }
-
-    const [services, reminders, documents, alerts, expenses, valueHistory] = await Promise.all([
-      this.getVehicleServices(vehicleId),
-      this.getVehicleReminders(vehicleId),
-      db.find('ownership_documents', { owner_vehicle_id: vehicleId, status: 'active' }),
-      db.find('ownership_alerts', { owner_vehicle_id: vehicleId }),
-      this.getVehicleExpenses(vehicleId),
-      db.find('value_tracking', { owner_vehicle_id: vehicleId }, { sort: { calculated_at: -1 } }),
-    ]);
-
-    return {
-      vehicle,
-      services,
-      reminders,
-      documents,
-      alerts,
-      expenses,
-      valueHistory,
-    };
-  }
-
-  // ============================================================
-  // SERVICE RECORDS
-  // ============================================================
-
-  /**
-   * Add service record
-   */
-  async addServiceRecord(vehicleId, serviceData) {
-    const vehicle = await db.findById('owner_vehicles', vehicleId);
-    if (!vehicle) {
-      throw new AppError('Vehicle not found', 404);
-    }
-
+  async addServiceRecord(userId, vehicleId, data) {
+    const vehicle = await this.getVehicleForOwner(userId, vehicleId);
+    if (!data?.serviceDate || !data?.serviceType || !data?.serviceTitle) throw new AppError('Service date, type and title are required', 400);
     const service = await db.create('ownership_service_records', {
-      owner_vehicle_id: vehicleId,
-      service_date: serviceData.serviceDate,
-      service_type: serviceData.serviceType,
-      service_title: serviceData.serviceTitle,
-      service_description: serviceData.description,
-      workshop_name: serviceData.workshopName,
-      workshop_verified: serviceData.workshopVerified || false,
-      mileage_at_service: serviceData.mileageAtService || vehicle.current_mileage,
-      service_cost: serviceData.serviceCost,
-      invoice_number: serviceData.invoiceNumber,
-      invoice_url: serviceData.invoiceUrl,
-      documents: serviceData.documents || [],
-      photos: serviceData.photos || [],
-      created_at: new Date(),
-      updated_at: new Date(),
+      owner_vehicle_id: vehicle.id, service_date: data.serviceDate, service_type: data.serviceType,
+      service_title: data.serviceTitle, service_description: data.description || null,
+      workshop_name: data.workshopName || null, workshop_verified: Boolean(data.workshopVerified),
+      mileage_at_service: data.mileageAtService ?? vehicle.current_mileage ?? null,
+      service_cost: data.serviceCost ?? null, invoice_number: data.invoiceNumber || null,
+      invoice_url: data.invoiceUrl || null, documents: data.documents || [], photos: data.photos || [],
+      created_at: new Date(), updated_at: new Date(),
     });
-
-    // Update vehicle mileage if higher
-    if (serviceData.mileageAtService && serviceData.mileageAtService > (vehicle.current_mileage || 0)) {
-      await db.update('owner_vehicles', vehicleId, {
-        current_mileage: serviceData.mileageAtService,
-        updated_at: new Date(),
-      });
+    if (Number(data.mileageAtService) > Number(vehicle.current_mileage || 0)) {
+      await db.update('owner_vehicles', vehicle.id, { current_mileage: data.mileageAtService, updated_at: new Date() });
     }
-
-    logInfo('Service record added', { vehicleId, serviceId: service.id });
     return service;
   }
 
-  /**
-   * Get vehicle services
-   */
-  async getVehicleServices(vehicleId) {
-    return db.find('ownership_service_records', { owner_vehicle_id: vehicleId }, {
-      sort: { service_date: -1 },
-    });
-  }
-
-  // ============================================================
-  // REMINDERS
-  // ============================================================
-
-  /**
-   * Get upcoming reminders for owner
-   */
-  async getUpcomingReminders(userId) {
-    const vehicles = await db.find('owner_vehicles', { 
-      owner_id: userId, 
-      ownership_type: 'current',
-      status: 'active' 
-    });
-
-    const vehicleIds = vehicles.map(v => v.id);
-    const reminders = [];
-
-    for (const vehicleId of vehicleIds) {
-      const vehicleReminders = await db.find('ownership_reminders', {
-        owner_vehicle_id: vehicleId,
-        status: 'pending',
-        due_date: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) }, // Next 30 days
-      });
-      const vehicle = vehicles.find(v => v.id === vehicleId);
-      reminders.push(...vehicleReminders.map(r => ({ ...r, vehicle })));
-    }
-
-    return reminders.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
-  }
-
-  /**
-   * Get vehicle reminders
-   */
-  async getVehicleReminders(vehicleId) {
-    return db.find('ownership_reminders', { owner_vehicle_id: vehicleId }, {
-      sort: { due_date: 1 },
-    });
-  }
-
-  /**
-   * Complete reminder
-   */
-  async completeReminder(reminderId, serviceRecordId) {
-    const reminder = await db.findById('ownership_reminders', reminderId);
-    if (!reminder) {
-      throw new AppError('Reminder not found', 404);
-    }
-
-    const updates = {
-      status: 'completed',
-      completed_at: new Date(),
-      completed_service_record_id: serviceRecordId,
-      updated_at: new Date(),
-    };
-
-    // If recurring, create next reminder
-    if (reminder.is_recurring) {
-      const intervals = {
-        'monthly': 30,
-        'quarterly': 90,
-        '6months': 180,
-        'yearly': 365,
-      };
-      const days = intervals[reminder.recurrence_interval] || 90;
-      const nextDue = new Date(reminder.due_date);
-      nextDue.setDate(nextDue.getDate() + days);
-
-      await db.create('ownership_reminders', {
-        owner_vehicle_id: reminder.owner_vehicle_id,
-        reminder_type: reminder.reminder_type,
-        title: reminder.title,
-        description: reminder.description,
-        due_date: nextDue,
-        is_recurring: true,
-        recurrence_interval: reminder.recurrence_interval,
-        notify_days_before: reminder.notify_days_before,
-        status: 'pending',
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-    }
-
-    await db.update('ownership_reminders', reminderId, updates);
-    return db.findById('ownership_reminders', reminderId);
-  }
-
-  // ============================================================
-  // EXPENSES
-  // ============================================================
-
-  /**
-   * Add expense
-   */
-  async addExpense(vehicleId, expenseData) {
-    return db.create('ownership_expenses', {
-      owner_vehicle_id: vehicleId,
-      expense_date: expenseData.expenseDate,
-      expense_type: expenseData.expenseType,
-      description: expenseData.description,
-      amount: expenseData.amount,
-      category: expenseData.category,
-      receipt_url: expenseData.receiptUrl,
-      is_recurring: expenseData.isRecurring || false,
-      recurring_interval: expenseData.recurringInterval,
-      created_at: new Date(),
-    });
-  }
-
-  /**
-   * Get vehicle expenses
-   */
+  async getVehicleServices(vehicleId) { return db.findAll('ownership_service_records', { filters: { owner_vehicle_id: vehicleId }, orderBy: 'service_date', ascending: false }); }
+  async getVehicleReminders(vehicleId) { return db.findAll('ownership_reminders', { filters: { owner_vehicle_id: vehicleId }, orderBy: 'due_date', ascending: true }); }
+  async getVehicleDocuments(vehicleId) { return db.findAll('ownership_documents', { filters: { owner_vehicle_id: vehicleId, status: 'active' }, orderBy: 'created_at', ascending: false }); }
+  async getVehicleAlerts(vehicleId) { return db.findAll('ownership_alerts', { filters: { owner_vehicle_id: vehicleId }, orderBy: 'created_at', ascending: false }); }
+  async getValueHistory(vehicleId) { return db.findAll('value_tracking', { filters: { owner_vehicle_id: vehicleId }, orderBy: 'calculated_at', ascending: false }); }
   async getVehicleExpenses(vehicleId, options = {}) {
-    const query = { owner_vehicle_id: vehicleId };
-    if (options.startDate && options.endDate) {
-      query.expense_date = { $gte: new Date(options.startDate), $lte: new Date(options.endDate) };
-    }
-    return db.find('ownership_expenses', query, { sort: { expense_date: -1 } });
+    const filters = { owner_vehicle_id: vehicleId };
+    if (options.startDate) filters.expense_date = { ...(filters.expense_date || {}), $gte: options.startDate };
+    if (options.endDate) filters.expense_date = { ...(filters.expense_date || {}), $lte: options.endDate };
+    return db.findAll('ownership_expenses', { filters, orderBy: 'expense_date', ascending: false });
   }
 
-  /**
-   * Get expense summary for owner
-   */
+  async getUpcomingReminders(userId) {
+    const vehicles = await db.findAll('owner_vehicles', { filters: { owner_id: userId, ownership_type: ACTIVE_OWNERSHIP, status: 'active' } });
+    const cutoff = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+    const result = [];
+    for (const vehicle of vehicles) {
+      const reminders = await db.findAll('ownership_reminders', { filters: { owner_vehicle_id: vehicle.id, status: 'pending', due_date: { $lte: cutoff } }, orderBy: 'due_date', ascending: true });
+      result.push(...reminders.map((r) => ({ ...r, vehicle })));
+    }
+    return result;
+  }
+
+  async completeReminder(userId, reminderId, serviceRecordId = null) {
+    const reminder = await db.findById('ownership_reminders', reminderId);
+    if (!reminder) throw new AppError('Reminder not found', 404);
+    await this.getVehicleForOwner(userId, reminder.owner_vehicle_id);
+    const updated = await db.update('ownership_reminders', reminder.id, {
+      status: 'completed', completed_at: new Date(), completed_service_record_id: serviceRecordId, updated_at: new Date(),
+    });
+    if (reminder.is_recurring) {
+      const days = { monthly: 30, quarterly: 90, '6months': 180, yearly: 365 }[reminder.recurrence_interval] || 90;
+      const nextDue = new Date(reminder.due_date); nextDue.setDate(nextDue.getDate() + days);
+      await db.create('ownership_reminders', { owner_vehicle_id: reminder.owner_vehicle_id, reminder_type: reminder.reminder_type, title: reminder.title, description: reminder.description, due_date: nextDue, is_recurring: true, recurrence_interval: reminder.recurrence_interval, notify_days_before: reminder.notify_days_before, status: 'pending', created_at: new Date(), updated_at: new Date() });
+    }
+    return updated;
+  }
+
+  async addExpense(userId, vehicleId, data) {
+    await this.getVehicleForOwner(userId, vehicleId);
+    if (!data?.expenseDate || !data?.expenseType || Number(data.amount) <= 0) throw new AppError('Expense date, type and positive amount are required', 400);
+    return db.create('ownership_expenses', { owner_vehicle_id: vehicleId, expense_date: data.expenseDate, expense_type: data.expenseType, description: data.description || null, amount: data.amount, category: data.category || 'other', receipt_url: data.receiptUrl || null, is_recurring: Boolean(data.isRecurring), recurring_interval: data.recurringInterval || null, created_at: new Date() });
+  }
+
   async getExpenseSummary(userId) {
-    const vehicles = await db.find('owner_vehicles', { owner_id: userId, status: 'active' });
-    const vehicleIds = vehicles.map(v => v.id);
-
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-
-    const [monthlyExpenses, yearlyExpenses, byCategory] = await Promise.all([
-      this.getExpensesTotal(vehicleIds, startOfMonth, now),
-      this.getExpensesTotal(vehicleIds, startOfYear, now),
-      this.getExpensesByCategory(vehicleIds, startOfYear, now),
-    ]);
-
-    return {
-      monthlyTotal: monthlyExpenses,
-      yearlyTotal: yearlyExpenses,
-      byCategory,
-      currency: 'KES',
-    };
+    const vehicles = await db.findAll('owner_vehicles', { filters: { owner_id: userId, status: 'active' }, select: 'id' });
+    const ids = vehicles.map(v => v.id); if (!ids.length) return { monthlyTotal: 0, yearlyTotal: 0, byCategory: {}, currency: 'KES' };
+    const expenses = await db.findAll('ownership_expenses', { filters: { owner_vehicle_id: { $in: ids } }, orderBy: 'expense_date', ascending: false });
+    const now = new Date(); const monthStart = new Date(now.getFullYear(), now.getMonth(), 1); const yearStart = new Date(now.getFullYear(), 0, 1);
+    let monthlyTotal = 0, yearlyTotal = 0; const byCategory = {};
+    for (const e of expenses) { const amount = Number(e.amount) || 0; const date = new Date(e.expense_date); if (date >= yearStart && date <= now) { yearlyTotal += amount; byCategory[e.category || 'other'] = (byCategory[e.category || 'other'] || 0) + amount; } if (date >= monthStart && date <= now) monthlyTotal += amount; }
+    return { monthlyTotal, yearlyTotal, byCategory, currency: 'KES' };
   }
 
-  async getExpensesTotal(vehicleIds, startDate, endDate) {
-    // Simplified - would calculate from database
-    return 0;
-  }
+  async addDocument(userId, vehicleId, data) { await this.getVehicleForOwner(userId, vehicleId); if (!data?.documentType || !data?.title) throw new AppError('Document type and title are required', 400); return db.create('ownership_documents', { owner_vehicle_id: vehicleId, document_type: data.documentType, title: data.title, description: data.description || null, file_name: data.fileName || null, file_type: data.fileType || null, file_url: data.fileUrl || null, file_size: data.fileSize || null, issue_date: data.issueDate || null, expiry_date: data.expiryDate || null, status: 'active', created_at: new Date(), updated_at: new Date() }); }
 
-  async getExpensesByCategory(vehicleIds, startDate, endDate) {
-    // Simplified - would aggregate from database
-    return {
-      fuel: 0,
-      maintenance: 0,
-      insurance: 0,
-      finance: 0,
-      taxes: 0,
-      other: 0,
-    };
-  }
+  async addTrip(userId, vehicleId, data) { await this.getVehicleForOwner(userId, vehicleId); const start = Number(data.odometerStart); const end = Number(data.odometerEnd); if (!data?.tripDate || !Number.isFinite(start) || !Number.isFinite(end) || end < start) throw new AppError('Trip date and valid odometer values are required', 400); const distance = data.distanceKm ?? end - start; return db.create('travel_logs', { owner_vehicle_id: vehicleId, trip_date: data.tripDate, odometer_start: start, odometer_end: end, distance_km: distance, fuel_litres: data.fuelLitres || null, fuel_cost: data.fuelCost || null, fuel_efficiency: data.fuelLitres ? Number(distance) / Number(data.fuelLitres) : null, origin: data.origin || null, destination: data.destination || null, route_notes: data.routeNotes || null, purpose: data.purpose || 'personal', created_at: new Date() }); }
 
-  // ============================================================
-  // DOCUMENTS
-  // ============================================================
+  async markVehicleSold(userId, vehicleId, saleData) { const vehicle = await this.getVehicleForOwner(userId, vehicleId); if (vehicle.ownership_type === 'sold') throw new AppError('Vehicle is already sold', 409); const updated = await db.update('owner_vehicles', vehicle.id, { ownership_type: 'sold', sale_date: saleData.saleDate, sale_price: saleData.salePrice, status: 'active', updated_at: new Date() }); const reminders = await db.findAll('ownership_reminders', { filters: { owner_vehicle_id: vehicle.id, status: 'pending' } }); for (const reminder of reminders) await db.update('ownership_reminders', reminder.id, { status: 'cancelled', updated_at: new Date() }); await this.syncOwnerCount(userId); return updated; }
 
-  /**
-   * Add document
-   */
-  async addDocument(vehicleId, documentData) {
-    return db.create('ownership_documents', {
-      owner_vehicle_id: vehicleId,
-      document_type: documentData.documentType,
-      title: documentData.title,
-      description: documentData.description,
-      file_name: documentData.fileName,
-      file_type: documentData.fileType,
-      file_url: documentData.fileUrl,
-      file_size: documentData.fileSize,
-      issue_date: documentData.issueDate,
-      expiry_date: documentData.expiryDate,
-      status: 'active',
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-  }
-
-  /**
-   * Get vehicle documents
-   */
-  async getVehicleDocuments(vehicleId) {
-    return db.find('ownership_documents', { owner_vehicle_id: vehicleId, status: 'active' }, {
-      sort: { created_at: -1 },
-    });
-  }
-
-  // ============================================================
-  // VALUE TRACKING
-  // ============================================================
-
-  /**
-   * Update vehicle value
-   */
-  async updateVehicleValue(vehicleId, valueData) {
-    return db.create('value_tracking', {
-      owner_vehicle_id: vehicleId,
-      market_value: valueData.marketValue,
-      wholesale_value: valueData.wholesaleValue,
-      retail_value: valueData.retailValue,
-      depreciation_from_purchase: valueData.depreciationFromPurchase,
-      depreciation_pct: valueData.depreciationPct,
-      comparable_count: valueData.comparableCount,
-      demand_score: valueData.demandScore,
-      similar_listings_count: valueData.similarListingsCount,
-      avg_price_similar: valueData.avgPriceSimilar,
-      best_time_to_sell: valueData.bestTimeToSell,
-      sell_now_estimate: valueData.sellNowEstimate,
-      calculated_at: new Date(),
-    });
-  }
-
-  /**
-   * Get value history
-   */
-  async getValueHistory(vehicleId) {
-    return db.find('value_tracking', { owner_vehicle_id: vehicleId }, {
-      sort: { calculated_at: -1 },
-    });
-  }
-
-  // ============================================================
-  // SELL VEHICLE
-  // ============================================================
-
-  /**
-   * Mark vehicle as sold
-   */
-  async markVehicleSold(vehicleId, saleData) {
-    const vehicle = await db.findById('owner_vehicles', vehicleId);
-    if (!vehicle) {
-      throw new AppError('Vehicle not found', 404);
-    }
-
-    await db.update('owner_vehicles', vehicleId, {
-      ownership_type: 'sold',
-      sale_date: saleData.saleDate,
-      sale_price: saleData.salePrice,
-      status: 'active', // Keep for historical records
-      updated_at: new Date(),
-    });
-
-    // Archive reminders
-    await db.update('ownership_reminders', { owner_vehicle_id: vehicleId }, {
-      status: 'cancelled',
-      updated_at: new Date(),
-    });
-
-    logInfo('Vehicle marked as sold', { vehicleId, salePrice: saleData.salePrice });
-    return db.findById('owner_vehicles', vehicleId);
-  }
-
-  /**
-   * Generate marketplace listing draft
-   */
-  async generateListingDraft(vehicleId) {
-    const vehicle = await db.findById('owner_vehicles', vehicleId);
-    if (!vehicle) {
-      throw new AppError('Vehicle not found', 404);
-    }
-
-    const [services, valueData] = await Promise.all([
-      this.getVehicleServices(vehicleId),
-      db.findOne('value_tracking', { owner_vehicle_id: vehicleId }, { sort: { calculated_at: -1 } }),
-    ]);
-
-    return {
-      vehicle: {
-        make: vehicle.make,
-        model: vehicle.model,
-        year: vehicle.year,
-        vin: vehicle.vin,
-        colour: vehicle.colour,
-        registration: vehicle.registration_number,
-        mileage: vehicle.current_mileage,
-      },
-      suggestedPrice: valueData?.sell_now_estimate || valueData?.market_value,
-      recentServices: services.slice(0, 5),
-      vehicleHistory: {
-        totalServices: services.length,
-        lastServiceDate: services[0]?.service_date,
-        lastServiceMileage: services[0]?.mileage_at_service,
-      },
-    };
-  }
-
-  // ============================================================
-  // TRAVEL LOG
-  // ============================================================
-
-  /**
-   * Add trip
-   */
-  async addTrip(vehicleId, tripData) {
-    return db.create('travel_logs', {
-      owner_vehicle_id: vehicleId,
-      trip_date: tripData.tripDate,
-      odometer_start: tripData.odometerStart,
-      odometer_end: tripData.odometerEnd,
-      distance_km: tripData.distanceKm,
-      fuel_litres: tripData.fuelLitres,
-      fuel_cost: tripData.fuelCost,
-      fuel_efficiency: tripData.fuelEfficiency,
-      origin: tripData.origin,
-      destination: tripData.destination,
-      route_notes: tripData.routeNotes,
-      purpose: tripData.purpose,
-      created_at: new Date(),
-    });
-  }
-
-  /**
-   * Get travel history
-   */
-  async getTravelHistory(vehicleId, options = {}) {
-    return db.find('travel_logs', { owner_vehicle_id: vehicleId }, {
-      sort: { trip_date: -1 },
-      limit: options.limit || 50,
-    });
-  }
-
-  // ============================================================
-  // ALERTS
-  // ============================================================
-
-  /**
-   * Get vehicle alerts
-   */
-  async getVehicleAlerts(vehicleId) {
-    return db.find('ownership_alerts', { owner_vehicle_id: vehicleId }, {
-      sort: { created_at: -1 },
-    });
-  }
-
-  /**
-   * Create alert
-   */
-  async createAlert(vehicleId, alertData) {
-    return db.create('ownership_alerts', {
-      owner_vehicle_id: vehicleId,
-      alert_type: alertData.alertType,
-      title: alertData.title,
-      message: alertData.message,
-      severity: alertData.severity || 'info',
-      action_url: alertData.actionUrl,
-      action_label: alertData.actionLabel,
-      status: 'unread',
-      created_at: new Date(),
-    });
-  }
-
-  /**
-   * Dismiss alert
-   */
-  async dismissAlert(alertId) {
-    await db.update('ownership_alerts', alertId, {
-      status: 'dismissed',
-      read_at: new Date(),
-    });
-    return { success: true };
-  }
+  async getVehicleDetails(userId, vehicleId) { const vehicle = await this.getVehicleForOwner(userId, vehicleId); return this.enrichVehicle(vehicle); }
+  async createAlert(userId, vehicleId, data) { await this.getVehicleForOwner(userId, vehicleId); return db.create('ownership_alerts', { owner_vehicle_id: vehicleId, alert_type: data.alertType, title: data.title, message: data.message, severity: data.severity || 'info', action_url: data.actionUrl || null, action_label: data.actionLabel || null, status: 'unread', created_at: new Date() }); }
 }
 
 export const ownershipService = new OwnershipService();

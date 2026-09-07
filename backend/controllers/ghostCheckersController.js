@@ -7,6 +7,7 @@ import Inspection from "../models/Inspection.js";
 import InspectionPackage from "../models/InspectionPackage.js";
 import Inspector from "../models/Inspector.js";
 import VehiclePassport from "../models/VehiclePassport.js";
+import { vehiclePassportService } from "../vehiclePassport/services/vehiclePassportService.js";
 
 // ============================================================
 // LANDING PAGE DATA
@@ -601,77 +602,12 @@ export async function getInspectionChecklist(req, res) {
 
 export async function getVehiclePassport(req, res) {
   const { vin } = req.params;
-
-  const passport = {
-    passportId: `GCP-${vin?.substring(0, 8).toUpperCase() || 'DEMO1234'}`,
-    vin,
-    issuedDate: new Date().toISOString(),
-    validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    vehicle: {
-      make: 'Toyota',
-      model: 'Land Cruiser',
-      year: 2022,
-      bodyType: 'SUV',
-      color: 'Pearl White',
-      engine: '3.5L V6 Twin Turbo',
-      transmission: 'Automatic',
-    },
-    inspections: [
-      {
-        id: 'GC-A1B2C3',
-        date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        package: '150-Point Inspection',
-        score: 94,
-        inspector: 'John Kamau',
-        results: {
-          engine: 96,
-          transmission: 94,
-          suspension: 92,
-          brakes: 95,
-          electrical: 98,
-          interior: 90,
-          exterior: 88,
-          testDrive: 94,
-        },
-        aiFindings: [
-          { type: 'panel_repair', location: 'Front bumper', confidence: 87 },
-        ],
-        verified: true,
-      },
-    ],
-    ownership: [
-      { owner: 'Original Owner', period: '2022 - 2023', verified: true },
-      { owner: 'Second Owner', period: '2023 - Present', verified: true },
-    ],
-    serviceHistory: [
-      { date: '2023-06-15', mileage: 15000, service: 'Regular Service', dealer: 'Toyota Kenya' },
-      { date: '2024-01-20', mileage: 28000, service: 'Full Service', dealer: 'Toyota Kenya' },
-    ],
-    mileageTimeline: [
-      { date: '2022-03-15', mileage: 0, source: 'Registration' },
-      { date: '2023-06-15', mileage: 15000, source: 'Service Record' },
-      { date: '2024-01-20', mileage: 28000, source: 'Service Record' },
-      { date: '2024-03-01', mileage: 28500, source: 'Inspection' },
-    ],
-    marketValueHistory: [
-      { date: '2022-03-15', value: 4200000, source: 'MSRP' },
-      { date: '2024-03-01', value: 3500000, source: 'Ghost Checkers' },
-    ],
-    certifications: [
-      { type: 'Ghost Certified', issued: '2024-03-01', validUntil: '2025-03-01' },
-    ],
-    riskAssessment: {
-      score: 2,
-      level: 'Low',
-      factors: [
-        { factor: 'No accident history detected', impact: 'positive' },
-        { factor: 'Verified mileage', impact: 'positive' },
-        { factor: 'Complete service history', impact: 'positive' },
-      ],
-    },
-  };
-
-  res.json({ success: true, data: passport });
+  const passport = await vehiclePassportService.findPassport(vin, null, null);
+  if (!passport) {
+    return res.status(404).json({ success: false, message: "Vehicle passport not found" });
+  }
+  const data = await vehiclePassportService.getPublicPassport(passport.id);
+  return res.json({ success: true, data });
 }
 
 // ============================================================
