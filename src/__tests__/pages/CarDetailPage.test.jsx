@@ -53,6 +53,7 @@ vi.mock('../../api/api', () => {
 });
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: { _id: 'u1' }, isAuth: true, isAdmin: false }),
+  useOptionalAuth: () => ({ user: { _id: 'u1' }, isAuth: true, isAdmin: false }),
 }));
 vi.mock('../../context/CompareContext', () => ({
   useCompare: () => ({ isComparing: () => false, toggleCar: vi.fn(), compareCount: 0 }),

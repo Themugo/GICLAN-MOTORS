@@ -35,7 +35,7 @@ describe('PaymentHistoryView', () => {
     render(<PaymentHistoryView />);
 
     expect(await screen.findByText('Toyota Land Cruiser')).toBeInTheDocument();
-    expect(screen.getByText('KES 125,000')).toBeInTheDocument();
+    expect(screen.getAllByText('KES 125,000').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.getByText('QAB123')).toBeInTheDocument();
     expect(myPayments).toHaveBeenCalledWith({ page: 1, limit: 10 });

@@ -112,14 +112,14 @@ export const logVehicleEdited = async (vehicle, oldData, actor, req) => {
 
   // Compare fields and track changes
   const fieldsToCompare = [
-    "make",
+    "brand",
     "model",
     "year",
     "price",
     "mileage",
     "status",
     "description",
-    "location",
+    "city",
     "condition",
   ];
 

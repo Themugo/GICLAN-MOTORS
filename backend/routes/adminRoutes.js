@@ -448,13 +448,12 @@ router.delete(
     await Car.softDelete(car._id, req.user.id);
     if (car.dealer) {
       await User.findByIdAndUpdate(car.dealer, {
-        $inc: { listingCount: -1, trialListingsUsed: -1 },
+        $inc: { listingCount: -1 },
       });
       await User.updateOne({ _id: car.dealer }, [
         {
           $set: {
             listingCount: { $max: ["$listingCount", 0] },
-            trialListingsUsed: { $max: ["$trialListingsUsed", 0] },
           },
         },
       ]).catch((e) => console.warn("⚠️ Dealer listing count update failed:", e.message));

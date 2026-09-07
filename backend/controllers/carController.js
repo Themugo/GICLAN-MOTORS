@@ -563,6 +563,10 @@ export const updateCar = async (req, res) => {
     const car = await Car.findById(req.params.id);
     if (!car) return res.status(404).json({ success: false, message: "Car not found" });
 
+    // Snapshot before any mutation so the audit trail records the real
+    // before/after state rather than two identical post-save objects.
+    const oldData = car.toObject();
+
     const isStaff = STAFF_ROLES.includes(req.user.role);
     const isDealer = DEALER_ROLES.includes(req.user.role);
     const isOwner = car.dealer?.toString() === req.user.id;
@@ -631,13 +635,15 @@ export const updateCar = async (req, res) => {
       "dutyStatus",
       "logbookVerified",
     ];
-    // `location` is a flat string (see createCar) — if the edit form
-    // ever sends city/address, fold them into that same flat format
-    // instead of setting them as their own (nonexistent) columns.
+    // The real cars column is location_city. `city` is the application
+    // field mapped to that column; `address` is not a cars column. Keep
+    // the edit path on the same contract as createCar instead of writing
+    // a nonexistent `location` field.
     if (req.body.city || req.body.address) {
-      const cityPart = req.body.city ?? (car.location || "").split(",")[0]?.trim() ?? "";
+      const existingCity = car.city || "";
+      const cityPart = req.body.city ?? existingCity;
       const addressPart = req.body.address ?? "";
-      req.body.location = [cityPart, addressPart].filter(Boolean).join(", ");
+      req.body.city = [cityPart, addressPart].filter(Boolean).join(", ");
     }
     for (const key of Object.keys(req.body)) {
       if (key === "city" || key === "address") continue; // folded into location above
@@ -673,9 +679,6 @@ export const updateCar = async (req, res) => {
     }
 
     await car.save();
-
-    // Store old data for audit logging
-    const oldData = car.toObject();
 
     await cacheDelPattern("cars:list:*");
 
@@ -714,14 +717,12 @@ export const deleteCar = async (req, res) => {
 
     // Decrement listing counts
     if (car.dealer) {
-      const owner = await User.findById(car.dealer).select("listingCount trialListingsUsed");
-      if (owner) {
-        const updates = {};
-        if (owner.listingCount > 0) updates.listingCount = owner.listingCount - 1;
-        if (owner.trialListingsUsed > 0) updates.trialListingsUsed = owner.trialListingsUsed - 1;
-        if (Object.keys(updates).length > 0) {
-          await User.findByIdAndUpdate(car.dealer, updates);
-        }
+      const owner = await User.findById(car.dealer).select("listingCount");
+      if (owner && owner.listingCount > 0) {
+        // listingCount represents currently retained listings.
+        // trialListingsUsed is historical entitlement consumption and must
+        // not be refunded when a trial listing is later deleted.
+        await User.findByIdAndUpdate(car.dealer, { listingCount: owner.listingCount - 1 });
       }
     }
 

@@ -294,7 +294,7 @@ export function mapBackendCarToVehicle(car: BackendCar): Vehicle {
     sellerPhone: car.dealer?.phone || undefined,
     sellerEmail: car.dealer?.email || undefined,
     sellerRating: 0, // no authoritative rating aggregate is returned by this endpoint
-    sellerType: car.dealer?.role === 'dealer' ? 'Verified Dealer' : car.dealer?.role === 'individual_seller' ? 'Private Seller' : undefined,
+    sellerType: car.dealer_id ? (car.dealer?.role === 'dealer' ? 'Verified Dealer' : car.dealer?.role === 'individual_seller' ? 'Private Seller' : undefined) : 'Private Seller',
     isDealerCertified: Boolean(car.is_verified_dealer || car.dealer?.dealerApprovedAt),
     verified: Boolean(car.is_verified_dealer),
     isAuction: Boolean(car.has_auction),

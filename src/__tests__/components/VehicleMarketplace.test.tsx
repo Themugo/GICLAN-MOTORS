@@ -4,6 +4,12 @@ import { readEscrowRulesConfig } from '../../features/Admin/hooks/escrowRulesCon
 import { VehicleMarketplace } from '../../features/VehicleMarketplace/components/VehicleMarketplace';
 import { INITIAL_VEHICLES } from '../fixtures/mockVehicles';
 
+const vehicleApiMocks = vi.hoisted(() => ({ getCars: vi.fn() }));
+vi.mock('../../services/vehicleApi', async () => {
+  const actual = await vi.importActual('../../services/vehicleApi');
+  return { ...actual, getCars: vehicleApiMocks.getCars };
+});
+
 // Fixed: mid-grid sponsor cards previously came from MOCK_SPONSOR_CARDS
 // (static, always-present placeholder data) - now fetched for real via
 // services/adApi.ts's getVisibleAdSlots, which has no real backend to
@@ -23,6 +29,21 @@ vi.mock('../../services/adApi', async () => {
 });
 
 describe('VehicleMarketplace - real inventory grid (redesigned layout)', () => {
+  beforeEach(() => {
+    vehicleApiMocks.getCars.mockReset();
+    vehicleApiMocks.getCars.mockResolvedValue({
+      success: true,
+      data: INITIAL_VEHICLES.map((v) => ({
+        id: v.id, title: v.title, brand: v.make, model: v.model, year: v.year, price: v.price,
+        mileage: v.mileage, fuel: v.fuelType, transmission: v.transmission, body_type: v.bodyStyle,
+        location_city: v.location, has_auction: v.isAuction, current_bid: v.currentBid ?? null,
+        bids_count: v.bidsCount ?? null, auction_end: v.auctionEndsAt ?? null,
+        is_verified_dealer: v.verified ?? false, dealer_id: v.sellerId || null,
+      })),
+      pagination: { page: 1, limit: 24, total: INITIAL_VEHICLES.length, pages: 1 },
+    });
+  });
+
   const baseProps = {
     vehicles: INITIAL_VEHICLES,
     savedVehicles: [],
@@ -59,6 +80,7 @@ describe('VehicleMarketplace - real inventory grid (redesigned layout)', () => {
   });
 
   it('renders empty vehicles list without crashing, showing a real empty state', async () => {
+    vehicleApiMocks.getCars.mockResolvedValueOnce({ success: true, data: [], pagination: { page: 1, limit: 24, total: 0, pages: 1 } });
     render(<VehicleMarketplace {...baseProps} vehicles={[]} />);
     await waitFor(() => {
       expect(screen.getByText(/No vehicles match your filters/i)).toBeTruthy();
@@ -100,6 +122,21 @@ describe('VehicleMarketplace - real inventory grid (redesigned layout)', () => {
 });
 
 describe('VehicleMarketplace - consolidated Make selector (space audit)', () => {
+  beforeEach(() => {
+    vehicleApiMocks.getCars.mockReset();
+    vehicleApiMocks.getCars.mockResolvedValue({
+      success: true,
+      data: INITIAL_VEHICLES.map((v) => ({
+        id: v.id, title: v.title, brand: v.make, model: v.model, year: v.year, price: v.price,
+        mileage: v.mileage, fuel: v.fuelType, transmission: v.transmission, body_type: v.bodyStyle,
+        location_city: v.location, has_auction: v.isAuction, current_bid: v.currentBid ?? null,
+        bids_count: v.bidsCount ?? null, auction_end: v.auctionEndsAt ?? null,
+        is_verified_dealer: v.verified ?? false, dealer_id: v.sellerId || null,
+      })),
+      pagination: { page: 1, limit: 24, total: INITIAL_VEHICLES.length, pages: 1 },
+    });
+  });
+
   const baseProps = {
     vehicles: INITIAL_VEHICLES,
     savedVehicles: [],
@@ -188,6 +225,21 @@ describe('VehicleMarketplace - consolidated Make selector (space audit)', () => 
 // no longer exists.
 
 describe('VehicleMarketplace - toolbar controls (redesigned layout)', () => {
+  beforeEach(() => {
+    vehicleApiMocks.getCars.mockReset();
+    vehicleApiMocks.getCars.mockResolvedValue({
+      success: true,
+      data: INITIAL_VEHICLES.map((v) => ({
+        id: v.id, title: v.title, brand: v.make, model: v.model, year: v.year, price: v.price,
+        mileage: v.mileage, fuel: v.fuelType, transmission: v.transmission, body_type: v.bodyStyle,
+        location_city: v.location, has_auction: v.isAuction, current_bid: v.currentBid ?? null,
+        bids_count: v.bidsCount ?? null, auction_end: v.auctionEndsAt ?? null,
+        is_verified_dealer: v.verified ?? false, dealer_id: v.sellerId || null,
+      })),
+      pagination: { page: 1, limit: 24, total: INITIAL_VEHICLES.length, pages: 1 },
+    });
+  });
+
   const baseProps = {
     vehicles: INITIAL_VEHICLES,
     savedVehicles: [],
@@ -216,6 +268,21 @@ describe('VehicleMarketplace - toolbar controls (redesigned layout)', () => {
 });
 
 describe('VehicleMarketplace - admin home page customization', () => {
+  beforeEach(() => {
+    vehicleApiMocks.getCars.mockReset();
+    vehicleApiMocks.getCars.mockResolvedValue({
+      success: true,
+      data: INITIAL_VEHICLES.map((v) => ({
+        id: v.id, title: v.title, brand: v.make, model: v.model, year: v.year, price: v.price,
+        mileage: v.mileage, fuel: v.fuelType, transmission: v.transmission, body_type: v.bodyStyle,
+        location_city: v.location, has_auction: v.isAuction, current_bid: v.currentBid ?? null,
+        bids_count: v.bidsCount ?? null, auction_end: v.auctionEndsAt ?? null,
+        is_verified_dealer: v.verified ?? false, dealer_id: v.sellerId || null,
+      })),
+      pagination: { page: 1, limit: 24, total: INITIAL_VEHICLES.length, pages: 1 },
+    });
+  });
+
   const baseProps = {
     vehicles: INITIAL_VEHICLES,
     savedVehicles: [],
@@ -320,6 +387,21 @@ describe('VehicleMarketplace - admin home page customization', () => {
 });
 
 describe('VehicleMarketplace - Escrow Rules & Activation admin UI (end-to-end through the real panel)', () => {
+  beforeEach(() => {
+    vehicleApiMocks.getCars.mockReset();
+    vehicleApiMocks.getCars.mockResolvedValue({
+      success: true,
+      data: INITIAL_VEHICLES.map((v) => ({
+        id: v.id, title: v.title, brand: v.make, model: v.model, year: v.year, price: v.price,
+        mileage: v.mileage, fuel: v.fuelType, transmission: v.transmission, body_type: v.bodyStyle,
+        location_city: v.location, has_auction: v.isAuction, current_bid: v.currentBid ?? null,
+        bids_count: v.bidsCount ?? null, auction_end: v.auctionEndsAt ?? null,
+        is_verified_dealer: v.verified ?? false, dealer_id: v.sellerId || null,
+      })),
+      pagination: { page: 1, limit: 24, total: INITIAL_VEHICLES.length, pages: 1 },
+    });
+  });
+
   const baseProps = {
     vehicles: INITIAL_VEHICLES,
     savedVehicles: [],
