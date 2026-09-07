@@ -6,15 +6,37 @@ import { logError } from "../infrastructure/logging/index.js";
 // =============================
 export const createLoanApplication = async (req, res) => {
   try {
-    const { car, vehiclePrice, depositAmount, loanAmount, termMonths, monthlyIncome, employmentStatus } = req.body;
+    const { car, vehiclePrice, depositAmount = 0, loanAmount, termMonths, monthlyIncome, employmentStatus } = req.body;
+    const price = Number(vehiclePrice);
+    const deposit = Number(depositAmount);
+    const requestedLoan = Number(loanAmount);
+    const term = Number(termMonths);
 
-    if (!vehiclePrice || !loanAmount) {
-      return res.status(400).json({ success: false, message: "Vehicle price and loan amount are required" });
+    if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(requestedLoan) || requestedLoan <= 0) {
+      return res.status(400).json({ success: false, message: "Vehicle price and loan amount must be positive numbers" });
+    }
+    if (!Number.isFinite(deposit) || deposit < 0 || deposit > price || Math.abs((price - deposit) - requestedLoan) > 0.01) {
+      return res.status(400).json({ success: false, message: "Deposit and loan amount must match the vehicle price" });
+    }
+    if (![24, 36, 48, 60].includes(term)) {
+      return res.status(400).json({ success: false, message: "Term must be 24, 36, 48, or 60 months" });
+    }
+    if (monthlyIncome !== undefined && (!Number.isFinite(Number(monthlyIncome)) || Number(monthlyIncome) <= 0)) {
+      return res.status(400).json({ success: false, message: "Monthly income must be a positive number" });
+    }
+    if (!['employed', 'self_employed', 'business_owner'].includes(employmentStatus)) {
+      return res.status(400).json({ success: false, message: "Invalid employment status" });
     }
 
     const application = await LoanApplication.create({
       applicant: req.user.id,
-      car, vehiclePrice, depositAmount, loanAmount, termMonths, monthlyIncome, employmentStatus,
+      car: car || undefined,
+      vehiclePrice: price,
+      depositAmount: deposit,
+      loanAmount: requestedLoan,
+      termMonths: term,
+      monthlyIncome: monthlyIncome === undefined ? undefined : Number(monthlyIncome),
+      employmentStatus,
       status: "submitted",
     });
 
@@ -66,23 +88,29 @@ export const updateLoanApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, reviewerNotes } = req.body;
+    const allowed = new Set(["submitted", "under_review", "approved", "declined", "withdrawn"]);
+    if (!allowed.has(status)) return res.status(400).json({ success: false, message: "Invalid status" });
 
     const existing = await LoanApplication.findById(id);
-    if (!existing) {
-      return res.status(404).json({ success: false, message: "Application not found" });
-    }
-    if (status && !["submitted", "under_review", "approved", "declined", "withdrawn"].includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status" });
+    if (!existing) return res.status(404).json({ success: false, message: "Application not found" });
+
+    const transitions = {
+      submitted: new Set(["under_review", "withdrawn"]),
+      under_review: new Set(["approved", "declined", "withdrawn"]),
+      approved: new Set(),
+      declined: new Set(),
+      withdrawn: new Set(),
+    };
+    if (status !== existing.status && !transitions[existing.status]?.has(status)) {
+      return res.status(409).json({ success: false, message: `Cannot move application from ${existing.status} to ${status}` });
     }
 
-    const updates = {};
-    if (status) updates.status = status;
-    if (reviewerNotes !== undefined) updates.reviewerNotes = reviewerNotes;
-    if (status && status !== "submitted") {
-      updates.reviewedBy = req.user.id;
-      updates.reviewedAt = new Date().toISOString();
-    }
-
+    const updates = {
+      status,
+      ...(reviewerNotes !== undefined ? { reviewerNotes: String(reviewerNotes).trim() } : {}),
+      reviewedBy: req.user.id,
+      reviewedAt: new Date().toISOString(),
+    };
     const updated = await LoanApplication.findByIdAndUpdate(id, updates, { new: true });
     res.json({ success: true, data: updated });
   } catch (error) {
