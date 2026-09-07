@@ -21,10 +21,12 @@
     "validate:phase39": "node scripts/validate-phase39.mjs",
     "validate:recovery": "node scripts/validate-recovery-repair.mjs",
     "validate:phase40": "node scripts/validate-phase40.mjs",
+    "validate:phase14": "node scripts/validate-phase14.mjs",
     "validate:phase58": "node scripts/validate-phase58.mjs",
     "validate:phase60": "node scripts/validate-phase60.mjs",
     "validate:marketplace-core": "node scripts/validate-marketplace-initiative.mjs",
-    "validate:communications": "node scripts/validate-communications-initiative.mjs"
+    "validate:communications": "node scripts/validate-communications-initiative.mjs",
+    "validate:transaction-integrity": "node scripts/validate-transaction-integrity.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",

@@ -308,10 +308,8 @@ export const disputeEscrow = async (req, res) => {
     const isStaff = ["admin", "superadmin", "moderator"].includes(req.user.role);
     if (!isParty && !isStaff) return res.status(403).json({ success: false, message: "Not authorized" });
 
-    const role = isStaff ? "admin" : String(escrow.seller) === userId ? "seller" : "buyer";
-    const updated = await serviceDispute(escrow._id, userId, role, reason, {
-      idempotencyKey: req.idempotencyKey,
-    });
+    const role = isStaff ? "admin" : "buyer";
+    const updated = await serviceDispute(escrow._id, userId, role, reason, { req });
 
     if (getIO()) {
       getIO().to(`user_${escrow.buyer}`).emit("escrowDisputed", { escrowId: escrow._id });
@@ -335,7 +333,7 @@ export const closeEscrowHandler = async (req, res) => {
     if (!escrow) throw new Error("Escrow not found");
 
     const role = ["admin", "superadmin"].includes(req.user.role) ? "admin" : "system";
-    const updated = await serviceClose(escrow._id, req.user.id, role, { idempotencyKey: req.idempotencyKey });
+    const updated = await serviceClose(escrow._id, req.user.id, role, { req });
 
     res.json({ success: true, message: "Escrow closed", data: updated });
   } catch (err) {

@@ -175,21 +175,21 @@ router.post(
       });
     }
 
-    await Bid.markWinner(bidId);
-
-    await Car.findByIdAndUpdate(req.params.carId, {
-      winner: {
-        user: bid.user,
-        amount: bid.amount,
-      },
-      sold: true,
-      auctionStatus: "ended",
-      allowBid: false,
+    const result = await closeAuction(req.params.carId, {
+      req,
+      actor: req.user,
+      reason: "admin_set_winner",
+      winnerBidId: bidId,
     });
+
+    if (!result.success && !result.alreadyClosed) {
+      return res.status(500).json({ success: false, message: result.message || "Failed to set winner" });
+    }
 
     res.json({
       success: true,
-      message: "Winner manually set",
+      message: result.alreadyClosed ? "Auction already closed" : "Winner set atomically",
+      result,
     });
   }),
 );

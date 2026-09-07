@@ -66,23 +66,28 @@ export const addFavorite = async (req, res) => {
       return res.status(404).json({ success: false, message: "Car not found" });
     }
 
-    await Favorite.findOneAndUpdate(
-      { user: req.user.id, car: carId },
-      {
-        user: req.user.id,
-        car: carId,
-        carSnapshot: {
-          title: car.title,
-          price: car.price,
-          brand: car.brand,
-          image: car.images?.[0]?.url || car.images?.[0] || null,
-        },
+    const existing = await Favorite.findOne({ user: req.user.id, car: carId });
+    if (existing) {
+      return res.json({
+        success: true,
+        favorited: true,
+        notifyOnPriceDrop: existing.notifyOnPriceDrop === true,
+        message: "Already in favourites",
+      });
+    }
+
+    await Favorite.create({
+      user: req.user.id,
+      car: carId,
+      carSnapshot: {
+        title: car.title,
+        price: car.price,
+        brand: car.brand,
+        image: car.images?.[0]?.url || car.images?.[0] || null,
       },
-      { upsert: true, new: true, session },
-    );
+    });
 
     await Car.findByIdAndUpdate(carId, { $inc: { favoritesCount: 1 } });
-
 
     return res.json({ success: true, favorited: true, notifyOnPriceDrop: false, message: "Added to favourites" });
   } catch (err) {
@@ -140,14 +145,12 @@ export const toggleFavorite = async (req, res) => {
     const existing = await Favorite.findOne({ user: req.user.id, car: carId });
 
     if (existing) {
-      await existing.deleteOne({ session });
+      await existing.deleteOne();
       await Car.findByIdAndUpdate(carId, { $inc: { favoritesCount: -1 } });
-      await session.commitTransaction();
-      session.endSession();
       return res.json({ success: true, favorited: false, message: "Removed from favourites" });
     }
 
-    await Favorite.create([{
+    await Favorite.create({
       user: req.user.id,
       car: carId,
       carSnapshot: {
@@ -156,7 +159,7 @@ export const toggleFavorite = async (req, res) => {
         brand: car.brand,
         image: car.images?.[0]?.url || car.images?.[0] || null,
       },
-    }], { session });
+    });
     await Car.findByIdAndUpdate(carId, { $inc: { favoritesCount: 1 } });
 
 

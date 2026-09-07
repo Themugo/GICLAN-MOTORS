@@ -13,7 +13,7 @@ import { acquireLock, releaseLock } from "../middleware/distributedLock.js";
 import { closeAuction } from "../services/auctionClose.service.js";
 import { getIO } from "../utils/io.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
-import { atomicPlaceBid, atomicConfirmBidPayment } from "../utils/atomicTransactions.js";
+import { atomicPlaceBid, atomicConfirmBidPayment, atomicAutoBid } from "../utils/atomicTransactions.js";
 import { findOrCreateLeadFromAuction, addLeadActivity, updateLeadStage } from "../services/leadService.js";
 import { logAuctionBidPlaced } from "../services/auditService.js";
 
@@ -54,114 +54,44 @@ const createLeadFromBid = async (userId, carId) => {
 // 🧠 AUTO-BIDDING ENGINE (PRO) - Bid Loop Prevention
 // =============================
 const runAutoBidding = async (carId) => {
-  const autoBidders = await Bid.find({
-    carId,
-    status: "paid",
-    maxBid: { $gt: 0 },
-  }).sort({ maxBid: -1 });
+  try {
+    // Auto-bidding is a market mutation and therefore must use the same
+    // database-level locking discipline as manual bids. The RPC locks the
+    // car row, derives the two highest max-bid participants, inserts at most
+    // one auto-bid, and advances the market in one PostgreSQL transaction.
+    const result = await atomicAutoBid(carId);
+    if (!result?.created) return result;
 
-  if (autoBidders.length < 2) return;
+    const car = await Car.findById(carId);
+    if (!car) return result;
 
-  let highest = autoBidders[0];
-  let second = autoBidders[1];
+    await applySnipingProtection(car);
 
-  // 🔒 BID LOOP PREVENTION: Check if same user is highest and second
-  if (highest.user.toString() === second.user.toString()) {
-    logWarn("Auto-bid skipped: same user has top 2 max bids", { carId, userId: highest.user });
-    return;
-  }
-
-  // 🔒 BID LOOP PREVENTION: Limit auto-bids per auction
-  const recentAutoBids = await Bid.countDocuments({
-    carId,
-    isAuto: true,
-    createdAt: { $gte: new Date(Date.now() - 60000) }, // Last 60 seconds
-  });
-
-  const MAX_AUTO_BIDS_PER_MINUTE = 10;
-  if (recentAutoBids >= MAX_AUTO_BIDS_PER_MINUTE) {
-    logWarn("Auto-bid skipped: too many auto-bids in last minute", { carId, count: recentAutoBids });
-    return;
-  }
-
-  // 🔒 BID LOOP PREVENTION: Check for bid loop pattern
-  // If the same two users keep alternating bids, stop auto-bidding
-  const recentBids = await Bid.find({
-    carId,
-    status: "paid",
-  })
-    .sort({ createdAt: -1 })
-    .limit(6)
-    .lean();
-
-  if (recentBids.length >= 4) {
-    const users = recentBids.slice(0, 4).map((b) => b.user.toString());
-    const uniqueUsers = new Set(users);
-    if (uniqueUsers.size === 2 && users[0] === users[2] && users[1] === users[3]) {
-      logWarn("Auto-bid skipped: detected bid loop pattern", { carId, users });
-      return;
+    const carIdStr = String(carId);
+    if (getIO()) {
+      getIO().to(`car_${carIdStr}`).emit("auctionUpdate", {
+        carId: carIdStr,
+        currentBid: result.amount,
+      });
     }
-  }
-
-  const increment = 1000;
-
-  let nextAmount = Math.min(highest.maxBid, second.maxBid + increment);
-
-  if (nextAmount <= second.maxBid) return;
-
-  // 🔒 BID LOOP PREVENTION: Check if this exact auto-bid already exists
-  const existing = await Bid.findOne({
-    carId,
-    user: highest.user,
-    amount: nextAmount,
-    isAuto: true,
-  });
-
-  if (existing) {
-    logDebug("Auto-bid skipped: duplicate bid exists", { carId, userId: highest.user, amount: nextAmount });
-    return;
-  }
-
-  // 🔒 BID LOOP PREVENTION: Don't auto-bid if user is already highest bidder
-  const car = await Car.findById(carId);
-  if (!car) return;
-
-  if (car.highestBidder && car.highestBidder.toString() === highest.user.toString()) {
-    logDebug("Auto-bid skipped: user is already highest bidder", { carId, userId: highest.user });
-    return;
-  }
-
-  const carIdStr = carId.toString();
-  const userIdStr = highest.user.toString();
-  const pseudonym = generatePseudonym(userIdStr, carIdStr);
-
-  const autoBid = await Bid.create({
-    carId,
-    user: highest.user,
-    amount: nextAmount,
-    maxBid: highest.maxBid,
-    isAuto: true,
-    bidderTag: pseudonym,
-    phone: highest.phone || "N/A",
-    status: "paid",
-  });
-
-  car.currentBid = nextAmount;
-  car.highestBidder = highest.user;
-  await car.save();
-
-  // ⏱ SNIPING PROTECTION
-  await applySnipingProtection(car);
-
-  if (getIO()) {
-    getIO().to(`car_${carIdStr}`).emit("auctionUpdate", {
-      carId: carIdStr,
-      currentBid: nextAmount,
+    emitListingUpdate(carIdStr, {
+      currentBid: result.amount,
+      bidsCount: Number(car.bidsCount || 0),
     });
-  }
-  emitListingUpdate(carIdStr, { currentBid: nextAmount, bidsCount: (car.bidsCount || 0) + 1 });
 
-  logInfo("Auto-bid placed", { carId, userId: highest.user, amount: nextAmount, maxBid: highest.maxBid });
+    logInfo("Auto-bid placed atomically", {
+      carId,
+      userId: result.user_id,
+      amount: result.amount,
+      maxBid: result.max_bid,
+    });
+    return result;
+  } catch (err) {
+    // Auto-bidding is secondary to the confirmed bid. A failed auto-bid must
+    // never roll back the provider-confirmed manual bid.
+    logWarn("Atomic auto-bid failed", { carId, error: err.message });
+    return { created: false, error: err.message };
+  }
 };
 
 // =============================
@@ -288,8 +218,6 @@ export const placeBid = async (req, res) => {
         status: "held",
       });
       if (!escrowDeposit) {
-        await session.abortTransaction();
-        session.endSession();
         return res.status(403).json({
           success: false,
             message:
@@ -474,18 +402,6 @@ export const confirmBidPayment = async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    if (session) {
-      try {
-        await session.abortTransaction();
-      } catch {
-        /* already aborted */
-      }
-      try {
-        session.endSession();
-      } catch {
-        /* already ended */
-      }
-    }
     logError("CALLBACK ERROR", err);
     res.status(500).json({ success: false, message: "Bid callback failed" });
   }

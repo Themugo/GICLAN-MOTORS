@@ -4,8 +4,8 @@
 // idempotency, ledger integration, and full audit logging.
 // ─────────────────────────────────────────────────────────────
 
-import { findById, findOne, create } from "../db/index.js";
-import { STATES } from "../services/escrowStateMachine.js";
+import { findById, findOne, create, update } from "../db/index.js";
+import { STATES, validateTransition } from "../services/escrowStateMachine.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { atomicTransitionEscrow } from "../utils/atomicTransactions.js";
 
@@ -103,24 +103,31 @@ export const refundEscrow = async (escrowId, adminId, reason, { idempotencyKey }
   return escrow || result;
 };
 
-export const disputeEscrow = async (escrowId, userId, role, reason, { idempotencyKey } = {}) => {
+export const disputeEscrow = async (escrowId, userId, role, reason) => {
   await atomicTransitionEscrow({
     escrowId, nextStatus: STATES.DISPUTED, actorId: userId, role,
-    idempotencyKey, reason,
+    reason,
   });
   return findById("escrows", escrowId);
 };
 
-export const closeEscrow = async (escrowId, userId, role, { idempotencyKey } = {}) => {
-  await atomicTransitionEscrow({
-    escrowId,
-    nextStatus: STATES.CLOSED,
-    actorId: userId,
-    role,
-    idempotencyKey,
-  });
+export const closeEscrow = async (escrowId, userId, role, { req } = {}) => {
+  try {
+    const escrow = await findById("escrows", escrowId);
+    if (!escrow) throw new Error("Escrow not found");
 
-  const escrow = await findById("escrows", escrowId);
-  logInfo("Escrow closed atomically", { escrowId, actorId: userId });
-  return escrow;
+    const validation = validateTransition(escrow.status, STATES.CLOSED, role, escrow);
+    if (!validation.allowed) throw new Error(validation.reason);
+
+    const now = new Date();
+    await update("escrows", escrow.id, {
+      status: STATES.CLOSED,
+      closedAt: now,
+      history: [...(escrow.history || []), { action: "Escrow closed", by: userId, at: now }],
+    });
+
+    return { ...escrow, status: STATES.CLOSED, closedAt: now };
+  } catch (err) {
+    throw err;
+  }
 };

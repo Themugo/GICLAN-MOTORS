@@ -557,8 +557,6 @@ export const reconcilePaymentSubscription = async (startDate, endDate, report) =
 // =============================
 export const reconcileRefunds = async (startDate, endDate, report) => {
   try {
-    // The canonical refund ledger is `refunds`; historical payment rows with
-    // type=refund are not the authoritative refund instruction model.
     const refunds = await findAll("refunds", { filters: {
       createdAt: { $gte: startDate, $lte: endDate },
     } });
@@ -576,19 +574,14 @@ export const reconcileRefunds = async (startDate, endDate, report) => {
 
       if (!originalPayment) {
         await report.addIssue({
-          type: "orphan_transaction",
-          severity: "high",
+          type: "orphan_transaction", severity: "high",
           description: "Refund without corresponding original payment",
-          transactionId: refund.id,
-          transactionModel: "Refund",
+          transactionId: refund.id, transactionModel: "Refund",
           amountDifference: refund.amount,
         });
         await createRecord(report.id, {
-          source: "refund",
-          actualType: "refund",
-          actualId: refund.id, actualModel: "Refund",
-          actualAmount: refund.amount,
-          outcome: "unmatched",
+          source: "refund", actualType: "refund", actualId: refund.id, actualModel: "Refund",
+          actualAmount: refund.amount, outcome: "unmatched",
         });
         unreconciled++;
         continue;
@@ -599,25 +592,16 @@ export const reconcileRefunds = async (startDate, endDate, report) => {
         overpaid++;
         overpaidTotal += excess;
         await report.addIssue({
-          type: "refund_exceeds_original",
-          severity: "critical",
+          type: "refund_exceeds_original", severity: "critical",
           description: `Refund amount exceeds original payment: ${refund.amount} > ${originalPayment.amount} by ${excess}`,
-          transactionId: refund.id,
-          transactionModel: "Refund",
-          relatedTransactionId: originalPayment.id,
-          relatedTransactionModel: "Payment",
+          transactionId: refund.id, transactionModel: "Refund",
+          relatedTransactionId: originalPayment.id, relatedTransactionModel: "Payment",
           amountDifference: excess,
         });
         await createRecord(report.id, {
-          source: "refund",
-          expectedType: "payment",
-          expectedId: originalPayment.id, expectedModel: "Payment",
-          expectedAmount: originalPayment.amount,
-          actualType: "refund",
-          actualId: refund.id, actualModel: "Refund",
-          actualAmount: refund.amount,
-          outcome: "overpaid",
-          amountDifference: excess,
+          source: "refund", expectedType: "payment", expectedId: originalPayment.id, expectedModel: "Payment",
+          expectedAmount: originalPayment.amount, actualType: "refund", actualId: refund.id, actualModel: "Refund",
+          actualAmount: refund.amount, outcome: "overpaid", amountDifference: excess,
         });
         unreconciled++;
         continue;
@@ -627,20 +611,14 @@ export const reconcileRefunds = async (startDate, endDate, report) => {
         const hoursPending = (Date.now() - new Date(refund.createdAt).getTime()) / (1000 * 60 * 60);
         if (hoursPending > 48) {
           await report.addIssue({
-            type: "stuck_transaction",
-            severity: "high",
+            type: "stuck_transaction", severity: "high",
             description: `Refund ${refund.status} for ${hoursPending.toFixed(1)} hours`,
-            transactionId: refund.id,
-            transactionModel: "Refund",
+            transactionId: refund.id, transactionModel: "Refund",
             amountDifference: refund.amount,
           });
           await createRecord(report.id, {
-            source: "refund",
-            actualType: "refund",
-            actualId: refund.id, actualModel: "Refund",
-            actualAmount: refund.amount,
-            outcome: "unmatched",
-            statusActual: refund.status,
+            source: "refund", actualType: "refund", actualId: refund.id, actualModel: "Refund",
+            actualAmount: refund.amount, outcome: "unmatched", statusActual: refund.status,
           });
           unreconciled++;
           continue;

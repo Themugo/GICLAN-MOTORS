@@ -1,22 +1,14 @@
 -- KAYAD Phase 14: refund + payment reconciliation integrity.
 -- Uses only the canonical refunds/payments/escrows schema.
 
--- Refund amounts must be positive.
 ALTER TABLE refunds
   ADD CONSTRAINT refunds_amount_positive CHECK (amount > 0) NOT VALID;
 
--- A payment may have historical failed/cancelled refund attempts, but only one
--- live refund instruction may exist at a time. This prevents duplicate payout
--- instructions while preserving audit history.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_refunds_one_active_per_payment
   ON refunds(payment_id)
   WHERE payment_id IS NOT NULL
     AND status IN ('pending', 'processing');
 
--- Replace the escrow transition function so an administrative escrow refund
--- also creates one canonical pending refund instruction in the same DB
--- transaction. The platform must not claim a provider refund completed before
--- the actual provider settlement has succeeded.
 CREATE OR REPLACE FUNCTION kayad_transition_escrow_atomic(
   p_escrow_id UUID,
   p_next_status TEXT,
@@ -37,11 +29,12 @@ DECLARE
   v_seller_amount NUMERIC;
   v_now TIMESTAMPTZ := now();
   v_rate NUMERIC := 0.05;
-  v_existing_refund UUID;
 BEGIN
   SELECT * INTO v_escrow FROM escrows WHERE id = p_escrow_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Escrow not found'; END IF;
 
+  -- A repeated idempotency key is a successful no-op. This check occurs
+  -- while holding the row lock, so two identical requests cannot both win.
   IF p_idempotency_key IS NOT NULL AND v_escrow.lastActionKey = p_idempotency_key THEN
     RETURN jsonb_build_object('id', v_escrow.id, 'status', v_escrow.status, 'idempotent', true);
   END IF;
@@ -61,6 +54,7 @@ BEGIN
     RAISE EXCEPTION 'Transition from % to % is not allowed', v_escrow.status, p_next_status;
   END IF;
 
+  -- Match the canonical application state machine's role permissions.
   IF NOT (
     (v_escrow.status = 'pending' AND p_next_status = 'funded' AND p_role = 'system') OR
     (v_escrow.status = 'pending' AND p_next_status = 'disputed' AND p_role IN ('buyer','seller','admin','superadmin')) OR
@@ -80,6 +74,7 @@ BEGIN
     RAISE EXCEPTION 'Role % is not authorized for transition % -> %', p_role, v_escrow.status, p_next_status;
   END IF;
 
+  -- Actor ownership checks for buyer/seller transitions.
   IF p_role = 'buyer' AND p_actor_id IS NOT NULL AND v_escrow.buyer <> p_actor_id THEN
     RAISE EXCEPTION 'Only the escrow buyer can perform this action';
   END IF;
@@ -87,24 +82,8 @@ BEGIN
     RAISE EXCEPTION 'Only the escrow seller can perform this action';
   END IF;
 
-  IF p_next_status = 'funded' THEN
-    IF v_escrow.payment IS NULL THEN RAISE EXCEPTION 'Escrow cannot be funded without a payment'; END IF;
-    SELECT * INTO v_payment FROM payments WHERE id = v_escrow.payment FOR UPDATE;
-    IF NOT FOUND THEN RAISE EXCEPTION 'Escrow payment not found'; END IF;
-    IF v_payment.amount <> v_escrow.amount THEN
-      RAISE EXCEPTION 'Escrow/payment amount mismatch: escrow %, payment %', v_escrow.amount, v_payment.amount;
-    END IF;
-    IF v_payment.status NOT IN ('pending','success','completed') THEN
-      RAISE EXCEPTION 'Escrow payment is not fundable in status %', v_payment.status;
-    END IF;
-  END IF;
-
-  IF p_next_status = 'released' AND v_escrow.status = 'delivered'
-     AND v_escrow."deliveredAt" IS NULL
-     AND (v_escrow.autoReleaseEligibleAt IS NULL OR v_escrow.autoReleaseEligibleAt > v_now) THEN
-    RAISE EXCEPTION 'Delivery is not confirmed and auto-release window has not opened';
-  END IF;
-
+  -- Auto-release guard: the window must have opened for system releases from
+  -- funded/vehicle_confirmed states.
   IF p_next_status = 'released'
      AND v_escrow.status IN ('funded','vehicle_confirmed')
      AND (v_escrow.autoReleaseEligibleAt IS NULL OR v_escrow.autoReleaseEligibleAt > v_now) THEN
@@ -114,34 +93,13 @@ BEGIN
   IF p_next_status = 'released' THEN
     BEGIN
       SELECT COALESCE(dealer_commission, 5) / 100.0 INTO v_rate
-        FROM platform_config LIMIT 1;
+        FROM platform_config
+       LIMIT 1;
     EXCEPTION WHEN undefined_column THEN
       v_rate := 0.05;
     END;
     v_commission := ROUND(v_escrow.amount * v_rate);
     v_seller_amount := v_escrow.amount - v_commission;
-  END IF;
-
-  IF p_next_status = 'refunded' AND v_escrow.payment IS NOT NULL THEN
-    SELECT * INTO v_payment FROM payments WHERE id = v_escrow.payment FOR UPDATE;
-    IF NOT FOUND THEN RAISE EXCEPTION 'Escrow payment not found'; END IF;
-    IF v_payment.amount <> v_escrow.amount THEN
-      RAISE EXCEPTION 'Refund/payment amount mismatch: escrow %, payment %', v_escrow.amount, v_payment.amount;
-    END IF;
-    SELECT id INTO v_existing_refund
-      FROM refunds
-     WHERE payment_id = v_payment.id
-       AND status IN ('pending','processing','completed')
-     ORDER BY created_at DESC
-     LIMIT 1;
-    IF v_existing_refund IS NOT NULL THEN
-      IF EXISTS (SELECT 1 FROM refunds WHERE id = v_existing_refund AND status = 'completed') THEN
-        RAISE EXCEPTION 'A completed refund already exists for payment %', v_payment.id;
-      END IF;
-      IF EXISTS (SELECT 1 FROM refunds WHERE id = v_existing_refund AND escrow_id IS NOT NULL AND escrow_id <> v_escrow.id) THEN
-        RAISE EXCEPTION 'An active refund already belongs to another escrow for payment %', v_payment.id;
-      END IF;
-    END IF;
   END IF;
 
   UPDATE escrows
@@ -176,25 +134,40 @@ BEGIN
 
   IF p_next_status = 'released' THEN
     IF v_escrow.car IS NOT NULL THEN
-      UPDATE cars SET sold = true, status = 'sold', "isPaid" = true, updated_at = v_now WHERE id = v_escrow.car;
+      UPDATE cars
+         SET sold = true,
+             status = 'sold',
+             "isPaid" = true,
+             updated_at = v_now
+       WHERE id = v_escrow.car;
     END IF;
+
     IF v_escrow.payment IS NOT NULL THEN
-      UPDATE payments SET status = 'released', platform_fee = v_commission, dealer_amount = v_seller_amount, updated_at = v_now WHERE id = v_escrow.payment;
+      UPDATE payments
+         SET status = 'released',
+             platform_fee = v_commission,
+             dealer_amount = v_seller_amount,
+             updated_at = v_now
+       WHERE id = v_escrow.payment;
     END IF;
   ELSIF p_next_status = 'refunded' THEN
     IF v_escrow.payment IS NOT NULL THEN
-      UPDATE payments SET status = 'refunded', updated_at = v_now WHERE id = v_escrow.payment;
-      IF v_existing_refund IS NULL THEN
-        INSERT INTO refunds (payment_id, escrow_id, amount, reason, status, initiated_by, created_at, updated_at)
-        VALUES (v_escrow.payment, v_escrow.id, v_escrow.amount, p_reason, 'pending', p_actor_id, v_now, v_now);
-      ELSE
-        UPDATE refunds
-           SET escrow_id = COALESCE(escrow_id, v_escrow.id),
-               amount = v_escrow.amount,
-               reason = COALESCE(p_reason, reason),
-               updated_at = v_now
-         WHERE id = v_existing_refund;
+      SELECT * INTO v_payment FROM payments WHERE id = v_escrow.payment FOR UPDATE;
+      IF NOT FOUND THEN RAISE EXCEPTION 'Escrow payment not found'; END IF;
+      IF v_payment.amount <> v_escrow.amount THEN
+        RAISE EXCEPTION 'Refund/payment amount mismatch: escrow %, payment %', v_escrow.amount, v_payment.amount;
       END IF;
+      IF EXISTS (SELECT 1 FROM refunds WHERE payment_id = v_payment.id AND status = 'completed') THEN
+        RAISE EXCEPTION 'A completed refund already exists for payment %', v_payment.id;
+      END IF;
+      UPDATE payments SET status = 'refunded', updated_at = v_now WHERE id = v_escrow.payment;
+      INSERT INTO refunds (payment_id, escrow_id, amount, reason, status, initiated_by, created_at, updated_at)
+      SELECT v_escrow.payment, v_escrow.id, v_escrow.amount, p_reason, 'pending', p_actor_id, v_now, v_now
+      WHERE NOT EXISTS (
+        SELECT 1 FROM refunds
+         WHERE payment_id = v_escrow.payment
+           AND status IN ('pending','processing')
+      );
     END IF;
     IF v_escrow.car IS NOT NULL THEN
       UPDATE cars SET sold = false, "isPaid" = false, updated_at = v_now WHERE id = v_escrow.car;
@@ -206,12 +179,14 @@ BEGIN
     'status', p_next_status,
     'commission', v_commission,
     'sellerAmount', v_seller_amount,
-    'refundId', v_existing_refund,
     'refundStatus', CASE WHEN p_next_status = 'refunded' THEN 'pending' ELSE NULL END,
     'idempotent', false
   );
 END;
 $$;
+
+REVOKE ALL ON FUNCTION kayad_place_bid_atomic(UUID, UUID, NUMERIC, TEXT, TEXT, NUMERIC, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION kayad_confirm_bid_payment_atomic(TEXT, TEXT) FROM PUBLIC;
 
 REVOKE ALL ON FUNCTION kayad_transition_escrow_atomic(UUID, TEXT, UUID, TEXT, TEXT, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION kayad_transition_escrow_atomic(UUID, TEXT, UUID, TEXT, TEXT, TEXT) TO service_role;

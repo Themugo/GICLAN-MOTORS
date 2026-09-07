@@ -804,14 +804,16 @@ router.post(
     const bid = await findOne("bids", { id: bidId, carId: car.id });
     if (!bid) return res.status(404).json({ success: false, message: "Bid not found for this car" });
 
-    await update("bids", bidId, { status: "accepted" });
-
-    const updatedCar = await update("cars", req.params.id, {
-      sold: true,
-      status: "sold",
-      soldTo: { user: bid.user, amount: bid.amount, bidId: bid.id, soldAt: new Date().toISOString() },
-      auctionStatus: "ended",
+    const result = await closeAuction(req.params.id, {
+      req,
+      actor: req.user,
+      reason: "dealer_accept_bid",
+      winnerBidId: bidId,
     });
+    if (!result.success && !result.alreadyClosed) {
+      return res.status(500).json({ success: false, message: result.message || "Failed to accept bid" });
+    }
+    const updatedCar = await findOne("cars", { id: req.params.id });
 
     // Notify winner
     try {
@@ -831,7 +833,7 @@ router.post(
       details: { bidId, bidder: bid.user, amount: bid.amount },
     });
 
-    res.json({ success: true, car: updatedCar, bid });
+    res.json({ success: true, car: updatedCar, bid, result });
   }),
 );
 

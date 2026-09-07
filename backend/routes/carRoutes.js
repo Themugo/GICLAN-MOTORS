@@ -28,6 +28,7 @@ import {
 
 import { findAll, findById, findOne, create, update, remove, paginate } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
+import { closeAuction } from "../services/auctionClose.service.js";
 
 const router = express.Router();
 
@@ -514,9 +515,12 @@ router.post(
       });
     }
 
-    const updated = await update("cars", req.params.id, { auctionStatus: "ended" });
+    const result = await closeAuction(req.params.id, { req, actor: req.user, reason: "car_admin_end" });
+    if (!result.success && !result.alreadyClosed) {
+      return res.status(500).json({ success: false, message: result.message || "Failed to end auction" });
+    }
 
-    res.json({ success: true, data: updated });
+    res.json({ success: true, result });
   }),
 );
 

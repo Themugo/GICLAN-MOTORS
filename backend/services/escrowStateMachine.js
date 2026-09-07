@@ -106,13 +106,10 @@ const GUARDS = {
   },
   [STATES.DELIVERED]: {
     [STATES.RELEASED]: (escrow) => {
-      // The persisted escrow contract uses deliveredAt; retain support for
-      // the legacy in-memory deliveryConfirmed flag used by older callers.
-      const deliveryConfirmed = Boolean(escrow.deliveryConfirmed || escrow.deliveredAt);
-      if (!deliveryConfirmed && !escrow.autoReleaseEligibleAt) {
+      if (!escrow.deliveryConfirmed && !escrow.autoReleaseEligibleAt) {
         return { allowed: false, reason: "Buyer has not confirmed delivery and no auto-release window is set" };
       }
-      if (!deliveryConfirmed && escrow.autoReleaseEligibleAt && escrow.autoReleaseEligibleAt > new Date()) {
+      if (!escrow.deliveryConfirmed && escrow.autoReleaseEligibleAt && escrow.autoReleaseEligibleAt > new Date()) {
         return { allowed: false, reason: "Auto-release window has not yet opened" };
       }
       return { allowed: true, reason: null };

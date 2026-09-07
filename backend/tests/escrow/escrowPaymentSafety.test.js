@@ -24,7 +24,6 @@ describe("escrow state machine", () => {
     expect(validateTransition(STATES.VEHICLE_CONFIRMED, STATES.DELIVERED, "seller").allowed).toBe(true);
     const delivered = { deliveryConfirmed: true };
     expect(validateTransition(STATES.DELIVERED, STATES.RELEASED, "admin", delivered).allowed).toBe(true);
-    expect(validateTransition(STATES.DELIVERED, STATES.RELEASED, "admin", { deliveredAt: new Date() }).allowed).toBe(true);
     expect(validateTransition(STATES.RELEASED, STATES.CLOSED, "admin").allowed).toBe(true);
   });
 
@@ -99,7 +98,6 @@ jest.unstable_mockModule("../../utils/logger.js", () => ({
   logError: jest.fn(),
 }));
 jest.unstable_mockModule("../../utils/atomicTransactions.js", () => ({
-  atomicTransitionEscrow: jest.fn().mockResolvedValue({ ok: true }),
   atomicSettleBidPayment: jest.fn().mockImplementation(async (paymentId, receipt) => {
     const payment = await dbMock.findOne("payments", { id: paymentId });
     if (payment) {
@@ -179,14 +177,6 @@ describe("handleMpesaCallback", () => {
       return p;
     });
     dbMock.findOne.mockImplementation(async (table, filters) => {
-      if (table === "escrows") {
-        return {
-          id: "escrow-1",
-          payment: filters.payment || "pay-1",
-          amount: 500000,
-          status: "pending",
-        };
-      }
       if (table !== "payments") return null;
       return payments.find((p) =>
         Object.entries(filters).every(([k, v]) => p[k] === v),

@@ -5,69 +5,48 @@
 // and realtime notification live here and nowhere else.
 
 import Car from "../models/Car.js";
-import Bid from "../models/Bid.js";
+import { atomicCloseAuction } from "../utils/atomicTransactions.js";
 import { emitAuctionEnd, emitListingUpdate } from "../socket/socket.js";
 import { logAuctionEnded } from "./auditService.js";
 import { logInfo, logError } from "../utils/logger.js";
 
 const SYSTEM_ACTOR = { id: null, role: "system", name: "auction-engine", email: null };
 
-export const closeAuction = async (carId, { req = null, actor = null, reason = "auto_close" } = {}) => {
-  // Atomic live → ended transition: whichever caller lands this first is
-  // the only closer. Concurrent/duplicate close attempts get
-  // alreadyClosed and must not re-run winner determination.
-  const car = await Car.findOneAndUpdate(
-    { _id: carId, auctionStatus: "live" },
-    { auctionStatus: "ended", allowBid: false },
-    { new: true },
-  );
-
-  if (!car) {
-    return { success: false, alreadyClosed: true };
-  }
-
+export const closeAuction = async (carId, { req = null, actor = null, reason = "auto_close", winnerBidId = null } = {}) => {
   try {
-    // Server-authoritative winner: highest payment-confirmed bid.
-    const topBid = await Bid.getHighestBid(carId);
+    // The database function locks the car, determines/validates the winner,
+    // marks winner + losers, and transitions the car to ended/sold atomically.
+    // Concurrent callers therefore cannot leave a half-settled auction.
+    const result = await atomicCloseAuction(carId, winnerBidId);
 
-    let winner = null;
-    if (topBid) {
-      const winnerBidId = topBid.id || topBid._id;
-      await Bid.markWinner(winnerBidId);
-      await Bid.markLosers(carId, winnerBidId);
-
-      winner = {
-        user: topBid.user,
-        amount: topBid.amount,
-        bidderTag: topBid.bidderTag,
+    if (result?.already_closed) {
+      return {
+        success: true,
+        alreadyClosed: true,
+        winner: result.winner || null,
+        finalBid: Number(result.final_bid || 0),
       };
-
-      await Car.findByIdAndUpdate(carId, {
-        currentBid: topBid.amount,
-        highestBidder: topBid.user,
-        winner,
-        sold: true,
-        status: "sold",
-      });
     }
 
-    logInfo("Auction closed", {
+    const winner = result?.winner || null;
+    const car = await Car.findById(carId);
+
+    logInfo("Auction closed atomically", {
       carId,
       reason,
       winner: winner?.user || null,
-      finalBid: winner?.amount ?? car.currentBid ?? 0,
+      finalBid: Number(result?.final_bid || 0),
     });
 
-    // Audit trail — never throws (auditService swallows and logs errors).
     await logAuctionEnded(
       {
         id: carId,
         auctionId: carId,
         car,
         status: "live",
-        currentBid: car.currentBid,
+        currentBid: result?.final_bid || car?.currentBid || 0,
       },
-      topBid,
+      winner ? { ...winner, id: result?.winner_bid_id } : null,
       actor || SYSTEM_ACTOR,
       req,
     );
@@ -75,23 +54,24 @@ export const closeAuction = async (carId, { req = null, actor = null, reason = "
     emitAuctionEnd(String(carId), {
       carId: String(carId),
       winner,
-      highestBid: winner?.amount ?? car.currentBid ?? 0,
+      highestBid: Number(result?.final_bid || 0),
       reason,
     });
     emitListingUpdate(String(carId), {
       auctionStatus: "ended",
-      sold: Boolean(topBid),
-      currentBid: winner?.amount ?? car.currentBid ?? 0,
+      sold: Boolean(winner),
+      currentBid: Number(result?.final_bid || 0),
     });
 
     return {
       success: true,
       winner,
-      finalBid: winner?.amount ?? car.currentBid ?? 0,
-      totalBids: car.bidsCount || 0,
+      finalBid: Number(result?.final_bid || 0),
+      totalBids: Number(result?.total_bids || car?.bidsCount || 0),
+      winnerBidId: result?.winner_bid_id || null,
     };
   } catch (err) {
     logError("CLOSE AUCTION ERROR", err, { carId, reason });
-    return { success: false, message: "Failed to close auction" };
+    return { success: false, message: err.message || "Failed to close auction" };
   }
 };

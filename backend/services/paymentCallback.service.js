@@ -186,12 +186,8 @@ export const handleMpesaCallback = async (callbackData) => {
     if (payment.type === "escrow") {
       const escrow = await findOne("escrows", { payment: payment.id });
       if (!escrow) throw new Error("Escrow payment has no escrow record");
-
-      // Keep the payment claim recoverable until the escrow transition has
-      // committed. If funding fails, the outer catch releases processed=false
-      // and a provider retry can safely complete the same escrow funding.
-      const funded = await fundEscrow(escrow.id, { idempotencyKey: `payment-callback:${checkoutId}`, paymentId: payment.id });
       await update("payments", payment.id, { status: "success", mpesaReceipt: receipt, paidAt: new Date() });
+      const funded = await fundEscrow(escrow.id, { idempotencyKey: `payment-callback:${checkoutId}` });
       await recordPaymentEvent({ paymentId: payment.id, eventType: "escrow_funded", payload: { escrowId: escrow.id } }).catch(() => {});
       if (funded) logInfo("Escrow funded from confirmed M-Pesa payment", { paymentId: payment.id, escrowId: escrow.id });
     }

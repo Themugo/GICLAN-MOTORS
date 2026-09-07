@@ -38,6 +38,24 @@ export async function atomicConfirmBidPayment(checkoutRequestId, receipt = null)
   return data;
 }
 
+
+export async function atomicAutoBid(carId) {
+  const { data, error } = await getSupabase().rpc("kayad_auto_bid_atomic", {
+    p_car_id: carId,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function atomicCloseAuction(carId, winnerBidId = null) {
+  const { data, error } = await getSupabase().rpc("kayad_close_auction_atomic", {
+    p_car_id: carId,
+    p_winner_bid_id: winnerBidId,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function atomicSettleBidPayment(paymentId, receipt = null) {
   const { data, error } = await getSupabase().rpc("kayad_settle_bid_payment_atomic", {
     p_payment_id: paymentId,
