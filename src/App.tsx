@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import VehicleMarketplace from './features/VehicleMarketplace';
 import TopNoticeStrip from './components/TopNoticeStrip';
@@ -17,24 +17,27 @@ import { Vehicle, UserProfile } from './types';
 import { getVehicleIdFromUrl, setVehicleDetailUrl } from './utils/navigation';
 
 // Views
-import AuctionsView from './features/AuctionsView';
-import EscrowView from './features/EscrowView';
-import InspectionsView from './features/InspectionsView';
-import FinancingView from './features/FinancingView';
-import DealersView from './features/DealersView';
-import DashboardView from './features/DashboardView';
-import PrivateSellerDashboardView from './features/PrivateSellerDashboardView';
-import ChatView from './features/ChatView';
-import AdminView from './features/AdminView';
-import SupportView from './features/SupportView';
-import PaymentHistoryView from './features/PaymentHistoryView';
-import AuctionDiscoveryNetwork from './pages/AuctionDiscoveryNetwork';
-import KAYADLive from './pages/KAYADLive';
-import { BuyerPlatform } from './features/OwnershipPlatform';
-import { PrivateSellerPlatform } from './features/PrivateSellerPlatform';
-import DealerDashboard from './pages/dealer/dashboard/DealerDashboard';
-import { FinanceMarketplace } from './features/FinancePlatform';
-import InspectionMarketplacePage from './features/InspectionMarketplace/pages/InspectionMarketplacePage';
+// Heavy authenticated/admin surfaces are loaded on demand. This keeps the
+// public marketplace shell small while preserving existing navigation and
+// component contracts.
+const AuctionsView = React.lazy(() => import('./features/AuctionsView'));
+const EscrowView = React.lazy(() => import('./features/EscrowView'));
+const InspectionsView = React.lazy(() => import('./features/InspectionsView'));
+const FinancingView = React.lazy(() => import('./features/FinancingView'));
+const DealersView = React.lazy(() => import('./features/DealersView'));
+const DashboardView = React.lazy(() => import('./features/DashboardView'));
+const PrivateSellerDashboardView = React.lazy(() => import('./features/PrivateSellerDashboardView'));
+const ChatView = React.lazy(() => import('./features/ChatView'));
+const AdminView = React.lazy(() => import('./features/AdminView'));
+const SupportView = React.lazy(() => import('./features/SupportView'));
+const PaymentHistoryView = React.lazy(() => import('./features/PaymentHistoryView'));
+const AuctionDiscoveryNetwork = React.lazy(() => import('./pages/AuctionDiscoveryNetwork'));
+const KAYADLive = React.lazy(() => import('./pages/KAYADLive'));
+const BuyerPlatform = React.lazy(() => import('./features/OwnershipPlatform').then((m) => ({ default: m.BuyerPlatform })));
+const PrivateSellerPlatform = React.lazy(() => import('./features/PrivateSellerPlatform'));
+const DealerDashboard = React.lazy(() => import('./pages/dealer/dashboard/DealerDashboard'));
+const FinanceMarketplace = React.lazy(() => import('./features/FinancePlatform').then((m) => ({ default: m.FinanceMarketplace })));
+const InspectionMarketplacePage = React.lazy(() => import('./features/InspectionMarketplace/pages/InspectionMarketplacePage'));
 
 // Fixed (Final Integration - real data integration): App() previously
 // held its own, disconnected local user state directly - re-applying
@@ -324,6 +327,14 @@ function AppInner() {
 
       {/* 2. Main Container (Inventory Priority & Clear Hierarchy) */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <Suspense fallback={
+          <div className="min-h-[420px] flex items-center justify-center px-6" role="status" aria-live="polite">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-amber-400" aria-hidden="true" />
+              <p className="text-sm font-medium text-slate-600">Loading KAYAD workspace…</p>
+            </div>
+          </div>
+        }>
         
         {/* Module Switcher Rendering */}
         {activeNav === 'marketplace' && (
@@ -526,6 +537,7 @@ function AppInner() {
               onOpenAuthModal={() => setShowAuthModal(true)}
             />
           )}
+        </Suspense>
         </main>
 
       {/* 3. Footer */}
