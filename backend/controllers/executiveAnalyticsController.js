@@ -3,7 +3,6 @@ import User from "../models/User.js";
 import Escrow from "../models/Escrow.js";
 import Bid from "../models/Bid.js";
 import Payment from "../models/Payment.js";
-import Dispute from "../models/Dispute.js";
 import Event from "../models/Event.js";
 import { logError } from "../infrastructure/logging/index.js";
 

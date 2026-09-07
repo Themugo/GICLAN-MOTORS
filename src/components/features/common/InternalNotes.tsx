@@ -5,7 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 interface Note {
   id: string;
   content: string;
-  author: string;
+  author: string | { name?: string; email?: string };
   createdAt: string;
   isPrivate: boolean;
 }
@@ -89,7 +89,7 @@ export default function InternalNotes({
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium text-sm">{note.author}</span>
+              <span className="font-medium text-sm">{typeof note.author === 'object' ? (note.author?.name || note.author?.email || 'Unknown') : note.author}</span>
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 {note.isPrivate && <Lock className="h-3 w-3" />}
                 <span>{new Date(note.createdAt).toLocaleString()}</span>

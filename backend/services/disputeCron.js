@@ -9,7 +9,7 @@
 import { STATES } from "./disputeStateMachine.js";
 import { getIO } from "../utils/io.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
-import { findAll, create } from "../db/index.js";
+import { findAll, update, create } from "../db/index.js";
 import { isSupabaseConnected } from "../utils/supabase.js";
 
 const ENABLED = process.env.DISPUTE_CRON_ENABLED !== "false";
@@ -34,24 +34,26 @@ const notifyAdmins = async (title, message) => {
 const escalateOpenDisputes = async () => {
   const cutoff = new Date(Date.now() - ESCALATION_HOURS_OPEN * 3600000);
 
-  const staleOpen = await findAll("disputes", { filters: {
-    status: STATES.OPEN,
-    assignedTo: null,
-    createdAt: { $lte: cutoff },
-  } }) /* .populate("openedBy", "name") - TODO: use separate query */;
+  const staleOpen = await findAll("escrows", { filters: {
+    status: "disputed",
+    disputeWorkflowStatus: STATES.OPEN,
+    disputeAssignedTo: null,
+    disputedAt: { $lte: cutoff },
+  } });
 
   if (staleOpen.length === 0) return;
 
   logInfo("DisputeCron: unassigned open disputes", { count: staleOpen.length });
 
   for (const dispute of staleOpen) {
-    if (!dispute.timeline) dispute.timeline = [];
-    dispute.timeline.push({
-      action: "Auto-escalated — no admin assigned",
-      note: `Unassigned for ${ESCALATION_HOURS_OPEN}h`,
-      at: new Date(),
+    await update("escrows", dispute.id, {
+      disputeWorkflowStatus: STATES.UNDER_REVIEW,
+      disputeTimeline: [...(dispute.disputeTimeline || []), {
+        action: "Auto-escalated — no admin assigned",
+        note: `Unassigned for ${ESCALATION_HOURS_OPEN}h`,
+        at: new Date().toISOString(),
+      }],
     });
-    await dispute.save();
   }
 
   await notifyAdmins(
@@ -64,11 +66,14 @@ const escalateOpenDisputes = async () => {
 const flagStuckMediation = async () => {
   const cutoff = new Date(Date.now() - MEDIATION_MAX_DAYS * 86400000);
 
-  const stuckMediation = await findAll("disputes", { filters: {
-    status: STATES.MEDIATION,
-    "mediation.startedAt": { $lte: cutoff },
-    "mediation.completedAt": null,
-  } });
+  const disputedEscrows = await findAll("escrows", { filters: {
+    status: "disputed",
+    disputeWorkflowStatus: STATES.MEDIATION,
+  }, limit: 1000 });
+  const stuckMediation = disputedEscrows.filter((e) => {
+    const startedAt = e.disputeMediation?.startedAt;
+    return startedAt && new Date(startedAt) <= cutoff && !e.disputeMediation?.completedAt;
+  });
 
   if (stuckMediation.length === 0) return;
 

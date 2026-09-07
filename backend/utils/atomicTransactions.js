@@ -117,6 +117,22 @@ export async function atomicTransitionEscrow({
 }
 
 
+
+export async function atomicResolveDispute({ escrowId, actorId, decision, amount = null, sellerAmount = null, buyerAmount = null, reason = null, idempotencyKey = null }) {
+  const { data, error } = await getSupabase().rpc("kayad_resolve_dispute_atomic", {
+    p_escrow_id: escrowId,
+    p_actor_id: actorId,
+    p_decision: decision,
+    p_amount: amount,
+    p_seller_amount: sellerAmount,
+    p_buyer_amount: buyerAmount,
+    p_reason: reason,
+    p_idempotency_key: idempotencyKey,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function atomicVerifyEscrowFunding(escrowId, actorId, fundingReference = null) {
   const { data, error } = await getSupabase().rpc("kayad_verify_escrow_funding_atomic", {
     p_escrow_id: escrowId,

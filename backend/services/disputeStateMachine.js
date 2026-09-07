@@ -73,21 +73,23 @@ const STATE_LABELS = Object.freeze({
 });
 
 export function validateTransition(currentStatus, nextStatus, role, dispute = {}) {
-  if (!STATES[currentStatus] && !Object.values(STATES).includes(currentStatus)) {
+  const normalizedCurrent = String(currentStatus || "").toLowerCase();
+  const normalizedNext = String(nextStatus || "").toLowerCase();
+  if (!Object.values(STATES).includes(normalizedCurrent)) {
     return { allowed: false, reason: `Unknown current state: ${currentStatus}` };
   }
-  if (TERMINAL.has(currentStatus)) {
-    return { allowed: false, reason: `Dispute is already ${currentStatus} (terminal)` };
+  if (TERMINAL.has(normalizedCurrent)) {
+    return { allowed: false, reason: `Dispute is already ${normalizedCurrent} (terminal)` };
   }
-  const allowed = TRANSITIONS[currentStatus];
-  if (!allowed || !allowed.has(nextStatus)) {
-    return { allowed: false, reason: `Transition ${currentStatus} → ${nextStatus} is not allowed` };
+  const allowed = TRANSITIONS[normalizedCurrent];
+  if (!allowed || !allowed.has(normalizedNext)) {
+    return { allowed: false, reason: `Transition ${normalizedCurrent} → ${normalizedNext} is not allowed` };
   }
-  const roleMap = TRANSITION_ROLES[currentStatus]?.[nextStatus];
+  const roleMap = TRANSITION_ROLES[normalizedCurrent]?.[normalizedNext];
   if (roleMap && !roleMap.includes(role)) {
     return { allowed: false, reason: `Role "${role}" is not permitted for ${currentStatus} → ${nextStatus}` };
   }
-  const guard = GUARDS[currentStatus]?.[nextStatus];
+  const guard = GUARDS[normalizedCurrent]?.[normalizedNext];
   if (guard) {
     const result = guard(dispute);
     if (!result.allowed) return result;

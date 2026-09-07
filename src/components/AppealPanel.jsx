@@ -14,7 +14,7 @@ export default function AppealPanel({ dispute, onRefresh }) {
   const [loading, setLoading] = useState(false);
 
   const isAdmin = ['admin', 'superadmin', 'escrow_officer'].includes(user?.role);
-  const isParty = dispute?.openedBy?._id === user?.id || dispute?.openedAgainst?._id === user?.id;
+  const isParty = String(dispute?.openedBy?._id || dispute?.openedBy || '') === String(user?.id || '') || String(dispute?.openedAgainst?._id || dispute?.openedAgainst || '') === String(user?.id || '');
   const isResolved = dispute?.status === 'resolved';
   const isAppealed = dispute?.status === 'appealed';
   const appeal = dispute?.appeal;
