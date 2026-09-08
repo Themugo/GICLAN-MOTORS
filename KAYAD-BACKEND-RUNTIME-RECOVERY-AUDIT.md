@@ -52,3 +52,7 @@ The production frontend is already confirmed live on Vercel. The remaining produ
 ## Important validation boundary
 
 The repository contains a large number of historical domain validators. Some older validators still encode superseded architectural expectations in areas such as auction UI convergence, legacy CMS/team surfaces, finance, ownership, and lead CRM. Those failures were not silently converted into passes or used as justification to delete working production code. The production recovery gate above is intentionally limited to runtime, deployment, module-contract, and infrastructure correctness.
+
+## Correction after startup-hardening review
+
+The governance lifecycle hardening migration and end-to-end governance documentation were restored after review. The migration is substantive database hardening and is not redundant with the governance domain creation migration.
