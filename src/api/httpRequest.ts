@@ -24,7 +24,8 @@ export interface HttpRequestOptions {
 export async function request<T>(path: string, options: HttpRequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers, params } = options;
   const configuredApiUrl = String(import.meta.env.VITE_API_URL || '');
-  const requestPath = !configuredApiUrl && /^\/api(?:\/|$)/.test(path)
+  const hasProductionApiFallback = import.meta.env.PROD && !configuredApiUrl;
+  const requestPath = !configuredApiUrl && !hasProductionApiFallback && /^\/api(?:\/|$)/.test(path)
     ? path.slice(4) || '/'
     : path;
 

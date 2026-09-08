@@ -2,9 +2,15 @@ import axios from 'axios';
 import { getCsrfHeaders } from '../utils/csrf';
 
 const configuredApiUrl = String(import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-// Keep the established `/api` same-origin fallback for service prefixes while
-// accepting either an API origin or an origin that already ends in `/api`.
-const API_URL = configuredApiUrl ? configuredApiUrl.replace(/\/api$/, '') : '/api';
+// Production must never silently point API calls at the Vercel SPA origin.
+// The public KAYAD API has a stable HTTPS origin, so use it as the runtime
+// fallback when Vercel's VITE_API_URL environment variable is absent.
+const productionApiUrl = 'https://api.kayad.space';
+// Keep the established `/api` same-origin fallback for local development
+// while accepting either an API origin or an origin that already ends in `/api`.
+const API_URL = configuredApiUrl
+  ? configuredApiUrl.replace(/\/api$/, '')
+  : (import.meta.env.PROD ? productionApiUrl : '/api');
 
 export const api = axios.create({
   baseURL: API_URL,

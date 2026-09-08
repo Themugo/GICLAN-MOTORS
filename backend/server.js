@@ -316,6 +316,11 @@ app.use(globalLimiter);
 // ─── CORS ─────────────────────────────────────────────────────
 const allowedOrigins = [
   FRONTEND,
+  // Stable production origins are explicit defaults so a correct backend
+  // deployment remains reachable even if FRONTEND_URL is omitted or a
+  // deployment secret temporarily lags the application configuration.
+  "https://kayad.space",
+  "https://www.kayad.space",
   ...(FRONTEND_HOSTNAME ? [`https://${FRONTEND_HOSTNAME}`, `https://www.${FRONTEND_HOSTNAME}`] : []),
   ...(process.env.EXTRA_CORS_ORIGINS || "")
     .split(",")
