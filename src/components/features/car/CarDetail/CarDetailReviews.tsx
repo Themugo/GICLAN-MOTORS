@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Star, MessageCircle } from 'lucide-react';
 import { timeAgo } from '../../../../utils/helpers';
-import { createReview } from '../../../../services/reviewApi';
+import { reviewsAPI } from '../../../../api/api.exports';
 
 interface Review {
   _id: string;
@@ -34,7 +34,7 @@ export default function CarDetailReviews({ reviews = [], dealerId, onAddReview }
     setSubmitting(true);
     try {
       if (!dealerId) return;
-      await createReview({ dealer: dealerId, rating, comment: comment.trim() });
+      await reviewsAPI.create({ dealer: dealerId, rating, comment: comment.trim() });
       
       // Reset form
       setComment('');
