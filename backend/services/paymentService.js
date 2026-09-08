@@ -16,13 +16,14 @@ const formatPhone = (phone) => {
 };
 
 // ── INITIATE ─────────────────────────────────────────────────
-export const initiatePayment = async ({ userId, carId, type, amount, phone, metadata = {} }) => {
+export const initiatePayment = async ({ userId, carId, type, amount, phone, metadata = {}, referenceId = carId, referenceModel = "Car" }) => {
   const formattedPhone = formatPhone(phone);
   if (!formattedPhone) return { success: false, message: "Invalid Safaricom number" };
 
-  const existing = await findOne("payments", {
-    user: userId, car: carId, status: "pending", type,
-  });
+  const pendingFilter = { user: userId, status: "pending", type };
+  if (type === "inspection" && referenceId) pendingFilter.referenceId = referenceId;
+  else pendingFilter.car = carId;
+  const existing = await findOne("payments", pendingFilter);
   if (existing) {
     return { success: false, message: "Payment already in progress", payment: existing };
   }
@@ -39,8 +40,8 @@ export const initiatePayment = async ({ userId, carId, type, amount, phone, meta
       car: carId,
       type,
       amount,
-      referenceId: carId,
-      referenceModel: "Car",
+      referenceId,
+      referenceModel,
       phone: formattedPhone,
       status: "pending",
       processed: false,
@@ -66,7 +67,10 @@ export const initiatePayment = async ({ userId, carId, type, amount, phone, meta
     // The partial unique pending-operation index is the final concurrency
     // guard. If another request won the race, return its authoritative row.
     if (error?.code === "23505") {
-      const existing = await findOne("payments", { user: userId, car: carId, status: "pending", type });
+      const retryFilter = { user: userId, status: "pending", type };
+      if (type === "inspection" && referenceId) retryFilter.referenceId = referenceId;
+      else retryFilter.car = carId;
+      const existing = await findOne("payments", retryFilter);
       if (existing) return { success: false, message: "Payment already in progress", payment: existing };
     }
     throw error;

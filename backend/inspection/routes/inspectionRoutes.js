@@ -123,6 +123,7 @@ router.get('/provider/:providerId/settlements', requireAuth, requireProviderOwne
 
 // Generate settlement
 router.post('/provider/:providerId/settlements', requireAuth, requireProviderOwnership, controller.generateSettlement);
+router.post('/provider/:providerId/settlements/:settlementId/pay', requireAuth, requireRole(['admin', 'superadmin']), controller.markSettlementPaid);
 
 // Get earnings summary
 router.get('/provider/:providerId/earnings', requireAuth, requireProviderOwnership, controller.getEarningsSummary);

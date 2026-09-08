@@ -245,6 +245,22 @@ export const inspectionApi = {
     return unwrapInspectionResponse(response);
   },
 
+  /** Initiate the authoritative M-Pesa payment for a canonical booking. */
+  initiateBookingPayment: async (bookingId: string, phone: string) => {
+    const response = await apiClient.post<any>('/api/payments/initiate', {
+      bookingId,
+      phone,
+      type: 'inspection',
+    });
+    return unwrapInspectionResponse(response);
+  },
+
+  /** Check the shared payment ledger status for a checkout request. */
+  getPaymentStatus: async (checkoutRequestId: string) => {
+    const response = await apiClient.get<any>(`/api/payments/status/${encodeURIComponent(checkoutRequestId)}`);
+    return unwrapInspectionResponse(response);
+  },
+
   // ============================================================
   // REPORT ENDPOINTS
   // ============================================================

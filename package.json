@@ -36,7 +36,9 @@
     "validate:auction-transport-convergence": "node scripts/validate-auction-transport-convergence.mjs",
     "validate:subscription-domain": "node scripts/validate-subscription-domain-e2e.mjs",
     "validate:inspection-workforce-lifecycle": "node scripts/validate-inspection-workforce-lifecycle.mjs",
-    "validate:service-export-surface": "node scripts/validate-service-export-surface.mjs"
+    "validate:service-export-surface": "node scripts/validate-service-export-surface.mjs",
+    "validate:inspection-marketplace-activation": "node scripts/validate-inspection-marketplace-activation.mjs",
+    "validate:governance-lifecycle": "node scripts/validate-governance-lifecycle.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",

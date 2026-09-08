@@ -53,6 +53,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [paymentError, setPaymentError] = useState('');
   
   const [formData, setFormData] = useState({
     // Vehicle
@@ -125,6 +126,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
 
   const handleSubmit = async () => {
     setLoading(true);
+    setPaymentError('');
     try {
       const booking = await inspectionApi.createBooking({
         packageId: formData.selectedPackage!.id,
@@ -151,9 +153,31 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
         staffId: formData.selectedStaff,
         notes: formData.notes,
       });
-      onComplete?.(booking.id);
+      const payment = await inspectionApi.initiateBookingPayment(booking.id, formData.customerPhone);
+      if (!payment?.checkoutID && !payment?.checkoutRequestID) {
+        throw new Error(payment?.message || 'Payment request could not be initiated');
+      }
+
+      // The M-Pesa callback is authoritative. Poll briefly so the customer
+      // only leaves the flow as completed after the booking is actually paid.
+      const checkoutId = payment.checkoutID || payment.checkoutRequestID;
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const status = await inspectionApi.getPaymentStatus(checkoutId);
+        if (status?.status === 'success') {
+          onComplete?.(booking.id);
+          return;
+        }
+        if (['failed', 'cancelled'].includes(status?.status)) {
+          throw new Error(status?.payment?.resultDesc || 'Payment was not completed');
+        }
+      }
+      throw new Error('Payment is still pending. Check your M-Pesa prompt and refresh your bookings shortly.');
     } catch (error) {
-      console.error('Booking failed:', error);
+      console.error('Booking/payment failed:', error);
+      setPaymentError(error instanceof Error ? error.message : 'Payment could not be completed. Please try again.');
+      // Keep the booking id available to the parent only after settlement;
+      // the booking itself remains safely pending for a later retry.
     } finally {
       setLoading(false);
     }
@@ -306,6 +330,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
                 totalPrice={totalPrice}
                 onSubmit={handleSubmit}
                 loading={loading}
+                error={paymentError}
               />
             )}
           </motion.div>
@@ -698,7 +723,7 @@ function ConfirmStep({ provider, formData, totalPrice, onChange }: any) {
   );
 }
 
-function PaymentStep({ formData, totalPrice, onSubmit, loading }: any) {
+function PaymentStep({ formData, totalPrice, onSubmit, loading, error }: any) {
   return (
     <div className="rounded-xl p-6" style={{ backgroundColor: KAYAD_COLORS.white }}>
       <h2 className="text-xl font-bold mb-6" style={{ color: KAYAD_COLORS.lightNavy }}>
@@ -717,12 +742,18 @@ function PaymentStep({ formData, totalPrice, onSubmit, loading }: any) {
         </p>
         
         <p style={{ color: KAYAD_COLORS.softBlue }}>
-          Payment will be processed securely via M-PESA or card.
+          Payment will be processed securely via M-PESA.
           <br />
           You will receive an SMS confirmation after payment.
         </p>
       </div>
       
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+          {error}
+        </div>
+      )}
+
       <button
         onClick={onSubmit}
         disabled={loading}

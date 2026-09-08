@@ -13,21 +13,47 @@ import { findAll, count } from "../db/index.js";
 // =============================
 export const initiatePayment = async (req, res) => {
   try {
-    const { phone, amount, carId, type } = req.body;
+    const { phone, amount, carId, type, bookingId } = req.body;
 
-    if (!phone || !amount || !type) {
+    if (!phone || !type) {
       return res.status(400).json({
         success: false,
-        message: "Phone, amount and type required",
+        message: "Phone and type required",
       });
     }
 
-    const parsedAmount = Number(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    let parsedAmount = amount === undefined ? null : Number(amount);
+    if (parsedAmount !== null && (isNaN(parsedAmount) || parsedAmount <= 0)) {
       return res.status(400).json({
         success: false,
         message: "Amount must be a positive number",
       });
+    }
+
+    // Inspection payments are bound to the canonical marketplace booking.
+    // The booking is the source of truth for price and customer ownership;
+    // never trust a client-supplied amount or vehicle reference for this type.
+    let inspectionPaymentMetadata = {};
+    if (type === "inspection") {
+      if (!bookingId) {
+        return res.status(400).json({ success: false, message: "bookingId required for inspection payment" });
+      }
+      const booking = await findById("inspection_bookings", bookingId);
+      if (!booking) return res.status(404).json({ success: false, message: "Inspection booking not found" });
+      if (String(booking.customer_id) !== String(req.user.id)) {
+        return res.status(403).json({ success: false, message: "Not authorized for this inspection booking" });
+      }
+      if (["cancelled", "closed", "no_show"].includes(booking.status)) {
+        return res.status(409).json({ success: false, message: "Inspection booking is no longer payable" });
+      }
+      if (booking.payment_status === "fully_paid") {
+        return res.status(409).json({ success: false, message: "Inspection booking is already paid" });
+      }
+      parsedAmount = Number(booking.total_price);
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        return res.status(409).json({ success: false, message: "Inspection booking has an invalid payable amount" });
+      }
+      inspectionPaymentMetadata = { bookingId: booking.id, bookingReference: booking.booking_reference };
     }
 
     // Minimum payment: KES 1 (M-Pesa minimum is 1)
@@ -89,10 +115,13 @@ export const initiatePayment = async (req, res) => {
 
     const result = await initiate({
       userId: req.user.id,
-      carId,
+      carId: type === "inspection" ? null : carId,
       type: normalizedType,
-      amount: settlementAmount,
+      amount: settlementAmount ?? parsedAmount,
       phone,
+      metadata: inspectionPaymentMetadata,
+      referenceId: type === "inspection" ? bookingId : carId,
+      referenceModel: type === "inspection" ? "InspectionBooking" : "Car",
     });
 
     // Create Escrow record for private sellers (individual_seller) - MANDATORY
@@ -249,7 +278,7 @@ export const getUserPayments = async (req, res) => {
     const skip = (page - 1) * limit;
     const filters = { user: req.user.id };
     const VALID_STATUSES = ["pending", "success", "failed", "cancelled"];
-    const VALID_TYPES = ["bid", "auction_win", "buy", "listing", "subscription", "escrow"];
+    const VALID_TYPES = ["bid", "purchase", "auction_win", "buy", "listing", "subscription", "package_upgrade", "escrow", "inspection"];
     if (req.query.status && VALID_STATUSES.includes(req.query.status)) filters.status = req.query.status;
     if (req.query.type && VALID_TYPES.includes(req.query.type)) filters.type = req.query.type;
     const [payments, total] = await Promise.all([
@@ -280,7 +309,7 @@ export const getAllPayments = async (req, res) => {
     const skip = (page - 1) * limit;
     const filters = {};
     const VALID_STATUSES = ["pending", "success", "failed", "cancelled"];
-    const VALID_TYPES = ["bid", "auction_win", "buy", "listing", "subscription", "escrow"];
+    const VALID_TYPES = ["bid", "purchase", "auction_win", "buy", "listing", "subscription", "package_upgrade", "escrow", "inspection"];
     if (req.query.status && VALID_STATUSES.includes(req.query.status)) filters.status = req.query.status;
     if (req.query.type && VALID_TYPES.includes(req.query.type)) filters.type = req.query.type;
     const [payments, total] = await Promise.all([
