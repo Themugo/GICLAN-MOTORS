@@ -48,7 +48,7 @@ export default function Chat() {
       try {
         const data = await chatAPI.inbox();
         // Transform API response to Conversation format
-        const convs: Conversation[] = (data.chats || data || []).map((chat: any) => ({
+        const convs: Conversation[] = data.chats.map((chat: any) => ({
           id: chat._id || chat.id,
           name: chat.otherUser?.name || chat.name || 'Unknown',
           avatar: chat.otherUser?.avatar,
@@ -83,7 +83,7 @@ export default function Chat() {
       setLoadingMessages(true);
       try {
         const data = await chatAPI.messages(selectedId, { limit: 50 });
-        const msgs: Message[] = (data.messages || data || []).map((msg: any) => ({
+        const msgs: Message[] = data.messages.map((msg: any) => ({
           id: msg._id || msg.id,
           sender: msg.senderId === user?.id ? 'me' : 'them',
           text: msg.text || msg.content,

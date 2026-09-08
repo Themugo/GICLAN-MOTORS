@@ -29,6 +29,6 @@ assert('Inspection marketplace API has typed payment responses', /initiateBookin
 assert('Auction self-recursion removed', !marketplace.includes('return fetchAuction(id);') && marketplace.includes('fetchAuctionById'));
 assert('Chat message id is defined from atomic append result', /const messageId = messageData\?\.id/.test(chatController));
 assert('Legacy Supabase JS duplicate removed', !fs.existsSync(path.join(root, 'src/lib/supabaseClient.js')));
-assert('Inspection marketplace callback prop is destructured', /InspectionsViewProps> = \(\{ onOpenInspectionMarketplace \}\)/.test(read('src/features/InspectionsView.tsx')));
+assert('Inspection marketplace callback prop is destructured', /InspectionsViewProps> = \(\{[\s\S]*onOpenInspectionMarketplace[\s\S]*\}\)/.test(read('src/features/InspectionsView.tsx')));
 
 console.log(`Deployment readiness validation: ${checks.length}/${checks.length} PASS`);

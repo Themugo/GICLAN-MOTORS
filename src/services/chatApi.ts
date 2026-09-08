@@ -98,8 +98,20 @@ export async function getChatMessages(chatId: string): Promise<BackendMessage[]>
 }
 
 /** POST /api/chat/:chatId/message - send a real message. */
-export async function sendChatMessage(chatId: string, text: string): Promise<unknown> {
-  return chatFetch(`/api/chat/${chatId}/message`, {
+export interface BackendSentMessage {
+  id: string;
+  chatId?: string;
+  sender: string;
+  text: string;
+  message: string;
+  createdAt: string;
+  seen: boolean;
+  seenBy: string[];
+  attachments?: Array<{ url: string; type: string }>;
+}
+
+export async function sendChatMessage(chatId: string, text: string): Promise<BackendSentMessage> {
+  return chatFetch<BackendSentMessage>(`/api/chat/${chatId}/message`, {
     method: 'POST',
     body: JSON.stringify({ content: text }),
   });

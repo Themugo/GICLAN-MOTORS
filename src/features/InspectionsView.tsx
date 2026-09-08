@@ -114,7 +114,13 @@ interface InspectionsViewProps {
   onOpenInspectionMarketplace?: () => void;
 }
 
-export const InspectionsView: React.FC<InspectionsViewProps> = ({ onOpenInspectionMarketplace }) => {
+export const InspectionsView: React.FC<InspectionsViewProps> = ({
+  vehicles,
+  user,
+  onOpenAuth,
+  initialSelectedVehicle,
+  onOpenInspectionMarketplace,
+}) => {
   // State
   // Fixed: reports/bookings previously started from, and only ever
   // showed, entirely fake mock data (specific fake mechanic names,

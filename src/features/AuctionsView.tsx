@@ -24,7 +24,7 @@ interface AuctionRecord {
   startTime: string | null;
   endTime: string | null;
   bidIncrement: number;
-  reservePrice: number | null;
+  reservePrice?: number | null;
   bidCount: number;
   allowBid: boolean;
   car: {
