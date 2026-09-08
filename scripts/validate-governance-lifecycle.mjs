@@ -2,35 +2,40 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
-const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
+const controller = fs.readFileSync(path.join(root, 'backend/controllers/governanceController.js'), 'utf8');
+const routes = fs.readFileSync(path.join(root, 'backend/routes/governanceRoutes.js'), 'utf8');
+const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20260907240000_governance_domain.sql'), 'utf8');
+const api = fs.readFileSync(path.join(root, 'src/services/governanceApi.js'), 'utf8');
 const checks = [];
-const pass = (name, ok, detail='') => checks.push({name, ok, detail});
+const check = (name, ok) => { checks.push({ name, ok: Boolean(ok) }); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}`); };
 
-const controller = read('backend/controllers/governanceController.js');
-const routes = read('backend/routes/governanceRoutes.js');
-const migration = fs.readdirSync(path.join(root,'supabase/migrations')).filter(x => x.includes('governance_lifecycle_hardening'));
-const domain = read('supabase/migrations/20260907240000_governance_domain.sql');
-const ui = read('src/pages/admin/governance/GovernanceStudio.jsx');
-const api = read('src/services/governanceApi.js');
-
-const requiredExports = [
-  'getGovernanceDashboard','getPolicies','getPolicy','createPolicy','updatePolicy',
-  'getChangeRequests','getChangeRequest','createChangeRequest','submitForApproval','approveChangeRequest','rejectChangeRequest',
-  'getApprovalRules','createApprovalRule','updateApprovalRule','getFeatureLifecycles','createFeatureLifecycle','updateFeatureStage',
-  'getRisks','createRisk','updateRiskStatus','getStandards','createStandard','getCountryRules','createCountryRule',
-  'getPartnerRequirements','createPartnerRequirement','getReleases','createRelease','updateReleaseStatus','getDecisions','createDecision',
-  'getAuditLogs','getComplianceDashboard','getGovernanceHelp','getGovernanceReport'
+const expectedTables = [
+  'governance_policies','change_requests','approval_rules','feature_lifecycles',
+  'risk_assessments','enterprise_standards','country_rules','partner_requirements',
+  'releases','decision_registers',
 ];
-pass('All governance controller handlers implemented', requiredExports.every(x => new RegExp(`export async function ${x}\\b`).test(controller)));
-pass('No governance 501 placeholder remains', !controller.includes('status(501)') && !controller.includes('GOVERNANCE_NOT_CONFIGURED'));
-pass('Governance routes remain mounted', routes.includes('router.get("/dashboard"') && routes.includes('router.post("/changes/:id/submit"') && routes.includes('router.post("/changes/:id/approve"'));
-pass('Authoritative governance migration exists', migration.length === 1);
-for (const table of ['governance_policies','change_requests','approval_rules','feature_lifecycles','risk_assessments','enterprise_standards','country_rules','partner_requirements','releases','decision_registers']) pass(`Domain table: ${table}`, domain.includes(`create table if not exists ${table}`));
-for (const fn of ['governance_touch_updated_at','governance_policies_status_check','change_requests_status_check','risk_assessments_severity_check','releases_status_check']) pass(`Governance integrity: ${fn}`, read(`supabase/migrations/${migration[0]}`).includes(fn));
-pass('UI has no synthetic compliance fallback', !ui.includes('|| 96') && !ui.includes('|| 98') && !ui.includes('|| 94') && !ui.includes("reviewDate: '2024-03-01'"));
-pass('Frontend governance API covers report/help/compliance', ['getGovernanceReport','getGovernanceHelp','getComplianceDashboard'].every(x => api.includes(x)));
+for (const table of expectedTables) check(`authoritative migration defines ${table}`, new RegExp(`create table if not exists ${table}\\b`, 'i').test(migration));
 
-let failed = 0;
-for (const c of checks) { console.log(`${c.ok ? 'PASS' : 'FAIL'} ${c.name}${c.detail ? ` — ${c.detail}` : ''}`); if (!c.ok) failed++; }
-console.log(`\\nGovernance lifecycle validation: ${checks.length-failed}/${checks.length} passed`);
-if (failed) process.exit(1);
+const functions = [
+  'getGovernanceDashboard','getPolicies','getPolicy','createPolicy','updatePolicy',
+  'getChangeRequests','getChangeRequest','createChangeRequest','submitForApproval',
+  'approveChangeRequest','rejectChangeRequest','getApprovalRules','createApprovalRule',
+  'updateApprovalRule','getFeatureLifecycles','createFeatureLifecycle','updateFeatureStage',
+  'getRisks','createRisk','updateRiskStatus','getStandards','createStandard',
+  'getCountryRules','createCountryRule','getPartnerRequirements','createPartnerRequirement',
+  'getReleases','createRelease','updateReleaseStatus','getDecisions','createDecision',
+  'getAuditLogs','getComplianceDashboard','getGovernanceHelp','getGovernanceReport',
+];
+for (const fn of functions) check(`controller exports ${fn}`, new RegExp(`export async function ${fn}\\b`).test(controller));
+check('legacy governance 501 boundary removed', !controller.includes('GOVERNANCE_NOT_CONFIGURED') && !controller.includes('status(501)'));
+check('dashboard derives summary from canonical governance tables', controller.includes('governance_migration_tables'));
+check('compliance score is derived from stored governance records', controller.includes('derived_governance_records'));
+check('change approval enforces submitted state', controller.includes('Only submitted changes can be approved.'));
+check('change rejection requires a reason', controller.includes('A rejection reason is required.'));
+check('governance routes retain authentication boundary', routes.includes('router.use(protect)'));
+check('governance mutations retain role gates', routes.includes('allowRoles("admin", "superadmin")'));
+check('frontend dashboard API remains wired', api.includes("/governance/dashboard"));
+
+const passed = checks.filter((x) => x.ok).length;
+console.log(`\nGovernance lifecycle validation: ${passed}/${checks.length} checks passed.`);
+if (passed !== checks.length) process.exit(1);

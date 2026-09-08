@@ -39,7 +39,8 @@
     "validate:service-export-surface": "node scripts/validate-service-export-surface.mjs",
     "validate:inspection-marketplace-activation": "node scripts/validate-inspection-marketplace-activation.mjs",
     "validate:dispute-canonical-lifecycle": "node scripts/validate-dispute-canonical-lifecycle.mjs",
-    "validate:deployment-readiness": "node scripts/validate-deployment-readiness.mjs"
+    "validate:deployment-readiness": "node scripts/validate-deployment-readiness.mjs",
+    "validate:governance": "node scripts/validate-governance-lifecycle.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",
