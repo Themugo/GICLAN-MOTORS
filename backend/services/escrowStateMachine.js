@@ -67,7 +67,7 @@ const TRANSITION_ROLES = {
 };
 
 // ── Human-readable labels for transitions ───────────────────
-export const TRANSITION_LABELS = {
+const TRANSITION_LABELS = {
   [STATES.PENDING]:            { [STATES.FUNDED]: "Payment confirmed — funds held", [STATES.DISPUTED]: "Dispute opened" },
   [STATES.FUNDED]:             { [STATES.VEHICLE_CONFIRMED]: "Buyer confirmed vehicle inspection", [STATES.DISPUTED]: "Dispute opened", [STATES.RELEASED]: "Auto-released after timeout" },
   [STATES.VEHICLE_CONFIRMED]:  { [STATES.DELIVERED]: "Seller confirmed delivery", [STATES.DISPUTED]: "Dispute opened", [STATES.RELEASED]: "Auto-released after timeout" },

@@ -61,7 +61,7 @@ const getOAuthToken = async () => {
 };
 
 // ── B2C DISBURSEMENT ─────────────────────────────────────────
-export const disburseB2C = async ({
+const disburseB2C = async ({
   phone,
   amount,
   escrowId,

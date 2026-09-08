@@ -5,7 +5,7 @@ import { optimizeImage } from "./imageProcessingService.js";
 // =============================
 // 📦 UPLOAD IMAGE (OPTIMIZED)
 // =============================
-export const uploadToCloudinary = async (filePath, options = {}) => {
+const uploadToCloudinary = async (filePath, options = {}) => {
   try {
     const { compress = true, convertToWebP = true } = options;
 

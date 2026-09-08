@@ -1,0 +1,72 @@
+# Backend Service Export Cleanup
+
+Removed named exports that had no static reference anywhere in `backend/`, `src/`, or `scripts/`. The declarations remain available internally within their defining modules; only unnecessary public module exports were removed.
+
+- `backend/services/escrowStateMachine.js::TRANSITION_LABELS`
+- `backend/services/paymentStateMachine.js::canTransitionPayment`
+- `backend/services/mpesaB2C.service.js::disburseB2C`
+- `backend/services/media.service.js::uploadToCloudinary`
+- `backend/services/fraudDetectionService.js::detectStolenPhotos`
+- `backend/services/reconciliationCron.js::stopAllReconciliationCrons`
+- `backend/services/reconciliationCron.js::stopReconciliationCron`
+- `backend/services/reconciliationCron.js::startReconciliationCron`
+- `backend/services/duplicateVehicleService.js::logDetection`
+- `backend/services/duplicateVehicleService.js::updateFraudScore`
+- `backend/services/analytics.service.js::getPlatformAnalytics`
+- `backend/services/queueService.js::queueEmail`
+- `backend/services/queueService.js::queueReport`
+- `backend/services/queueService.js::queueAuctionEvent`
+- `backend/services/queueService.js::queueImageProcessing`
+- `backend/services/ledgerService.js::recordEscrowDeposit`
+- `backend/services/ledgerService.js::recordEscrowRelease`
+- `backend/services/ledgerService.js::recordRefund`
+- `backend/services/ledgerService.js::recordSubscriptionPayment`
+- `backend/services/ledgerService.js::recordInspectionFee`
+- `backend/services/ledgerService.js::recordAuctionPayment`
+- `backend/services/search.service.js::searchCars`
+- `backend/services/escrowAuditService.js::logEscrowAction`
+- `backend/services/disputeCron.js::stopDisputeCron`
+- `backend/services/email.service.js::sendAuctionWonEmail`
+- `backend/services/email.service.js::sendNewMessageEmail`
+- `backend/services/abuse.service.js::detectAbuse`
+- `backend/services/dispute.service.js::getEscrowDispute`
+- `backend/services/dispute.service.js::openDispute`
+- `backend/services/dispute.service.js::listDisputes`
+- `backend/services/dispute.service.js::disputeStats`
+- `backend/services/mpesaAuth.service.js::getMpesaAccessToken`
+- `backend/services/mpesaAuth.service.js::_resetMpesaTokenCache`
+- `backend/services/escrow.service.js::fundEscrow`
+- `backend/services/dealerVerificationService.js::listDealerVerifications`
+- `backend/services/autoBid.service.js::setAutoBid`
+- `backend/services/autoBid.service.js::removeAutoBid`
+- `backend/services/escrowCron.js::stopEscrowCron`
+- `backend/services/sqlUploadStore.js::getUploadRecordByPublicId`
+- `backend/services/paymentService.js::failPayment`
+- `backend/services/ai.service.js::analyzeCarPrice`
+- `backend/services/auctionIntegrityCron.js::stopIntegrityCron`
+- `backend/services/auctionReminderCron.js::stopAuctionReminderCron`
+- `backend/services/sms.service.js::sendWelcomeSMS`
+- `backend/services/sms.service.js::sendBidPlacedSMS`
+- `backend/services/sms.service.js::sendOutbidSMS`
+- `backend/services/sms.service.js::sendEscrowReleasedSMS`
+- `backend/services/sms.service.js::sendEscrowRefundedSMS`
+- `backend/services/sms.service.js::sendChatMessageSMS`
+- `backend/services/sms.service.js::sendOTPSMS`
+- `backend/services/sms.service.js::sendSMSBidInvalidFormat`
+- `backend/services/sms.service.js::sendSMSBidNotRegistered`
+- `backend/services/sms.service.js::sendSMSBidNoAuctions`
+- `backend/services/sms.service.js::sendSMSBidNotLive`
+- `backend/services/sms.service.js::sendSMSBidOwnListing`
+- `backend/services/sms.service.js::sendSMSBidTooLow`
+- `backend/services/sms.service.js::sendSavedSearchAlert`
+- `backend/services/sms.service.js::sendAdminAlert`
+- `backend/services/escrowConfiguration.service.js::getActiveEscrowAccounts`
+- `backend/services/escrowConfiguration.service.js::getEscrowAccountById`
+- `backend/services/escrowConfiguration.service.js::saveEscrowAccount`
+- `backend/services/escrowConfiguration.service.js::removeEscrowAccount`
+- `backend/services/escrowConfiguration.service.js::validatePrivateSellerEscrow`
+- `backend/services/escrowConfiguration.service.js::sanitizeEscrowAccount`
+- `backend/services/escrowConfiguration.service.js::verifyEscrowFunding`
+- `backend/services/revenue.service.js::calculateRevenue`
+
+**Total removed:** 66

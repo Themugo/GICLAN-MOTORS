@@ -11,7 +11,7 @@ import { getSupabase } from "../utils/supabase.js";
 // =============================
 // 📝 LOG ESCROW ACTION
 // =============================
-export const logEscrowAction = async (escrowId, action, userId, req, options = {}) => {
+const logEscrowAction = async (escrowId, action, userId, req, options = {}) => {
   try {
     // Get IP address from request
     const ipAddress = getClientIp(req);

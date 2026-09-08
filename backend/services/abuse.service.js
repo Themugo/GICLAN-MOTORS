@@ -1,6 +1,6 @@
 import { findAll } from "../db/index.js";
 
-export const detectAbuse = async (userId, auctionId) => {
+const detectAbuse = async (userId, auctionId) => {
   const recentBids = await findAll("bids", { filters: { user: userId, auction: auctionId }, orderBy: "createdAt", ascending: false, limit: 20 });
 
   if (recentBids.length < 5) {

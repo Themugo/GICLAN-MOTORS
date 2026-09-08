@@ -24,7 +24,7 @@ let _tokenExpiry = 0;
  * Get a cached M-Pesa OAuth access token, fetching a new one if the
  * cached token is missing or within 5 minutes of its ~1h expiry.
  */
-export const getMpesaAccessToken = async (baseUrl, consumerKey, consumerSecret) => {
+const getMpesaAccessToken = async (baseUrl, consumerKey, consumerSecret) => {
   if (_token && Date.now() < _tokenExpiry) {
     return _token;
   }
@@ -57,7 +57,7 @@ export const getMpesaAccessToken = async (baseUrl, consumerKey, consumerSecret) 
 };
 
 // Exposed for tests that need to force a re-fetch between cases.
-export const _resetMpesaTokenCache = () => {
+const _resetMpesaTokenCache = () => {
   _token = null;
   _tokenExpiry = 0;
 };

@@ -1,7 +1,7 @@
 import { count, aggregate, findAll } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
 
-export const getPlatformAnalytics = async () => {
+const getPlatformAnalytics = async () => {
   const [totalCars, totalBids, totalUsers] = await Promise.all([
     count("cars"), count("bids"), count("users"),
   ]);

@@ -145,6 +145,6 @@ export const startAuctionReminderCron = () => {
   return _cronHandle;
 };
 
-export const stopAuctionReminderCron = () => {
+const stopAuctionReminderCron = () => {
   if (_cronHandle) clearInterval(_cronHandle);
 };

@@ -20,6 +20,6 @@ export function assertPaymentTransition(current, next) {
   return true;
 }
 
-export function canTransitionPayment(current, next) {
+function canTransitionPayment(current, next) {
   try { assertPaymentTransition(current, next); return true; } catch { return false; }
 }

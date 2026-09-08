@@ -161,7 +161,7 @@ export const analyzeDeal = (inputPrice, estimatedPrice) => {
 // =============================
 // 🧠 FULL AI ANALYSIS
 // =============================
-export const analyzeCarPrice = ({ title, year, mileage, price, condition }) => {
+const analyzeCarPrice = ({ title, year, mileage, price, condition }) => {
   const estimated = estimatePrice({ title, year, mileage, condition });
   const deal = analyzeDeal(price, estimated);
 

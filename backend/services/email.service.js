@@ -259,7 +259,7 @@ export const sendOutbidEmail = (user, newBid, car) =>
     ),
   });
 
-export const sendAuctionWonEmail = (user, car, amount) =>
+const sendAuctionWonEmail = (user, car, amount) =>
   sendEmail({
     to: user.email,
     subject: `You Won! — ${car.title} is yours`,
@@ -348,7 +348,7 @@ export const sendPasswordResetEmail = (user, resetToken) =>
     ),
   });
 
-export const sendNewMessageEmail = (user, fromName, carTitle) =>
+const sendNewMessageEmail = (user, fromName, carTitle) =>
   sendEmail({
     to: user.email,
     subject: `💬 New message from ${fromName} — ${APP_NAME}`,

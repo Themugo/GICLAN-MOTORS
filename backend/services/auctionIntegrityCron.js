@@ -60,7 +60,7 @@ export const startIntegrityCron = () => {
   logInfo("IntegrityCron: deep scan scheduled for midnight", { lookbackDays: DEEP_SCAN_DAYS });
 };
 
-export const stopIntegrityCron = () => {
+const stopIntegrityCron = () => {
   if (_cronHandle) clearInterval(_cronHandle);
   if (_deepCronHandle) clearInterval(_deepCronHandle);
 };

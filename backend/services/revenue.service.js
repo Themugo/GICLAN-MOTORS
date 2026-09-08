@@ -1,6 +1,6 @@
 import { findAll } from "../db/index.js";
 
-export const calculateRevenue = async ({ startDate, endDate } = {}) => {
+const calculateRevenue = async ({ startDate, endDate } = {}) => {
   const filters = { status: "success" };
 
   if (startDate || endDate) {

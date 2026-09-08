@@ -111,6 +111,6 @@ export const startDisputeCron = () => {
   return _cronHandle;
 };
 
-export const stopDisputeCron = () => {
+const stopDisputeCron = () => {
   if (_cronHandle) clearInterval(_cronHandle);
 };

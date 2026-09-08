@@ -1,6 +1,6 @@
 import { findAll, count } from "../db/index.js";
 
-export const searchCars = async ({
+const searchCars = async ({
   keyword,
   minPrice,
   maxPrice,

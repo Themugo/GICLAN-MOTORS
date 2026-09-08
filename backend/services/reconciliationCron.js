@@ -167,7 +167,7 @@ export const startDeepReconciliation = () => {
 // =============================
 // ⏹ STOP ALL CRONS
 // =============================
-export const stopAllReconciliationCrons = () => {
+const stopAllReconciliationCrons = () => {
   Object.entries(jobs).forEach(([name, job]) => {
     job.stop();
     logInfo(`Reconciliation cron ${name} stopped`);
@@ -179,7 +179,7 @@ export const stopAllReconciliationCrons = () => {
 // =============================
 // ⏹ STOP SPECIFIC CRON
 // =============================
-export const stopReconciliationCron = (name) => {
+const stopReconciliationCron = (name) => {
   if (jobs[name]) {
     jobs[name].stop();
     delete jobs[name];
@@ -227,4 +227,4 @@ export const getReconciliationCronStatus = () => {
 };
 
 // ── Legacy alias ─────────────────────────────────────────────
-export const startReconciliationCron = startAllReconciliationCrons;
+const startReconciliationCron = startAllReconciliationCrons;

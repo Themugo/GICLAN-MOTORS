@@ -347,7 +347,7 @@ export const flagDuplicate = async (carId, detectionData, dealerId) => {
 // =============================
 // 📝 LOG DETECTION
 // =============================
-export const logDetection = async (carId, detectionData, dealerId) => {
+const logDetection = async (carId, detectionData, dealerId) => {
   try {
     const duplicateLog = await create("duplicate_vehicle_logs", {car: carId, dealer: dealerId, detectionCriteria: detectionData.detectionCriteria, matchType: detectionData.matchType, matchScore: detectionData.matchScore, matchedCars: detectionData.matches.map((m) => m.id), matchDetails: { matches: detectionData.matches, detectionMethod: detectionData.detectionMethod, }, status: "flagged", detectionMethod: detectionData.detectionMethod, similarityThreshold: 0.7,});
 
@@ -367,7 +367,7 @@ export const logDetection = async (carId, detectionData, dealerId) => {
 // =============================
 // 💰 UPDATE FRAUD SCORE
 // =============================
-export const updateFraudScore = async (carId, impact) => {
+const updateFraudScore = async (carId, impact) => {
   try {
     const car = await findById("cars", carId);
     if (!car) {

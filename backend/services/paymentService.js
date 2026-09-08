@@ -187,7 +187,7 @@ export const confirmPayment = async ({ checkoutRequestID, receipt, amount }) => 
 };
 
 // ── FAIL ──────────────────────────────────────────────────────
-export const failPayment = async (checkoutRequestID, resultDesc = "") => {
+const failPayment = async (checkoutRequestID, resultDesc = "") => {
   const payment = await findOne("payments", { checkoutRequestId: checkoutRequestID });
 
   if (!payment || payment.status === "success") return;

@@ -390,7 +390,7 @@ export const detectVinReuse = async (vin) => {
   return null;
 };
 
-export const detectStolenPhotos = async (carId) => {
+const detectStolenPhotos = async (carId) => {
   // This would integrate with image recognition service
   // For now, it's a placeholder
   const car = await findById("cars", carId);
