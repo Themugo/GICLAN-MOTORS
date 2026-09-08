@@ -87,6 +87,26 @@ export const carsAPI = {
   adminEnd:   (id: string) => api.post(`/cars/admin/${id}/end`).then(unwrap),
 };
 
+
+// ── CHAT ──────────────────────────────────────────────
+// Compatibility facade for legacy chat callers. The canonical transport and
+// concurrency-safe mutations live in services/chatApi.ts.
+import { getMyChats, getChatMessages, sendChatMessage, markChatSeen } from '../services/chatApi';
+export const chatAPI = {
+  inbox: () => getMyChats().then((chats) => ({ chats })),
+  messages: (chatId: string, _params?: { limit?: number }) => getChatMessages(chatId).then((messages) => ({ messages })),
+  seen: (chatId: string) => markChatSeen(chatId),
+  start: async (body: { recipientId: string; carId?: string }) => {
+    const response = await api.post('/chat', body).then(unwrap);
+    return response;
+  },
+  send: async (chatId: string, body: { text?: string; content?: string; message?: string }) => {
+    const text = body.text ?? body.content ?? body.message ?? '';
+    return sendChatMessage(chatId, text);
+  },
+  confirmDelivery: (_chatId: string, body: { escrowId: string }) => api.post(`/escrow/${body.escrowId}/confirm-delivery`).then(unwrap),
+};
+
 // ── BIDS ──────────────────────────────────────────────
 export const bidsAPI = {
   place:           (carId: string, body: any) => api.post(`/bids/${carId}/bid`, body).then(unwrap),

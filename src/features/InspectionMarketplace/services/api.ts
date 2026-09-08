@@ -3,8 +3,10 @@
 // ============================================================
 
 import { api as apiClient } from '../../../api/api';
-const unwrapInspectionResponse = <T>(response: { data?: any }): T =>
-  (response?.data?.data ?? response?.data) as T;
+const unwrapInspectionResponse = <T>(response: { data?: T | { data?: T } }): T => {
+  const data = response?.data;
+  return (data && typeof data === 'object' && 'data' in data ? (data as { data?: T }).data : data) as T;
+};
 
 import type {
   InspectionProvider,
@@ -87,7 +89,7 @@ export const inspectionApi = {
   /**
    * Search inspection providers
    */
-  searchProviders: async (params: SearchProvidersParams) => {
+  searchProviders: async (params: SearchProvidersParams): Promise<{ items: InspectionProvider[]; total: number }> => {
     const response = await apiClient.get<{ items: InspectionProvider[]; total: number }>(
       '/api/inspection/providers',
       { params }
@@ -98,7 +100,7 @@ export const inspectionApi = {
   /**
    * Get provider profile
    */
-  getProviderProfile: async (providerId: string) => {
+  getProviderProfile: async (providerId: string): Promise<InspectionProvider> => {
     const response = await apiClient.get<InspectionProvider>(
       `/api/inspection/providers/${providerId}`
     );
@@ -119,7 +121,7 @@ export const inspectionApi = {
   /**
    * Get available time slots
    */
-  getAvailableSlots: async (providerId: string, date: string, staffId?: string) => {
+  getAvailableSlots: async (providerId: string, date: string, staffId?: string): Promise<{ slots: TimeSlot[]; date: string }> => {
     const response = await apiClient.get<{ slots: TimeSlot[]; date: string }>(
       `/api/inspection/providers/${providerId}/slots`,
       { params: { date, staffId } }
@@ -130,7 +132,7 @@ export const inspectionApi = {
   /**
    * Get provider dashboard
    */
-  getProviderDashboard: async (providerId: string) => {
+  getProviderDashboard: async (providerId: string): Promise<ProviderDashboard> => {
     const response = await apiClient.get<ProviderDashboard>(
       `/api/inspection/provider/${providerId}/dashboard`
     );
@@ -140,7 +142,7 @@ export const inspectionApi = {
   /**
    * Get provider earnings
    */
-  getProviderEarnings: async (providerId: string, period = 'monthly') => {
+  getProviderEarnings: async (providerId: string, period = 'monthly'): Promise<EarningsSummary> => {
     const response = await apiClient.get<EarningsSummary>(
       `/api/inspection/provider/${providerId}/earnings-summary`,
       { params: { period } }
@@ -155,7 +157,7 @@ export const inspectionApi = {
   /**
    * Create a new booking
    */
-  createBooking: async (params: CreateBookingParams) => {
+  createBooking: async (params: CreateBookingParams): Promise<Booking> => {
     const response = await apiClient.post<Booking>('/api/inspection/bookings', params);
     return unwrapInspectionResponse(response);
   },
@@ -206,7 +208,7 @@ export const inspectionApi = {
       page?: number;
       limit?: number;
     }
-  ) => {
+  ): Promise<{ items: Booking[]; total: number; page: number; limit: number; totalPages: number }> => {
     const response = await apiClient.get<{
       items: Booking[];
       total: number;
@@ -246,8 +248,8 @@ export const inspectionApi = {
   },
 
   /** Initiate the authoritative M-Pesa payment for a canonical booking. */
-  initiateBookingPayment: async (bookingId: string, phone: string) => {
-    const response = await apiClient.post<any>('/api/payments/initiate', {
+  initiateBookingPayment: async (bookingId: string, phone: string): Promise<{ success: boolean; mode?: string; checkoutID?: string; checkoutRequestID?: string; message?: string }> => {
+    const response = await apiClient.post<{ success: boolean; mode?: string; checkoutID?: string; checkoutRequestID?: string; message?: string }>('/api/payments/initiate', {
       bookingId,
       phone,
       type: 'inspection',
@@ -256,8 +258,8 @@ export const inspectionApi = {
   },
 
   /** Check the shared payment ledger status for a checkout request. */
-  getPaymentStatus: async (checkoutRequestId: string) => {
-    const response = await apiClient.get<any>(`/api/payments/status/${encodeURIComponent(checkoutRequestId)}`);
+  getPaymentStatus: async (checkoutRequestId: string): Promise<{ status: string; payment?: { resultDesc?: string } }> => {
+    const response = await apiClient.get<{ status: string; payment?: { resultDesc?: string } }>(`/api/payments/status/${encodeURIComponent(checkoutRequestId)}`);
     return unwrapInspectionResponse(response);
   },
 

@@ -98,8 +98,8 @@ export async function getChatMessages(chatId: string): Promise<BackendMessage[]>
 }
 
 /** POST /api/chat/:chatId/message - send a real message. */
-export async function sendChatMessage(chatId: string, text: string): Promise<void> {
-  await chatFetch(`/api/chat/${chatId}/message`, {
+export async function sendChatMessage(chatId: string, text: string): Promise<unknown> {
+  return chatFetch(`/api/chat/${chatId}/message`, {
     method: 'POST',
     body: JSON.stringify({ content: text }),
   });

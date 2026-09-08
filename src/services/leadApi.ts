@@ -27,7 +27,7 @@ const withParams = (path: string, params: Record<string, unknown> = {}) => {
 
 export const leadApi = {
   async list(params: LeadListParams = {}) {
-    return request<{ leads: any[]; count: number; pagination: any }>(withParams("/api/leads", params), {
+    return request<{ leads: any[]; count: number; pagination: any }>(withParams("/api/leads", params as unknown as Record<string, unknown>), {
       method: "GET",
     });
   },

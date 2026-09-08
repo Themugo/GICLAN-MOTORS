@@ -173,6 +173,11 @@ export const sendMessage = async (req, res) => {
       return res.status(code).json({ success: false, message: appendError.message || "Failed to send message" });
     }
 
+    const messageId = messageData?.id;
+    if (!messageId) {
+      return res.status(500).json({ success: false, message: "Message was appended but no message id was returned" });
+    }
+
     // Add lead activity for message sent
     try {
       const lead = await findOrCreateLeadFromChat(chatId);

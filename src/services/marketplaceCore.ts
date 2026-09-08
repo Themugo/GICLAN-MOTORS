@@ -1,5 +1,5 @@
 import { getCars, getCarById, mapBackendCarToVehicle, type GetCarsParams } from './vehicleApi';
-import { fetchActiveAuctions, fetchAuction } from './auctionService';
+import { fetchActiveAuctions, fetchAuction as fetchAuctionById } from './auctionService';
 import { bidsAPI } from '../api/api.exports';
 import type { Vehicle } from '../types';
 
@@ -24,7 +24,7 @@ export async function fetchLiveAuctions(params: { page?: number; limit?: number 
 }
 
 export async function fetchAuction(id: string) {
-  return fetchAuction(id);
+  return fetchAuctionById(id);
 }
 
 export async function fetchMyBids() {

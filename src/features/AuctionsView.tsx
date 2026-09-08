@@ -81,7 +81,11 @@ export const AuctionsView: React.FC<AuctionsViewProps> = ({
     setError(null);
     try {
       const result = await fetchActiveAuctions({ page: 1, limit: 100 });
-      setAuctions((result?.auctions || []) as AuctionRecord[]);
+      setAuctions((result?.auctions || []).flatMap((auction) => {
+        const car = auction.car;
+        if (!car || typeof car._id !== 'string' || typeof car.title !== 'string') return [];
+        return [{ ...auction, car: car as AuctionRecord['car'] }];
+      }));
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Unable to load live auctions from KAYAD.');
       setAuctions([]);

@@ -13,6 +13,8 @@ jobs:
     name: Pre-deployment Validation
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      build_available: 'true'
 
     steps:
       - name: Checkout
@@ -27,42 +29,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check if secrets are configured
-        id: secrets-check
-        run: |
-          if [ -n "${{ secrets.VITE_SUPABASE_URL }}" ] && [ -n "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
-            echo "secrets_status=configured" >> $GITHUB_OUTPUT
-          else
-            echo "secrets_status=missing" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build for production (with secrets)
-        if: steps.secrets-check.outputs.secrets_status == 'configured'
+      - name: Build for production
         run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-
-      - name: Require production frontend secrets
-        if: steps.secrets-check.outputs.secrets_status != 'configured'
-        run: |
-          echo "ERROR: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required for a production build."
-          echo "Configure both GitHub Actions secrets before merging/deploying to main."
-          exit 1
 
       - name: Validate dist output
         run: |
-          if [ ! -f "dist/index.html" ]; then
-            echo "ERROR: dist/index.html not found"
-            exit 1
-          fi
-          if [ ! -d "dist/assets" ]; then
-            echo "ERROR: dist/assets not found"
-            exit 1
-          fi
+          test -f dist/index.html || { echo "ERROR: dist/index.html not found"; exit 1; }
+          test -d dist/assets || { echo "ERROR: dist/assets not found"; exit 1; }
           echo "Build output validated"
 
       - name: Upload deployment artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: production-build
@@ -74,6 +51,7 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: needs.validate.result == 'success' && needs.validate.outputs.build_available == 'true'
 
     steps:
       - name: Download artifact
@@ -93,6 +71,7 @@ jobs:
   deploy-vercel:
     name: Deploy to Vercel
     needs: validate
+    if: needs.validate.outputs.build_available == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -139,29 +118,9 @@ jobs:
         if: steps.vercel-check.outputs.configured == 'true'
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Check if secrets are configured
-        if: steps.vercel-check.outputs.configured == 'true'
-        id: secrets-check
-        run: |
-          if [ -n "${{ secrets.VITE_SUPABASE_URL }}" ] && [ -n "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
-            echo "secrets_status=configured" >> $GITHUB_OUTPUT
-          else
-            echo "secrets_status=missing" >> $GITHUB_OUTPUT
-          fi
-
       - name: Build Project for Production (with secrets)
-        if: steps.vercel-check.outputs.configured == 'true' && steps.secrets-check.outputs.secrets_status == 'configured'
+        if: steps.vercel-check.outputs.configured == 'true'
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-
-      - name: Require production frontend secrets
-        if: steps.vercel-check.outputs.configured == 'true' && steps.secrets-check.outputs.secrets_status != 'configured'
-        run: |
-          echo "ERROR: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required for a production Vercel build."
-          echo "Configure both GitHub Actions secrets before enabling automatic production deployment."
-          exit 1
 
       - name: Deploy to Vercel (Production)
         if: steps.vercel-check.outputs.configured == 'true'

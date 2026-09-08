@@ -1,4 +1,5 @@
 import { request, HttpRequestError } from '../api/httpRequest';
+import type { Booking } from '../features/InspectionMarketplace/types/inspection';
 /**
  * Real backend inspection API client.
  *

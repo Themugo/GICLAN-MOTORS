@@ -55,3 +55,6 @@ export async function request<T>(path: string, options: HttpRequestOptions = {})
     throw new HttpRequestError('Unable to reach KAYAD servers. Please check your connection and try again.');
   }
 }
+
+/** Backwards-compatible name retained for older service modules. */
+export const httpRequest = request;
