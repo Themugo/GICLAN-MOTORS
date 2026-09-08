@@ -42,7 +42,7 @@ export const toDispute = (escrow) => ({
   appeal: escrow.disputeAppeal || null,
 });
 
-async function getEscrowDispute(escrowId, actorId, role) {
+export async function getEscrowDispute(escrowId, actorId, role) {
   const escrow = await findById("escrows", escrowId);
   if (!escrow) return null;
   if (!ADMIN_ROLES.has(role) && !isParty(escrow, actorId)) throw new Error("Access denied");
@@ -50,7 +50,7 @@ async function getEscrowDispute(escrowId, actorId, role) {
   return toDispute(escrow);
 }
 
-async function openDispute({ escrowId, actorId, role, title, description, category, priority, reason, idempotencyKey }) {
+export async function openDispute({ escrowId, actorId, role, title, description, category, priority, reason, idempotencyKey }) {
   const escrow = await findById("escrows", escrowId);
   if (!escrow) throw new Error("Escrow not found");
   if (!ADMIN_ROLES.has(role) && !isParty(escrow, actorId)) throw new Error("You are not involved in this escrow");
@@ -147,6 +147,18 @@ export async function addNote({ escrowId, actorId, note, isPrivate = true }) {
   return toDispute(updated);
 }
 
+export async function assignDispute({ escrowId, actorId, assigneeId }) {
+  const escrow = await findById("escrows", escrowId);
+  if (!escrow || escrow.status !== "disputed") throw new Error("Dispute not found or inactive");
+  if (!assigneeId) throw new Error("Assignee is required");
+  const entry = { action: "Dispute assigned", actor: actorId, at: nowIso(), note: assigneeId };
+  const updated = await update("escrows", escrowId, {
+    disputeAssignedTo: assigneeId,
+    disputeTimeline: [...(escrow.disputeTimeline || []), entry],
+  });
+  return toDispute(updated);
+}
+
 export async function startMediation({ escrowId, actorId, mediatorId, scheduledAt }) {
   const dispute = await transitionWorkflow({ escrowId, actorId, role: "admin", nextStatus: STATES.MEDIATION, reason: "Mediation started" });
   const escrow = await findById("escrows", escrowId);
@@ -194,14 +206,14 @@ export async function reviewAppeal({ escrowId, actorId, decision, reviewNotes })
   return toDispute(updated);
 }
 
-async function listDisputes({ actorId, role, filters = {} }) {
+export async function listDisputes({ actorId, role, filters = {} }) {
   const base = { status: "disputed" };
   if (!ADMIN_ROLES.has(role)) base.$or = [{ buyer: actorId }, { seller: actorId }];
   const rows = await findAll("escrows", { filters: base, orderBy: "disputedAt", ascending: false, limit: Number(filters.limit || 50) });
   return rows.filter((e) => !filters.status || (e.disputeWorkflowStatus || STATES.OPEN) === filters.status).map(toDispute);
 }
 
-async function disputeStats() {
+export async function disputeStats() {
   const rows = await findAll("escrows", { filters: { status: "disputed" }, limit: 1000 });
   const statusBreakdown = {};
   const categoryBreakdown = {};

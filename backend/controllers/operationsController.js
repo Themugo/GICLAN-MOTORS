@@ -2,7 +2,7 @@ import Escrow from "../models/Escrow.js";
 import Car from "../models/Car.js";
 import InspectionOrder from "../models/InspectionOrder.js";
 import User from "../models/User.js";
-import Dispute from "../models/Dispute.js";
+import { disputeStats, listDisputes } from "../services/dispute.service.js";
 import Payment from "../models/Payment.js";
 import { logError } from '../infrastructure/logging/index.js';
 
@@ -47,15 +47,7 @@ export const getOperationsDashboard = async (req, res) => {
           },
         },
       ]),
-      Dispute.aggregate([
-        {
-          $facet: {
-            open: [{ $match: { status: "open", createdAt: { $gte: today } } }, { $count: "count" }],
-            urgent: [{ $match: { status: "open", severity: "critical", createdAt: { $gte: today } } }, { $count: "count" }],
-            escalated: [{ $match: { status: "appealed", createdAt: { $gte: today } } }, { $count: "count" }],
-          },
-        },
-      ]),
+      disputeStats(),
       Payment.aggregate([
         {
           $facet: {
@@ -87,9 +79,9 @@ export const getOperationsDashboard = async (req, res) => {
     const dealerPendingKYC = dealerData.pendingKYC[0]?.count || 0;
     const dealerPendingApproval = dealerData.pendingApproval[0]?.count || 0;
 
-    const supportOpen = supportData.open[0]?.count || 0;
-    const supportUrgent = supportData.urgent[0]?.count || 0;
-    const supportEscalated = supportData.escalated[0]?.count || 0;
+    const supportOpen = supportData.open || 0;
+    const supportUrgent = supportData.priorityBreakdown?.urgent || 0;
+    const supportEscalated = supportData.statusBreakdown?.appealed || 0;
 
     const paymentPending = paymentData.pending[0]?.count || 0;
     const paymentFailed = paymentData.failed[0]?.count || 0;
@@ -287,34 +279,15 @@ export const getDealerQueue = async (req, res) => {
 export const getSupportQueue = async (req, res) => {
   try {
     const { status, severity, page = 1, limit = 50 } = req.query;
-    const filter = {};
-
-    if (status) filter.status = status;
-    if (severity) filter.severity = severity;
-
-    const skip = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 100);
-
     const [disputes, total] = await Promise.all([
-      Dispute.find(filter)
-        .populate("openedBy", "name email phone")
-        .populate("openedAgainst", "name email")
-        .populate("relatedEscrow", "amount status buyer seller")
-        .select("openedBy openedAgainst relatedEscrow status severity subject description createdAt")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Math.min(Number(limit), 100)),
-      Dispute.countDocuments(filter),
+      listDisputes({ actorId: req.user.id, role: req.user.role, filters: { status, limit: Math.min(Number(limit), 100) } }),
+      Promise.resolve(null),
     ]);
 
     res.json({
       success: true,
       disputes,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit)),
-      },
+      pagination: { page: Number(page), limit: Number(limit), total: disputes.length, pages: 1 },
     });
   } catch (error) {
     logError("Error getting support queue:", error);

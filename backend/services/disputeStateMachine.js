@@ -63,15 +63,6 @@ const GUARDS = {
   },
 };
 
-const STATE_LABELS = Object.freeze({
-  [STATES.OPEN]:          "Open",
-  [STATES.UNDER_REVIEW]:  "Under Review",
-  [STATES.MEDIATION]:     "Mediation",
-  [STATES.RESOLVED]:      "Resolved",
-  [STATES.APPEALED]:      "Appealed",
-  [STATES.CLOSED]:        "Closed",
-});
-
 export function validateTransition(currentStatus, nextStatus, role, dispute = {}) {
   if (!STATES[currentStatus] && !Object.values(STATES).includes(currentStatus)) {
     return { allowed: false, reason: `Unknown current state: ${currentStatus}` };
@@ -100,7 +91,7 @@ export function getAllowedTransitions(status) {
   if (!allowed) return [];
   return Array.from(allowed).map((s) => ({
     state: s,
-    label: STATE_LABELS[s] || s,
+    label: s,
   }));
 }
 
@@ -108,6 +99,3 @@ export function isTerminal(status) {
   return TERMINAL.has(status);
 }
 
-export function getStateLabel(status) {
-  return STATE_LABELS[status] || status;
-}
