@@ -379,7 +379,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <p className="font-bold text-slate-900 truncate">{user.name}</p>
                         <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
                         <span className="inline-block mt-1 px-2 py-0.5 bg-[#1E3063] text-white font-semibold text-[9px] rounded uppercase">
-                          {user.role === 'dealer' ? 'Verified Dealer' : user.role === 'mechanic' ? 'NTSA Mechanic' : user.role === 'admin' ? 'Administrator' : 'Private Seller / Buyer'}
+                          {user.role === 'dealer' ? 'Verified Dealer' : user.role === 'ghost_checker' ? 'Vehicle Inspector' : user.role === 'admin' ? 'Administrator' : 'Private Seller / Buyer'}
                         </span>
                       </div>
                     </div>
@@ -509,7 +509,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                     )}
 
-                    {user.role === 'mechanic' && (
+                    {user.role === 'ghost_checker' && (
                       <div className="border-t border-slate-100 pt-1.5 mt-1.5 bg-emerald-50/50 pb-1">
                         <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
                           Pre-Purchase Inspection Portal
@@ -777,7 +777,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               )}
 
-              {user.role === 'mechanic' && (
+              {user.role === 'ghost_checker' && (
                 <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/30 rounded-xl space-y-1 mt-2">
                   <span className="text-[9px] font-bold text-emerald-400 uppercase block">Mechanic Tools</span>
                   <button onClick={() => handleNavSelect('inspections')} className="text-xs font-bold text-emerald-200 flex items-center gap-1.5 py-1">

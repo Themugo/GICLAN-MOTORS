@@ -614,7 +614,7 @@ export interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  role: 'buyer' | 'dealer' | 'mechanic' | 'bank_officer' | 'admin';
+  role: 'buyer' | 'dealer' | 'ghost_checker' | 'bank_officer' | 'admin';
   avatar: string;
   isVerified?: boolean;
   unreadMessagesCount?: number;

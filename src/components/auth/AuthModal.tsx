@@ -5,7 +5,7 @@ import { Input } from '../ui/Input';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, User, Building2, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 
-type UserRole = 'buyer' | 'dealer' | 'mechanic' | 'admin';
+type UserRole = 'buyer' | 'dealer' | 'ghost_checker' | 'admin';
 
 interface UserProfile {
   name: string;

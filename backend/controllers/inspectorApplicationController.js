@@ -4,6 +4,7 @@ import UserAuth from "../models/UserAuth.js";
 import bcrypt from "bcryptjs";
 import { sendNotification } from "../services/notification.service.js";
 import { logError } from "../utils/logger.js";
+import db from "../inspection/services/dbAdapter.js";
 
 const INSPECTOR_REVIEW_ROLES = ["admin", "superadmin", "hr", "technical_support"];
 
@@ -80,10 +81,25 @@ export const submitApplication = async (req, res) => {
 // =============================
 export const listActiveInspectors = async (req, res) => {
   try {
-    const inspectors = await User.find({ isInspector: true, status: "approved" })
-      .select("name avatar bio inspectionSpecialty locationCity rating inspectionsCompleted")
-      .lean();
-    res.json({ success: true, inspectors });
+    const staff = await db.find('inspection_staff', {
+      is_active: true,
+      is_available: true,
+    });
+    const inspectors = await Promise.all(staff.map(async (member) => {
+      const user = member.user_id ? await db.findById('users', member.user_id, 'id,name,email,phone,role') : null;
+      if (!user || user.role !== 'ghost_checker') return null;
+      return {
+        id: member.id,
+        userId: member.user_id,
+        name: `${member.first_name} ${member.last_name}`,
+        email: member.email || user.email,
+        phone: member.phone || user.phone,
+        specializations: member.specializations || [],
+        yearsExperience: member.years_experience || 0,
+        averageRating: member.average_rating || 0,
+      };
+    }));
+    res.json({ success: true, inspectors: inspectors.filter(Boolean) });
   } catch (err) {
     logError("LIST ACTIVE INSPECTORS ERROR", { error: err.message });
     res.status(500).json({ success: false, message: "Failed to load inspectors" });
@@ -134,11 +150,40 @@ export const approveApplication = async (req, res) => {
     } else {
       user.role = "ghost_checker";
     }
-    user.isInspector = true;
-    user.inspectionSpecialty = application.assignedSpecialty;
-    user.locationCity = application.assignedRegion;
     user.status = "approved";
     await user.save();
+
+    // Canonical workforce record. Approval is not complete until the
+    // ghost_checker account is linked to inspection_staff so assignments
+    // cannot target an unbound or legacy-only inspector.
+    let staff = await db.findOne('inspection_staff', { user_id: user.id });
+    if (!staff) {
+      const [firstName, ...lastParts] = String(application.fullName).trim().split(/\s+/);
+      staff = await db.create('inspection_staff', {
+        user_id: user.id,
+        first_name: firstName || application.fullName,
+        last_name: lastParts.join(' ') || firstName || 'Inspector',
+        role: 'senior_inspector',
+        certifications: application.certifications || [],
+        years_experience: Number(application.yearsOfExperience) || 0,
+        specializations: application.specialties || [],
+        phone: application.phone,
+        email: application.email,
+        is_active: true,
+        is_available: true,
+        total_inspections: 0,
+        average_rating: 0,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+    } else {
+      await db.update('inspection_staff', staff.id, {
+        is_active: true,
+        is_available: true,
+        specializations: application.specialties || staff.specializations || [],
+        updated_at: new Date(),
+      });
+    }
 
     await sendNotification({
       userId: user._id,

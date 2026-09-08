@@ -46,35 +46,24 @@ class ReportGenerationService {
     // Calculate content hash
     const contentHash = this.calculateContentHash(reportContent);
 
-    // Create or update report
-    let report = await db.findOne('inspection_reports', { inspection_id: inspectionId });
-    
-    if (report) {
-      report = await db.update('inspection_reports', report.id, {
-        content: reportContent,
-        content_hash: contentHash,
-        updated_at: new Date(),
-      });
-    } else {
-      // Get next version number
-      const existingReports = await db.find('inspection_reports', { inspection_id: inspectionId });
-      const versionNumber = existingReports.length + 1;
-      const reportNumber = this.generateReportNumber(inspection, versionNumber);
-
-      report = await db.create('inspection_reports', {
-        inspection_id: inspectionId,
-        report_number: reportNumber,
-        report_version: versionNumber,
-        status: 'draft',
-        content: reportContent,
-        content_hash: contentHash,
-        previous_hash: existingReports.length > 0 
-          ? existingReports[existingReports.length - 1].content_hash 
-          : null,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-    }
+    // Reports are immutable versions. Never overwrite a published/audited
+    // version; each regeneration becomes the next chained version.
+    const existingReports = await db.find('inspection_reports', { inspection_id: inspectionId });
+    const versionNumber = existingReports.length + 1;
+    const reportNumber = this.generateReportNumber(inspection, versionNumber);
+    const report = await db.create('inspection_reports', {
+      inspection_id: inspectionId,
+      report_number: reportNumber,
+      report_version: versionNumber,
+      status: 'draft',
+      content: reportContent,
+      content_hash: contentHash,
+      previous_hash: existingReports.length
+        ? existingReports.sort((a, b) => (a.report_version || 0) - (b.report_version || 0))[existingReports.length - 1].content_hash
+        : null,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
 
     logInfo('Report generated', { reportId: report.id, inspectionId });
     return report;
@@ -134,8 +123,8 @@ class ReportGenerationService {
         totalDiagnostics: this.countEvidenceByType(evidence, 'diagnostic'),
       },
       inspectorDetails: {
-        inspectorId: booking?.assigned_staff_id,
-        inspectorName: booking?.assigned_engineer_name,
+        inspectorId: inspection?.inspector_id || booking?.assigned_staff_id,
+        inspectorName: booking?.assigned_engineer_name || null,
       },
       companyDetails: {
         companyName: provider?.company_name,

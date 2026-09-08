@@ -5,6 +5,8 @@
 import asyncHandler from '../../middleware/asyncHandler.js';
 import { response } from '../../utils/response.js';
 import { providerService, bookingService, reportService, settlementService } from '../services/index.js';
+import db from '../services/dbAdapter.js';
+import { assertStaffAssignable } from '../services/workforceService.js';
 
 /**
  * ============================================================
@@ -136,6 +138,7 @@ export const updateBookingStatus = asyncHandler(async (req, res) => {
 // Assign inspector
 export const assignInspector = asyncHandler(async (req, res) => {
   const { staffId } = req.body;
+  await assertStaffAssignable(req.params.providerId, staffId);
   const booking = await bookingService.assignInspector(
     req.params.bookingId,
     staffId,

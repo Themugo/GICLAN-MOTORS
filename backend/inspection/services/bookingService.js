@@ -55,9 +55,10 @@ class BookingService {
 
     if (bookingData.staffId) {
       const staff = await db.findById('inspection_staff', bookingData.staffId);
-      if (!staff || staff.provider_id !== provider.id || staff.is_active === false) {
+      if (!staff || staff.provider_id !== provider.id || !staff.is_active || !staff.is_available) {
         throw new AppError('Invalid or unavailable inspector', 400);
       }
+      if (!staff.user_id) throw new AppError('Inspector has no linked user account', 409);
     }
 
     // Calculate price
@@ -308,6 +309,13 @@ class BookingService {
       throw new AppError(`Cannot transition from ${booking.status} to ${newStatus}`, 400);
     }
 
+    // Field execution is payment-gated. Never allow a provider/admin
+    // status mutation to bypass the verified settlement state.
+    if (['confirmed', 'inspector_assigned', 'travelling', 'inspection_started'].includes(newStatus)
+      && booking.payment_status !== 'fully_paid') {
+      throw new AppError('Inspection payment must be fully settled before field execution', 409);
+    }
+
     const updates = {
       status: newStatus,
       status_changed_at: new Date(),
@@ -379,8 +387,12 @@ class BookingService {
 
     // Verify staff belongs to provider
     const staff = await db.findById('inspection_staff', staffId);
-    if (!staff || staff.provider_id !== booking.provider_id) {
-      throw new AppError('Invalid inspector', 400);
+    if (!staff || staff.provider_id !== booking.provider_id || !staff.is_active || !staff.is_available) {
+      throw new AppError('Inspector is inactive or unavailable', 409);
+    }
+    if (!staff.user_id) throw new AppError('Inspector has no linked user account', 409);
+    if (booking.payment_status !== 'fully_paid') {
+      throw new AppError('Inspection payment must be fully settled before assigning an inspector', 409);
     }
 
     await db.update('inspection_bookings', bookingId, {

@@ -34,7 +34,8 @@
     "validate:chat-convergence": "node scripts/validate-chat-surface-convergence.mjs",
     "validate:ui-surface-convergence": "node scripts/validate-ui-surface-convergence.mjs",
     "validate:auction-transport-convergence": "node scripts/validate-auction-transport-convergence.mjs",
-    "validate:subscription-domain": "node scripts/validate-subscription-domain-e2e.mjs"
+    "validate:subscription-domain": "node scripts/validate-subscription-domain-e2e.mjs",
+    "validate:inspection-workforce-lifecycle": "node scripts/validate-inspection-workforce-lifecycle.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",

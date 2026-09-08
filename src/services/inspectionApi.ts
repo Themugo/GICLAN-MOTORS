@@ -134,3 +134,136 @@ export async function createInspectionOrder(
     body: JSON.stringify({ carId, phone, location }),
   });
 }
+
+
+// ============================================================
+// CANONICAL DIGITAL INSPECTION WORKFLOW API
+// ============================================================
+
+export interface DigitalInspectionStage {
+  id: string;
+  stage_name: string;
+  stage_order: number;
+  status: 'pending' | 'in_progress' | 'completed' | 'skipped';
+  started_at?: string;
+  completed_at?: string;
+  total_points: number;
+  completed_points: number;
+}
+
+export interface DigitalInspectionPoint {
+  id: string;
+  point_code: string;
+  point_name: string;
+  point_description?: string;
+  category?: string;
+  is_mandatory: boolean;
+  requires_photo: boolean;
+  condition_rating?: string;
+  defect_classification?: string;
+  inspector_notes?: string;
+  recommendation?: string;
+}
+
+export interface DigitalInspectionWorkflow {
+  id: string;
+  booking_id: string;
+  provider_id: string;
+  inspector_id?: string;
+  status: string;
+  current_stage: string;
+  overall_score?: number;
+  overall_grade?: string;
+  stages: DigitalInspectionStage[];
+  points: DigitalInspectionPoint[];
+  defects: unknown[];
+  evidence: unknown[];
+  progress: {
+    pointsPercentage: number;
+    stagesPercentage: number;
+    completedStages: number;
+    totalStages: number;
+    completedPoints: number;
+    totalPoints: number;
+  };
+}
+
+export async function getInspectionWorkflow(bookingId: string) {
+  return inspectionFetch<{ success: boolean; booking: Booking; inspection: DigitalInspectionWorkflow | null }>(
+    `/api/inspection/bookings/${bookingId}/workflow`,
+    { method: 'GET' }
+  );
+}
+
+export async function startInspectionWorkflow(bookingId: string) {
+  return inspectionFetch<{ success: boolean; inspection: DigitalInspectionWorkflow }>(
+    `/api/inspection/bookings/${bookingId}/workflow/start`,
+    { method: 'POST' }
+  );
+}
+
+export async function updateInspectionStage(
+  inspectionId: string,
+  stageName: string,
+  status: 'in_progress' | 'completed'
+) {
+  return inspectionFetch<{ success: boolean; inspection: DigitalInspectionWorkflow }>(
+    `/api/inspection/workflow/${inspectionId}/stages/${encodeURIComponent(stageName)}`,
+    { method: 'POST', body: JSON.stringify({ status }) }
+  );
+}
+
+export async function recordInspectionPoint(
+  inspectionId: string,
+  point: Partial<DigitalInspectionPoint> & { pointCode: string; stageName?: string }
+) {
+  return inspectionFetch<{ success: boolean; point: DigitalInspectionPoint }>(
+    `/api/inspection/workflow/${inspectionId}/points`,
+    { method: 'POST', body: JSON.stringify(point) }
+  );
+}
+
+export async function addInspectionEvidence(
+  pointId: string,
+  evidence: { type: string; url: string; fileType?: string; caption?: string }
+) {
+  return inspectionFetch<{ success: boolean; evidence: unknown }>(
+    `/api/inspection/workflow/points/${pointId}/evidence`,
+    { method: 'POST', body: JSON.stringify(evidence) }
+  );
+}
+
+export async function completeInspectionWorkflow(inspectionId: string) {
+  return inspectionFetch<{ success: boolean; inspection: DigitalInspectionWorkflow }>(
+    `/api/inspection/workflow/${inspectionId}/complete`,
+    { method: 'POST' }
+  );
+}
+
+export async function submitInspectionWorkflow(inspectionId: string) {
+  return inspectionFetch<{ success: boolean; inspection: DigitalInspectionWorkflow }>(
+    `/api/inspection/workflow/${inspectionId}/submit`,
+    { method: 'POST' }
+  );
+}
+
+export async function generateInspectionWorkflowReport(inspectionId: string) {
+  return inspectionFetch<{ success: boolean; report: unknown }>(
+    `/api/inspection/workflow/${inspectionId}/report`,
+    { method: 'POST' }
+  );
+}
+
+export async function submitInspectionCustomerReview(inspectionId: string, notes?: string) {
+  return inspectionFetch<{ success: boolean; inspection: DigitalInspectionWorkflow }>(
+    `/api/inspection/workflow/${inspectionId}/customer-review`,
+    { method: 'POST', body: JSON.stringify({ notes }) }
+  );
+}
+
+export async function signInspectionWorkflow(inspectionId: string, signature: string) {
+  return inspectionFetch<{ success: boolean; inspection: DigitalInspectionWorkflow }>(
+    `/api/inspection/workflow/${inspectionId}/sign`,
+    { method: 'POST', body: JSON.stringify({ signature }) }
+  );
+}

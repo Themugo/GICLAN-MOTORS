@@ -17,84 +17,131 @@ class InspectionWorkflowService {
    * Start a new inspection
    */
   async startInspection(bookingId, providerId, inspectorId) {
-    // Verify booking exists
     const booking = await db.findById('inspection_bookings', bookingId);
-    if (!booking) {
-      throw new AppError('Booking not found', 404);
+    if (!booking) throw new AppError('Booking not found', 404);
+    if (String(booking.provider_id) !== String(providerId)) {
+      throw new AppError('Booking does not belong to this provider', 403);
+    }
+    if (!booking.assigned_staff_id || String(booking.assigned_staff_id) !== String(inspectorId)) {
+      throw new AppError('Inspector is not assigned to this booking', 403);
+    }
+    if (booking.payment_status !== 'fully_paid') {
+      throw new AppError('Inspection payment must be fully settled before field work', 409);
+    }
+    if (!['inspector_assigned', 'travelling'].includes(booking.status)) {
+      throw new AppError(`Booking cannot start inspection from ${booking.status}`, 400);
     }
 
-    // Check for existing inspection
-    const existing = await db.findOne('digital_inspections', { booking_id: bookingId });
+    const staff = await db.findById('inspection_staff', inspectorId);
+    if (!staff || !staff.is_active || String(staff.provider_id) !== String(providerId)) {
+      throw new AppError('Inspector is inactive or invalid', 403);
+    }
+    if (!staff.user_id) throw new AppError('Inspector has no linked user account', 409);
+
+    let existing = await db.findOne('digital_inspections', { booking_id: bookingId });
     if (existing) {
-      throw new AppError('Inspection already exists for this booking', 400);
+      if (existing.status === 'archived') throw new AppError('Inspection is archived', 409);
+      return existing;
     }
 
-    // Create inspection
     const inspection = await db.create('digital_inspections', {
       booking_id: bookingId,
       provider_id: providerId,
+      inspector_id: staff.user_id,
       status: 'in_progress',
       current_stage: 'job_verification',
       vehicle_make: booking.vehicle_make,
       vehicle_model: booking.vehicle_model,
       vehicle_year: booking.vehicle_year,
       vehicle_registration: booking.vehicle_registration,
+      vehicle_vin: booking.vehicle_vin,
+      inspection_latitude: booking.inspection_latitude,
+      inspection_longitude: booking.inspection_longitude,
+      inspection_location_name: booking.inspection_address || booking.inspection_town,
       inspection_started_at: new Date(),
       created_at: new Date(),
       updated_at: new Date(),
     });
 
-    // Initialize workflow stages
     await this.initializeStages(inspection.id);
-
-    // Create audit log
     await this.logAudit(inspection.id, 'inspection_started', {
       inspectorId,
       bookingId,
+      providerId,
     });
 
-    logInfo('Inspection started', { inspectionId: inspection.id, bookingId });
-    return inspection;
+    // Keep the booking lifecycle authoritative and synchronized.
+    if (booking.status !== 'inspection_started') {
+      await db.update('inspection_bookings', bookingId, {
+        status: 'inspection_started',
+        status_changed_at: new Date(),
+        started_at: new Date(),
+        updated_at: new Date(),
+      });
+      await db.create('inspection_status_history', {
+        booking_id: bookingId,
+        from_status: booking.status,
+        to_status: 'inspection_started',
+        changed_by: staff.user_id,
+        staff_id: inspectorId,
+        notes: 'Digital inspection session started',
+        created_at: new Date(),
+      });
+    }
+
+    await db.update('inspection_staff', inspectorId, {
+      is_available: false,
+      updated_at: new Date(),
+    });
+
+    logInfo('Inspection started', { inspectionId: inspection.id, bookingId, inspectorId });
+    return this.getInspection(inspection.id);
   }
 
   /**
    * Initialize all 18 workflow stages
    */
   async initializeStages(inspectionId) {
-    const stages = [
-      { name: 'job_verification', order: 1, description: 'Verify job details and requirements' },
-      { name: 'customer_confirmation', order: 2, description: 'Confirm inspection scope with customer' },
-      { name: 'vehicle_identification', order: 3, description: 'Record vehicle identification details' },
-      { name: 'exterior_inspection', order: 4, description: 'Exterior body and paint assessment' },
-      { name: 'interior_inspection', order: 5, description: 'Interior condition assessment' },
-      { name: 'engine_inspection', order: 6, description: 'Engine bay examination' },
-      { name: 'transmission_inspection', order: 7, description: 'Transmission and drivetrain' },
-      { name: 'suspension_inspection', order: 8, description: 'Suspension system check' },
-      { name: 'steering_inspection', order: 9, description: 'Steering system assessment' },
-      { name: 'brake_inspection', order: 10, description: 'Brake system evaluation' },
-      { name: 'electrical_inspection', order: 11, description: 'Electrical systems check' },
-      { name: 'diagnostics', order: 12, description: 'OBD diagnostics and fault codes' },
-      { name: 'road_test', order: 13, description: 'Road test assessment' },
-      { name: 'safety_systems', order: 14, description: 'Safety systems verification' },
-      { name: 'final_assessment', order: 15, description: 'Overall condition assessment' },
-      { name: 'customer_review', order: 16, description: 'Customer review of findings' },
-      { name: 'digital_signature', order: 17, description: 'Digital signatures and verification' },
-      { name: 'report_generation', order: 18, description: 'Generate final report' },
-    ];
+    const template = this.getInspectionTemplate();
+    const categoryItems = this.getInspectionPointDefinitions();
 
-    for (const stage of stages) {
-      await db.create('inspection_stages', {
+    for (const stage of template.stages) {
+      const stageRow = await db.create('inspection_stages', {
         inspection_id: inspectionId,
         stage_name: stage.name,
         stage_order: stage.order,
-        status: 'pending',
-        total_points: 0,
+        status: stage.order === 1 ? 'in_progress' : 'pending',
+        started_at: stage.order === 1 ? new Date() : null,
+        total_points: stage.name === 'vehicle_identification' ? 0 : (categoryItems[stage.name]?.length || 0),
         completed_points: 0,
         created_at: new Date(),
       });
-    }
 
-    logInfo('Inspection stages initialized', { inspectionId, count: stages.length });
+      const definitions = categoryItems[stage.name] || [];
+      for (let i = 0; i < definitions.length; i += 1) {
+        const item = definitions[i];
+        await db.create('inspection_points', {
+          inspection_id: inspectionId,
+          stage_id: stageRow.id,
+          point_code: item.code,
+          point_name: item.name,
+          point_description: item.description,
+          category: item.category,
+          display_order: i + 1,
+          is_mandatory: true,
+          requires_photo: item.requiresPhoto || false,
+          requires_diagnostic: item.requiresDiagnostic || false,
+          severity_level: 'medium',
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+      }
+    }
+    logInfo('Inspection stages and checklist initialized', {
+      inspectionId,
+      stages: template.stages.length,
+      vehiclePoints: Object.values(categoryItems).flat().length,
+    });
   }
 
   /**
@@ -145,62 +192,70 @@ class InspectionWorkflowService {
    */
   async updateStage(inspectionId, stageName, status = 'in_progress') {
     const inspection = await db.findById('digital_inspections', inspectionId);
-    if (!inspection) {
-      throw new AppError('Inspection not found', 404);
+    if (!inspection) throw new AppError('Inspection not found', 404);
+    if (!['in_progress', 'completed'].includes(status)) {
+      throw new AppError('Invalid stage status', 400);
+    }
+    const stage = await db.findOne('inspection_stages', { inspection_id: inspectionId, stage_name: stageName });
+    if (!stage) throw new AppError('Stage not found', 404);
+
+    if (status === 'in_progress' && inspection.current_stage !== stageName) {
+      throw new AppError(`Current workflow stage is ${inspection.current_stage}`, 409);
+    }
+    if (status === 'completed' && inspection.current_stage !== stageName) {
+      throw new AppError(`Cannot complete stage ${stageName} before ${inspection.current_stage}`, 409);
     }
 
-    // Update stage
-    const stage = await db.findOne('inspection_stages', {
-      inspection_id: inspectionId,
-      stage_name: stageName,
-    });
-
-    if (!stage) {
-      throw new AppError('Stage not found', 404);
-    }
-
-    const updates = { updated_at: new Date() };
-    if (status === 'in_progress' && !stage.started_at) {
-      updates.started_at = new Date();
-    } else if (status === 'completed') {
-      updates.completed_at = new Date();
-      updates.status = 'completed';
-    }
-
-    await db.update('inspection_stages', stage.id, updates);
-
-    // Update inspection current stage if moving forward
     if (status === 'completed') {
+      const incompleteRequired = await db.find('inspection_points', {
+        stage_id: stage.id,
+        is_mandatory: true,
+      });
+      const unrated = incompleteRequired.filter(p => !p.condition_rating);
+      if (unrated.length) throw new AppError(`Stage has ${unrated.length} incomplete mandatory point(s)`, 409);
+
+      await db.update('inspection_stages', stage.id, {
+        status: 'completed',
+        completed_at: new Date(),
+        completed_points: incompleteRequired.length,
+        updated_at: new Date(),
+      });
+
       const nextStage = await db.findOne('inspection_stages', {
         inspection_id: inspectionId,
         stage_order: stage.stage_order + 1,
       });
-
       if (nextStage) {
+        await db.update('inspection_stages', nextStage.id, {
+          status: 'in_progress',
+          started_at: nextStage.started_at || new Date(),
+          updated_at: new Date(),
+        });
         await db.update('digital_inspections', inspectionId, {
           current_stage: nextStage.stage_name,
           updated_at: new Date(),
         });
+        // Field inspection becomes complete after final_assessment.
+        // Customer review/signature/report publication remain separate actors.
+        if (stageName === 'final_assessment') {
+          await this.completeInspection(inspectionId, inspection.inspector_id || null);
+        }
       } else {
-        // All stages completed
-        await db.update('digital_inspections', inspectionId, {
-          status: 'completed',
-          inspection_completed_at: new Date(),
-          updated_at: new Date(),
-        });
+        await this.completeInspection(inspectionId, inspection.inspector_id || null);
       }
-    } else if (status === 'in_progress') {
+    } else {
+      await db.update('inspection_stages', stage.id, {
+        status: 'in_progress',
+        started_at: stage.started_at || new Date(),
+        updated_at: new Date(),
+      });
       await db.update('digital_inspections', inspectionId, {
         current_stage: stageName,
         updated_at: new Date(),
       });
     }
 
-    await this.logAudit(inspectionId, 'stage_updated', {
-      stageName,
-      status,
-    });
-
+    await this.logAudit(inspectionId, 'stage_updated', { stageName, status });
     return this.getInspection(inspectionId);
   }
 
@@ -211,15 +266,18 @@ class InspectionWorkflowService {
     const { pointCode, stageName, ...data } = pointData;
 
     const inspection = await db.findById('digital_inspections', inspectionId);
-    if (!inspection) {
-      throw new AppError('Inspection not found', 404);
-    }
+    if (!inspection) throw new AppError('Inspection not found', 404);
+    if (inspection.status !== 'in_progress') throw new AppError('Inspection is not editable', 409);
+    if (!pointCode) throw new AppError('pointCode is required', 400);
 
-    // Get or create point
-    let point = await db.findOne('inspection_points', {
+    const existingPoint = await db.findOne('inspection_points', {
       inspection_id: inspectionId,
       point_code: pointCode,
     });
+    const effectiveStageName = stageName || inspection.current_stage;
+
+    // Get or create point
+    let point = existingPoint;
 
     if (point) {
       await db.update('inspection_points', point.id, {
@@ -229,7 +287,7 @@ class InspectionWorkflowService {
     } else {
       const stage = await db.findOne('inspection_stages', {
         inspection_id: inspectionId,
-        stage_name: stageName,
+        stage_name: effectiveStageName,
       });
 
       point = await db.create('inspection_points', {
@@ -245,11 +303,15 @@ class InspectionWorkflowService {
     }
 
     // Update stage progress
-    await this.updateStageProgress(inspectionId, stageName);
+    await this.updateStageProgress(inspectionId, effectiveStageName);
 
-    // Log defect if rating is requires_attention or critical
+    // Log at most one open defect for a point/rating transition.
     if (data.conditionRating === 'requires_attention' || data.conditionRating === 'critical') {
-      await this.createDefectFromPoint(inspectionId, point, data);
+      const existingDefect = await db.findOne('inspection_defects', {
+        point_id: point.id,
+        is_resolved: false,
+      });
+      if (!existingDefect) await this.createDefectFromPoint(inspectionId, point, data);
     }
 
     await this.logAudit(inspectionId, 'point_recorded', { pointCode, data });
@@ -261,6 +323,11 @@ class InspectionWorkflowService {
    * Add evidence to a point
    */
   async addEvidence(pointId, evidenceData) {
+    const point = await db.findById('inspection_points', pointId);
+    if (!point) throw new AppError('Inspection point not found', 404);
+    if (!evidenceData?.type || !evidenceData?.url) {
+      throw new AppError('Evidence type and URL are required', 400);
+    }
     const evidence = await db.create('inspection_evidence', {
       point_id: pointId,
       evidence_type: evidenceData.type,
@@ -342,28 +409,66 @@ class InspectionWorkflowService {
    */
   async completeInspection(inspectionId, inspectorId) {
     const inspection = await this.getInspection(inspectionId);
-    
-    // Calculate scores
+    if (inspection.status !== 'in_progress') {
+      throw new AppError('Inspection is not in progress', 409);
+    }
+
+    const requiredPoints = inspection.points.filter(p => p.is_mandatory);
+    const unrated = requiredPoints.filter(p => !p.condition_rating);
+    if (unrated.length) {
+      throw new AppError(`Inspection has ${unrated.length} incomplete mandatory point(s)`, 409);
+    }
+
+    const fieldStages = inspection.stages.filter(s => s.stage_order <= 15);
+    const incompleteFieldStages = fieldStages.filter(s => s.status !== 'completed');
+    if (incompleteFieldStages.length) {
+      throw new AppError(`Incomplete field stages: ${incompleteFieldStages.map(s => s.stage_name).join(', ')}`, 409);
+    }
+
+    const validation = await this.validateInspection(inspectionId);
+    if (!validation.isValid) {
+      throw new AppError(`Inspection validation failed: ${validation.errors.join(', ')}`, 400);
+    }
+
     const scores = this.calculateScores(inspection.points, inspection.defects);
-    
-    // Update inspection
-    const updates = {
+    await db.update('digital_inspections', inspectionId, {
       ...scores,
       status: 'completed',
       inspection_completed_at: new Date(),
       updated_at: new Date(),
-    };
-
-    await db.update('digital_inspections', inspectionId, updates);
-
-    // Update final stage
-    await this.updateStage(inspectionId, 'report_generation', 'completed');
-
-    await this.logAudit(inspectionId, 'inspection_completed', {
-      inspectorId,
-      scores,
     });
 
+    const booking = await db.findById('inspection_bookings', inspection.booking_id);
+    if (booking && booking.status === 'inspection_started') {
+      await db.update('inspection_bookings', booking.id, {
+        status: 'inspection_complete',
+        status_changed_at: new Date(),
+        completed_at: new Date(),
+        updated_at: new Date(),
+      });
+      await db.create('inspection_status_history', {
+        booking_id: booking.id,
+        from_status: 'inspection_started',
+        to_status: 'inspection_complete',
+        changed_by: inspectorId,
+        staff_id: booking.assigned_staff_id,
+        notes: 'Digital inspection completed',
+        created_at: new Date(),
+      });
+    }
+
+    if (inspectorId) {
+      const staff = await db.findById('inspection_staff', inspectorId);
+      if (staff) {
+        await db.update('inspection_staff', inspectorId, {
+          is_available: true,
+          total_inspections: (staff.total_inspections || 0) + 1,
+          updated_at: new Date(),
+        });
+      }
+    }
+
+    await this.logAudit(inspectionId, 'inspection_completed', { inspectorId, scores });
     logInfo('Inspection completed', { inspectionId, scores });
     return this.getInspection(inspectionId);
   }
@@ -384,6 +489,10 @@ class InspectionWorkflowService {
       electrical: { weight: 0.10, points: 15 },
       road_test: { weight: 0.07, points: 15 },
       safety: { weight: 0.05, points: 15 },
+      body: { weight: 0.00, points: 12 },
+      paint: { weight: 0.00, points: 10 },
+      tyres: { weight: 0.00, points: 8 },
+      undercarriage: { weight: 0.00, points: 8 },
     };
 
     // Calculate category scores
@@ -427,9 +536,9 @@ class InspectionWorkflowService {
     };
 
     return {
-      mechanical_score: Math.round((categoryScores.engine || 0 + categoryScores.transmission || 0) / 2),
-      safety_score: Math.round((categoryScores.brakes || 0 + categoryScores.safety || 0) / 2),
-      body_score: categoryScores.exterior || 0,
+      mechanical_score: Math.round(((categoryScores.engine || 0) + (categoryScores.transmission || 0)) / 2),
+      safety_score: Math.round(categoryScores.brakes || 0),
+      body_score: Math.round(((categoryScores.exterior || 0) + (categoryScores.body || 0) + (categoryScores.paint || 0) + (categoryScores.tyres || 0)) / 4),
       interior_score: categoryScores.interior || 0,
       electrical_score: categoryScores.electrical || 0,
       roadworthiness_score: overallScore,
@@ -494,8 +603,9 @@ class InspectionWorkflowService {
     const errors = [];
     const warnings = [];
 
-    // Check all stages completed
-    const incompleteStages = inspection.stages.filter(s => s.status !== 'completed');
+    // Field execution stages (1-15) must be complete before submission.
+    // Customer review, signature and report publication are post-inspection actors.
+    const incompleteStages = inspection.stages.filter(s => s.stage_order <= 15 && s.status !== 'completed');
     if (incompleteStages.length > 0) {
       errors.push(`Incomplete stages: ${incompleteStages.map(s => s.stage_name).join(', ')}`);
     }
@@ -532,7 +642,8 @@ class InspectionWorkflowService {
       action_description: this.getActionDescription(actionType),
       entity_type: 'inspection',
       entity_id: inspectionId,
-      details: details,
+      previous_state: details?.previousState || null,
+      new_state: details?.newState || details || null,
       created_at: new Date(),
     });
   }
@@ -551,6 +662,43 @@ class InspectionWorkflowService {
       inspection_submitted: 'Inspection submitted for review',
     };
     return descriptions[actionType] || actionType;
+  }
+
+  getInspectionPointDefinitions() {
+    const categories = {
+      engine: ['Oil level and condition','Oil leaks','Coolant level','Coolant condition','Coolant leaks','Belts condition','Hoses condition','Engine noises','Engine performance','Engine temperature','Exhaust smoke color','Exhaust emissions','Turbo (if applicable)','Catalytic converter','Muffler condition','Engine mounts','Timing belt/chain','Water pump','Starter motor','Alternator'],
+      transmission: ['Fluid level','Fluid condition','Leak detection','Clutch operation (manual)','Gear shifts','Shifter mechanism','Transmission mounts','Driveshaft condition','CV joints','Universal joints','Differential','Transfer case (4WD)','Torque converter (auto)','Shift quality','Neutral engagement'],
+      suspension: ['Front struts/shocks','Rear struts/shocks','Spring condition','Control arms','Ball joints','Tie rod ends','Sway bar links','Steering rack','Power steering','Steering column','Wheel bearings','Alignment'],
+      brakes: ['Front brake pads','Rear brake pads','Front rotors','Rear rotors','Brake lines','Brake hoses','Brake fluid level','Brake fluid condition','ABS system','Parking brake','Master cylinder','Brake assistance'],
+      electrical: ['Battery condition','Battery terminals','Charging system','Starting system','Headlights','Tail lights','Brake lights','Turn signals','Hazard lights','Interior lights','Horn','Wipers/washers','Dashboard instruments','Warning lights','OBD-II scan'],
+      interior: ['Seat condition','Seat belts','Airbags','Dashboard','Steering wheel','Floor mats','Carpet condition','Headliner','Door panels','Windows operation','Sunroof/moonroof','Climate control','Audio system','Navigation system','Instrument cluster'],
+      exterior: ['Front bumper','Rear bumper','Hood','Trunk/tailgate','Door latches','Mirrors','Windshield','Rear windshield','Side windows','Convertible top','Grille','Antenna','Roof rails','Running boards','Body trim'],
+      body: ['Frame/unibody','Rust damage','Accident damage','Panel gaps','Door alignment','Hood alignment','Trunk alignment','Bumper alignment','Structural integrity','Floor pan condition','Firewall condition','Pillars condition'],
+      paint: ['Paint condition','Clear coat','Faded areas','Scratches','Chips','Peeling','Blistering','Touch-up repairs','Paint mismatch','Aftermarket paint'],
+      tyres: ['Front tyre condition','Rear tyre condition','Spare tyre','Wheel condition','Wheel alignment marks','Tire pressure','Tyre tread depth','Tyre age'],
+      undercarriage: ['Exhaust system','Fuel lines','Brake lines','Transmission pan','Differential housing','CV boots','Shocks/leakage','Frame condition'],
+      road_test: ['Engine performance','Transmission operation','Steering response','Braking performance','Suspension comfort','Noise/vibrations','AC/heating','Overall driveability'],
+    };
+    const stageMap = {
+      engine: 'engine_inspection', transmission: 'transmission_inspection', suspension: 'suspension_inspection',
+      brakes: 'brake_inspection', electrical: 'electrical_inspection', interior: 'interior_inspection',
+      exterior: 'exterior_inspection', body: 'exterior_inspection', paint: 'exterior_inspection',
+      tyres: 'exterior_inspection', undercarriage: 'engine_inspection', road_test: 'road_test',
+    };
+    const result = {};
+    for (const [category, items] of Object.entries(categories)) {
+      const stage = stageMap[category];
+      result[stage] ||= [];
+      items.forEach((name, i) => result[stage].push({
+        code: `${category.toUpperCase()}_${String(i + 1).padStart(3, '0')}`,
+        name,
+        description: `Inspect ${name.toLowerCase()}`,
+        category,
+        requiresPhoto: ['exterior','body','paint','tyres'].includes(category),
+        requiresDiagnostic: category === 'electrical' && name === 'OBD-II scan',
+      }));
+    }
+    return result;
   }
 
   /**
@@ -578,7 +726,7 @@ class InspectionWorkflowService {
         { name: 'digital_signature', order: 17, points: 2 },
         { name: 'report_generation', order: 18, points: 4 },
       ],
-      totalPoints: 195, // Including job and customer stages
+      totalPoints: 150, // Authoritative vehicle checklist points
       inspectionPoints: 150, // Actual vehicle inspection points
     };
   }
