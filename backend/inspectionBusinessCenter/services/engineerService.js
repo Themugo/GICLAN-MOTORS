@@ -117,7 +117,7 @@ class EngineerService {
    */
   async getEngineerPerformance(engineerId, period = 'monthly') {
     const engineer = await this.getEngineerById(engineerId);
-    
+
     let startDate = new Date();
     if (period === 'weekly') {
       startDate.setDate(startDate.getDate() - 7);
@@ -190,8 +190,8 @@ class EngineerService {
 
     const totalJobHours = inspections.reduce((sum, i) => sum + 1, 0) * 1.5; // Assume 1.5 hours avg per inspection
 
-    return totalAvailableHours > 0 
-      ? Math.round((totalJobHours / totalAvailableHours) * 100) 
+    return totalAvailableHours > 0
+      ? Math.round((totalJobHours / totalAvailableHours) * 100)
       : 0;
   }
 
@@ -361,7 +361,7 @@ class EngineerService {
       ...certification,
       addedAt: new Date(),
     });
-    
+
     return this.updateEngineer(engineerId, { certifications: certs });
   }
 
@@ -391,7 +391,7 @@ class EngineerService {
         bookingId: j.id,
         reference: j.booking_reference,
         engineerId: j.assigned_staff_id,
-        engineerName: engineers.find(e => e.id === j.assigned_staff_id) 
+        engineerName: engineers.find(e => e.id === j.assigned_staff_id)
           ? `${engineers.find(e => e.id === j.assigned_staff_id).first_name} ${engineers.find(e => e.id === j.assigned_staff_id).last_name}`
           : 'Unassigned',
         status: j.status,

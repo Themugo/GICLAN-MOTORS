@@ -164,8 +164,8 @@ router.get(
   "/available-inspectors",
   adminOnly,
   asyncHandler(async (req, res) => {
-    const inspectors = await User.find({ role: "ghost_checker" })
-      .select("name email phone role")
+    const inspectors = await User.find({ role: "ghost_checker", isInspector: true })
+      .select("name email phone locationCity inspectionSpecialty averageRating completedChecks")
       .lean();
 
     res.json({ success: true, inspectors });
@@ -184,11 +184,6 @@ router.post(
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
     if (order.status !== "paid")
       return res.status(400).json({ success: false, message: "Order must be in 'paid' status" });
-
-    const inspector = await User.findById(inspectorId).lean();
-    if (!inspector || inspector.role !== "ghost_checker") {
-      return res.status(403).json({ success: false, message: "Selected user is not an authorized inspector" });
-    }
 
     order.inspector = inspectorId;
     order.status = "assigned";

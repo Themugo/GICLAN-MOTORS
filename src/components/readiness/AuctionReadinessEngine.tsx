@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  ShieldCheck, 
-  Car, 
-  Camera, 
-  Eye, 
-  ClipboardCheck, 
-  Lock, 
-  Settings, 
+import {
+  ShieldCheck,
+  Car,
+  Camera,
+  Eye,
+  ClipboardCheck,
+  Lock,
+  Settings,
   Trophy,
   CheckCircle2,
   Circle,
@@ -22,18 +22,18 @@ import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import type { AuctionSession, Vehicle } from '../../types';
-import type { 
-  AuctionReadinessData, 
-  ReadinessResult, 
+import type {
+  AuctionReadinessData,
+  ReadinessResult,
   ReadinessCheck,
   ReadinessSection,
   ReadinessSeverity
 } from '../../utils/auctionReadiness';
-import { 
+import {
   READINESS_SECTIONS,
   validateAuctionReadiness,
   runQAValidation,
-  getDefaultReadinessData 
+  getDefaultReadinessData
 } from '../../utils/auctionReadiness';
 
 export interface AuctionReadinessEngineProps {
@@ -58,26 +58,26 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
 };
 
 // Severity styling
-const SEVERITY_STYLES: Record<ReadinessSeverity, { 
-  icon: React.ReactNode; 
-  color: string; 
+const SEVERITY_STYLES: Record<ReadinessSeverity, {
+  icon: React.ReactNode;
+  color: string;
   bgColor: string;
   borderColor: string;
 }> = {
-  critical: { 
-    icon: <AlertCircle className="w-4 h-4" />, 
+  critical: {
+    icon: <AlertCircle className="w-4 h-4" />,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     borderColor: 'border-red-200'
   },
-  warning: { 
-    icon: <AlertTriangle className="w-4 h-4" />, 
+  warning: {
+    icon: <AlertTriangle className="w-4 h-4" />,
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
     borderColor: 'border-amber-200'
   },
-  info: { 
-    icon: <Info className="w-4 h-4" />, 
+  info: {
+    icon: <Info className="w-4 h-4" />,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200'
@@ -85,16 +85,16 @@ const SEVERITY_STYLES: Record<ReadinessSeverity, {
 };
 
 // Score ring component
-const ScoreRing: React.FC<{ score: number; size?: 'sm' | 'md' | 'lg' }> = ({ 
-  score, 
-  size = 'md' 
+const ScoreRing: React.FC<{ score: number; size?: 'sm' | 'md' | 'lg' }> = ({
+  score,
+  size = 'md'
 }) => {
   const dimensions = { sm: 60, md: 100, lg: 140 };
   const dim = dimensions[size];
   const radius = (dim - 12) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score / 100) * circumference;
-  
+
   const strokeWidth = size === 'sm' ? 4 : size === 'md' ? 6 : 8;
   const fontSize = size === 'sm' ? 'text-sm' : size === 'md' ? 'text-2xl' : 'text-4xl';
   const labelSize = size === 'sm' ? 'text-[8px]' : size === 'md' ? 'text-[10px]' : 'text-xs';
@@ -174,11 +174,11 @@ const CheckItem: React.FC<{
         )}
       </div>
       {editable && (
-        <button 
+        <button
           onClick={() => onToggle?.(check.id, !check.isComplete)}
           className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
-            check.isComplete 
-              ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' 
+            check.isComplete
+              ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
               : 'bg-emerald-600 text-white hover:bg-emerald-700'
           }`}
         >
@@ -246,12 +246,12 @@ const ReadinessSectionAccordion: React.FC<{
           )}
         </div>
       </button>
-      
+
       {isExpanded && (
         <div className="p-4 bg-white space-y-2">
           {checks.map((check) => (
-            <CheckItem 
-              key={check.id} 
+            <CheckItem
+              key={check.id}
               check={check}
               onToggle={onCheckToggle}
               editable={editable}
@@ -315,18 +315,18 @@ export const AuctionReadinessEngine: React.FC<AuctionReadinessEngineProps> = ({
       <Card className="p-6 bg-gradient-to-r from-[#101935] to-[#1a2a4a] text-white border-none">
         <div className="flex flex-col md:flex-row items-center gap-6">
           <ScoreRing score={result.score} size="lg" />
-          
+
           <div className="flex-1 text-center md:text-left">
             <h3 className="text-xl font-black mb-2">
               Auction Readiness Score
             </h3>
             <p className="text-slate-300 text-sm mb-4">
-              {result.isPublishable 
+              {result.isPublishable
                 ? 'This auction is ready to be published.'
                 : `${result.criticalIssues.length} critical items must be completed before publishing.`
               }
             </p>
-            
+
             <div className="flex flex-wrap justify-center md:justify-start gap-4">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -374,7 +374,7 @@ export const AuctionReadinessEngine: React.FC<AuctionReadinessEngineProps> = ({
         <div className="mt-4 pt-4 border-t border-white/10">
           <p className="text-xs text-slate-400 flex items-center gap-2">
             <Info className="w-4 h-4" />
-            This readiness score is visible only to the Auction Organizer and KAYAD Administrators. 
+            This readiness score is visible only to the Auction Organizer and KAYAD Administrators.
             Buyers will only see fully validated auctions.
           </p>
         </div>
@@ -387,8 +387,8 @@ export const AuctionReadinessEngine: React.FC<AuctionReadinessEngineProps> = ({
           disabled={!result.isPublishable}
           onClick={onPublish}
           className={`px-8 font-bold ${
-            result.isPublishable 
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+            result.isPublishable
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
               : 'bg-slate-300 text-slate-500 cursor-not-allowed'
           }`}
         >
@@ -436,7 +436,7 @@ export const AuctionReadinessEngine: React.FC<AuctionReadinessEngineProps> = ({
           </h4>
           <div className="space-y-2">
             {qaResult.checks.map((check) => (
-              <div 
+              <div
                 key={check.name}
                 className={`flex items-center gap-3 p-3 rounded-lg ${
                   check.passed ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
@@ -459,7 +459,7 @@ export const AuctionReadinessEngine: React.FC<AuctionReadinessEngineProps> = ({
             ))}
           </div>
           <div className="mt-4 pt-4 border-t border-slate-200">
-            <Badge 
+            <Badge
               variant={qaResult.passed ? 'success' : 'danger'}
               className={qaResult.passed ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-red-100 text-red-800 border-red-200'}
             >

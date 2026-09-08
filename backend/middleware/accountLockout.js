@@ -17,16 +17,16 @@ const failedAttempts = new Map();
 const getLockoutInfo = (ip) => {
   const attempts = failedAttempts.get(ip);
   if (!attempts) return { locked: false, count: 0, remainingTime: 0 };
-  
+
   const now = Date.now();
   const timeSinceLastAttempt = now - attempts.lastAttempt;
-  
+
   // Reset if lockout period has passed
   if (timeSinceLastAttempt >= LOCKOUT_DURATION) {
     failedAttempts.delete(ip);
     return { locked: false, count: 0, remainingTime: 0 };
   }
-  
+
   // Check if locked
   if (attempts.count >= MAX_ATTEMPTS) {
     const remainingTime = Math.ceil((LOCKOUT_DURATION - timeSinceLastAttempt) / 1000 / 60);
@@ -36,7 +36,7 @@ const getLockoutInfo = (ip) => {
       remainingTime
     };
   }
-  
+
   return {
     locked: false,
     count: attempts.count,
@@ -48,11 +48,11 @@ const getLockoutInfo = (ip) => {
 export const recordFailedAttempt = (req) => {
   const ip = ipKeyGenerator(req);
   const attempts = failedAttempts.get(ip) || { count: 0, lastAttempt: 0 };
-  
+
   attempts.count++;
   attempts.lastAttempt = Date.now();
   failedAttempts.set(ip, attempts);
-  
+
   // Schedule cleanup after lockout duration
   setTimeout(() => {
     const entry = failedAttempts.get(ip);
@@ -72,14 +72,14 @@ export const recordSuccessfulAttempt = (req) => {
 export const accountLockout = (req, res, next) => {
   const ip = ipKeyGenerator(req);
   const lockoutInfo = getLockoutInfo(ip);
-  
+
   if (lockoutInfo.locked) {
     return res.status(429).json({
       success: false,
       message: `Too many failed attempts. Account locked for ${lockoutInfo.remainingTime} minutes.`
     });
   }
-  
+
   // Attach lockout info to request for use in controllers
   req.lockoutInfo = lockoutInfo;
   next();

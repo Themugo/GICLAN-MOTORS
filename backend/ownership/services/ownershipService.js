@@ -22,7 +22,7 @@ class OwnershipService {
    */
   async getOrCreateOwnerProfile(userId) {
     let profile = await db.findOne('owner_profiles', { user_id: userId });
-    
+
     if (!profile) {
       profile = await db.create('owner_profiles', {
         user_id: userId,
@@ -34,7 +34,7 @@ class OwnershipService {
       });
       logInfo('Owner profile created', { userId });
     }
-    
+
     return profile;
   }
 
@@ -43,7 +43,7 @@ class OwnershipService {
    */
   async getOwnerDashboard(userId) {
     const profile = await this.getOrCreateOwnerProfile(userId);
-    
+
     const [currentVehicles, soldVehicles, favouriteVehicles, recentViews, upcomingReminders, alerts, expenses] = await Promise.all([
       db.find('owner_vehicles', { owner_id: userId, ownership_type: 'current', status: 'active' }),
       db.find('owner_vehicles', { owner_id: userId, ownership_type: 'sold' }),
@@ -264,10 +264,10 @@ class OwnershipService {
    * Get upcoming reminders for owner
    */
   async getUpcomingReminders(userId) {
-    const vehicles = await db.find('owner_vehicles', { 
-      owner_id: userId, 
+    const vehicles = await db.find('owner_vehicles', {
+      owner_id: userId,
       ownership_type: 'current',
-      status: 'active' 
+      status: 'active'
     });
 
     const vehicleIds = vehicles.map(v => v.id);

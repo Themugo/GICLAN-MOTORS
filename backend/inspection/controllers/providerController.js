@@ -5,8 +5,6 @@
 import asyncHandler from '../../middleware/asyncHandler.js';
 import { response } from '../../utils/response.js';
 import { providerService, bookingService, reportService, settlementService } from '../services/index.js';
-import db from '../services/dbAdapter.js';
-import { assertStaffAssignable } from '../services/workforceService.js';
 
 /**
  * ============================================================
@@ -138,7 +136,6 @@ export const updateBookingStatus = asyncHandler(async (req, res) => {
 // Assign inspector
 export const assignInspector = asyncHandler(async (req, res) => {
   const { staffId } = req.body;
-  await assertStaffAssignable(req.params.providerId, staffId);
   const booking = await bookingService.assignInspector(
     req.params.bookingId,
     staffId,
@@ -230,7 +227,7 @@ export const getInspectionCategories = asyncHandler(async (req, res) => {
 
 // Process payment
 export const processPayment = asyncHandler(async (req, res) => {
-  const result = await settlementService.processPayment(req.params.bookingId, { ...req.body, userId: req.user.id });
+  const result = await settlementService.processPayment(req.params.bookingId, req.body);
   response.success(res, result);
 });
 
@@ -245,11 +242,6 @@ export const processRefund = asyncHandler(async (req, res) => {
 });
 
 // Generate settlement
-export const markSettlementPaid = asyncHandler(async (req, res) => {
-  const result = await settlementService.markSettlementPaid(req.params.settlementId, { ...req.body, userId: req.user.id });
-  response.success(res, result);
-});
-
 export const generateSettlement = asyncHandler(async (req, res) => {
   const { periodStart, periodEnd } = req.body;
   const result = await settlementService.generateSettlement(
@@ -296,7 +288,7 @@ export const getEarningsSummary = asyncHandler(async (req, res) => {
 // Submit review
 export const submitReview = asyncHandler(async (req, res) => {
   const { bookingId, ratings, reviewText } = req.body;
-  
+
   const review = {
     booking_id: bookingId,
     provider_id: req.body.providerId,
@@ -324,9 +316,9 @@ export const getProviderReviews = asyncHandler(async (req, res) => {
   const reviews = await db.find('inspection_reviews', {
     provider_id: req.params.providerId,
     is_published: true
-  }, { 
+  }, {
     sort: { created_at: -1 },
-    limit: parseInt(req.query.limit) || 20 
+    limit: parseInt(req.query.limit) || 20
   });
   response.success(res, { reviews });
 });
@@ -361,7 +353,6 @@ export default {
   processPayment,
   processRefund,
   generateSettlement,
-  markSettlementPaid,
   getTransactions,
   getSettlements,
   getEarningsSummary,

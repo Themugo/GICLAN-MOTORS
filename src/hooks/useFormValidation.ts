@@ -226,10 +226,10 @@ export function useFormValidation<T extends Record<string, any>>(
       if (field?.required && (!value || (typeof value === 'string' && !value.trim()))) {
         setFields(prev => ({
           ...prev,
-          [name]: { 
-            ...prev[name], 
+          [name]: {
+            ...prev[name],
             error: field.requiredMessage || 'This field is required',
-            touched: true 
+            touched: true
           },
         }));
         isAllValid = false;
@@ -261,7 +261,7 @@ export function useFormValidation<T extends Record<string, any>>(
   const handleSubmit = useCallback((onSubmit: (values: T) => Promise<void> | void) => {
     return async (e?: React.FormEvent) => {
       if (e) e.preventDefault();
-      
+
       // Mark all fields as touched
       setFields(prev => {
         const updated = { ...prev };

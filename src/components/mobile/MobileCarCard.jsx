@@ -1,6 +1,6 @@
 /**
  * MobileCarCard - Legacy wrapper for mobile vehicles
- * 
+ *
  * This component is deprecated. Please use VehicleCard with variant="horizontal" instead.
  */
 

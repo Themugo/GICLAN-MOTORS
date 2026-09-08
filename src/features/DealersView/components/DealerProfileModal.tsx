@@ -69,8 +69,8 @@ export const DealerProfileModal: React.FC<DealerProfileModalProps> = ({
   // Dealer Vehicles Filter
   const dealerVehicles = useMemo(() => {
     if (!dealer) return [];
-    return vehicles.filter((v) => 
-      v.sellerName.toLowerCase().includes(dealer.name.toLowerCase()) || 
+    return vehicles.filter((v) =>
+      v.sellerName.toLowerCase().includes(dealer.name.toLowerCase()) ||
       dealer.name.toLowerCase().includes(v.sellerName.toLowerCase())
     );
   }, [vehicles, dealer?.name]);
@@ -80,8 +80,8 @@ export const DealerProfileModal: React.FC<DealerProfileModalProps> = ({
     return dealerVehicles.filter((v) => {
       if (invSearch) {
         const q = invSearch.toLowerCase().trim();
-        const match = v.title.toLowerCase().includes(q) || 
-                      v.make.toLowerCase().includes(q) || 
+        const match = v.title.toLowerCase().includes(q) ||
+                      v.make.toLowerCase().includes(q) ||
                       v.model.toLowerCase().includes(q);
         if (!match) return false;
       }
@@ -222,14 +222,14 @@ export const DealerProfileModal: React.FC<DealerProfileModalProps> = ({
         {/* 1. DIGITAL SHOWROOM / PRIVATE SELLER HEADER BANNER */}
         {/* ========================================================================= */}
         <div className="relative rounded-3xl overflow-hidden border border-slate-200/80 shadow-md bg-[#1E3063]">
-          
+
           {/* Background Cover Image with Sophisticated Navy Gradient */}
           <div className="h-44 sm:h-56 w-full relative">
-            <LazyImage 
-              src={dealer.coverBanner || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1200'} 
-              alt={dealer.name} 
+            <LazyImage
+              src={dealer.coverBanner || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1200'}
+              alt={dealer.name}
               wrapperClassName="w-full h-full"
-              className="w-full h-full object-cover" 
+              className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1E3063] via-[#1E3063]/85 to-transparent" />
           </div>
@@ -237,15 +237,15 @@ export const DealerProfileModal: React.FC<DealerProfileModalProps> = ({
           {/* Header Content Overlay */}
           <div className="p-5 sm:p-6 -mt-16 sm:-mt-20 relative z-10 space-y-4">
             <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
-              
+
               {/* Logo & Identity */}
               <div className="flex items-start sm:items-end gap-4">
                 <div className="relative shrink-0">
-                  <LazyImage 
-                    src={dealer.logo} 
-                    alt={dealer.name} 
+                  <LazyImage
+                    src={dealer.logo}
+                    alt={dealer.name}
                     wrapperClassName="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white shadow-xl bg-white overflow-hidden"
-                    className="w-full h-full object-cover" 
+                    className="w-full h-full object-cover"
                   />
                   {isPrivateSeller ? (
                     <span className="absolute -top-2 -right-2 bg-emerald-600 text-white p-1 rounded-full shadow-md" title="Identity Verified Private Seller">
@@ -545,7 +545,7 @@ export const DealerProfileModal: React.FC<DealerProfileModalProps> = ({
         {/* TAB 1: INVENTORY SHOWCASE (PRIMARY CONTENT) */}
         {activeTab === 'inventory' && (
           <div id="showroom-inventory-anchor" className="space-y-5 animate-fade-in">
-            
+
             {/* Showroom Filter Controls */}
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -777,11 +777,11 @@ export const DealerProfileModal: React.FC<DealerProfileModalProps> = ({
         {/* TAB 3: TRUST & VERIFICATION MATRIX */}
         {activeTab === 'trust' && (
           <div className="space-y-6 animate-fade-in text-xs">
-            
+
             {/* Top Verification Header */}
             <div className={`p-5 rounded-2xl border space-y-3 ${
-              isPrivateSeller 
-                ? 'bg-[#1E3063] text-white border-slate-700' 
+              isPrivateSeller
+                ? 'bg-[#1E3063] text-white border-slate-700'
                 : 'bg-emerald-50 border-emerald-200 text-emerald-950'
             }`}>
               <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -1035,7 +1035,7 @@ export const DealerProfileModal: React.FC<DealerProfileModalProps> = ({
                 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=800',
                 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&q=80&w=800'
               ]).map((img, idx) => (
-                <div 
+                <div
                   key={idx}
                   onClick={() => setActiveGalleryImage(img)}
                   className="h-48 rounded-2xl overflow-hidden border border-slate-200 shadow-sm cursor-pointer group relative"
@@ -1081,7 +1081,7 @@ export const DealerProfileModal: React.FC<DealerProfileModalProps> = ({
                   wrapperClassName="w-full h-full opacity-60"
                   className="w-full h-full object-cover"
                 />
-                
+
                 <div className="absolute z-10 bg-[#1E3063] text-white p-4 rounded-2xl shadow-2xl border border-amber-400/50 text-center space-y-2 max-w-xs">
                   <MapPin className="w-8 h-8 text-amber-400 mx-auto animate-bounce" />
                   <p className="font-extrabold text-sm">{dealer.name}</p>

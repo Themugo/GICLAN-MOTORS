@@ -64,7 +64,7 @@ class GovernanceService {
     const [verification, certifications, recentDisputes, trustHistory, complianceAlerts] = await Promise.all([
       db.findOne('verification_applications', { entity_id: entityId }),
       db.find('certifications', { entity_id: entityId, status: 'active' }),
-      db.find('dispute_cases', { 
+      db.find('dispute_cases', {
         $or: [{ complainant_id: entityId }, { respondent_id: entityId }]
       }, { limit: 5, sort: { created_at: -1 } }),
       db.find('trust_score_history', { entity_id: entityId }, { limit: 10, sort: { calculated_at: -1 } }),
@@ -694,9 +694,9 @@ class GovernanceService {
    */
   async logAudit(auditData) {
     // Get previous checksum for chain integrity
-    const lastLog = await db.find('governance_audit_log', {}, { 
-      sort: { created_at: -1 }, 
-      limit: 1 
+    const lastLog = await db.find('governance_audit_log', {}, {
+      sort: { created_at: -1 },
+      limit: 1
     });
     const previousChecksum = lastLog[0]?.checksum || null;
 
@@ -733,11 +733,11 @@ class GovernanceService {
    */
   async getAuditLog(entityType, entityId, options = {}) {
     const query = { entity_type: entityType, entity_id: entityId };
-    
+
     if (options.actionType) {
       query.action_type = options.actionType;
     }
-    
+
     if (options.startDate && options.endDate) {
       query.created_at = { $gte: new Date(options.startDate), $lte: new Date(options.endDate) };
     }
@@ -781,11 +781,11 @@ class GovernanceService {
 
     return {
       totalEntities: entities.length,
-      verificationRate: verifications.length > 0 
-        ? Math.round((approvedVerifications / verifications.length) * 100) 
+      verificationRate: verifications.length > 0
+        ? Math.round((approvedVerifications / verifications.length) * 100)
         : 0,
-      disputeResolutionRate: disputes.length > 0 
-        ? Math.round((resolvedDisputes / disputes.length) * 100) 
+      disputeResolutionRate: disputes.length > 0
+        ? Math.round((resolvedDisputes / disputes.length) * 100)
         : 0,
       avgResolutionTimeDays: this.calculateAvgResolutionTime(disputes.filter(d => d.status === 'resolved')),
       trustDistribution,
@@ -832,11 +832,11 @@ class GovernanceService {
    */
   calculateIntegrityScore(entities) {
     if (entities.length === 0) return 0;
-    
+
     const avgTrust = entities.reduce((sum, e) => sum + e.trust_score, 0) / entities.length;
     const verifiedCount = entities.filter(e => e.verification_level !== 'basic').length;
     const violationRate = entities.reduce((sum, e) => sum + e.violation_count, 0) / entities.length;
-    
+
     return Math.round(
       (avgTrust * 0.5) +
       ((verifiedCount / entities.length) * 100 * 0.3) +

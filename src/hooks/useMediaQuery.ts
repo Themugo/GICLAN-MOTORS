@@ -17,12 +17,12 @@ export default function useMediaQuery(query: string): boolean {
     if (typeof window === 'undefined') return;
 
     const mq = window.matchMedia(query);
-    
+
     // Set initial value
     setMatches(mq.matches);
 
     const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
-    
+
     // Use addEventListener for modern browsers
     if (mq.addEventListener) {
       mq.addEventListener('change', handler);

@@ -96,9 +96,9 @@ const StatusSummaryCard: React.FC<{
   label: string;
 }> = ({ status, count, label }) => {
   const style = COMPLIANCE_STATUS_STYLES[status];
-  
+
   return (
-    <Card 
+    <Card
       className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${style.bgColor} border ${style.borderColor}`}
     >
       <div className="flex items-center gap-3">
@@ -133,7 +133,7 @@ const ComplianceItemCard: React.FC<{
   return (
     <Card className={`overflow-hidden border ${item.status === 'approved' ? 'border-emerald-200' : item.status === 'suspended' || item.status === 'rejected' ? 'border-red-200' : 'border-slate-200'}`}>
       {/* Header */}
-      <div 
+      <div
         className="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50"
         onClick={onToggleExpand}
       >
@@ -145,7 +145,7 @@ const ComplianceItemCard: React.FC<{
             <h4 className="font-bold text-[#1E3063] truncate">
               {session?.id || item.auctionId}
             </h4>
-            <Badge 
+            <Badge
               size="sm"
               className="text-[10px]"
               style={{ backgroundColor: statusStyle.bgColor, color: statusStyle.color, borderColor: statusStyle.borderColor }}
@@ -180,9 +180,9 @@ const ComplianceItemCard: React.FC<{
               <span className="font-bold text-[#1E3063]">{summary.percentage}%</span>
             </div>
             <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full rounded-full transition-all"
-                style={{ 
+                style={{
                   width: `${summary.percentage}%`,
                   backgroundColor: summary.requiredCompleted === summary.required ? '#10B981' : '#F59E0B'
                 }}
@@ -198,7 +198,7 @@ const ComplianceItemCard: React.FC<{
                 const catInfo = COMPLIANCE_CATEGORIES[category as ComplianceCategory];
                 const completed = checks.filter(c => c.isComplete).length;
                 return (
-                  <div 
+                  <div
                     key={category}
                     className="p-2 rounded-lg border border-slate-200 bg-white"
                   >
@@ -315,7 +315,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
 
     // Filter by category
     if (categoryFilter !== 'all') {
-      filtered = filtered.filter(i => 
+      filtered = filtered.filter(i =>
         i.checks.some(c => c.category === categoryFilter && !c.isComplete)
       );
     }
@@ -323,7 +323,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
     // Filter by search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(i => 
+      filtered = filtered.filter(i =>
         i.auctionId.toLowerCase().includes(query) ||
         i.organizerId.toLowerCase().includes(query)
       );
@@ -411,7 +411,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
           </div>
           <div className="space-y-2">
             {reminders.slice(0, 5).map(reminder => (
-              <div 
+              <div
                 key={reminder.id}
                 className={`flex items-center gap-3 p-2 rounded-lg ${
                   reminder.severity === 'critical' ? 'bg-red-100' : 'bg-amber-50'
@@ -422,7 +422,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
                   <span className="text-sm font-medium text-slate-800">{reminder.documentName}</span>
                   <span className="text-xs text-slate-500 ml-2">({reminder.documentType})</span>
                 </div>
-                <Badge 
+                <Badge
                   size="sm"
                   className={reminder.severity === 'critical' ? 'bg-red-200 text-red-800' : 'bg-amber-200 text-amber-800'}
                 >
@@ -510,7 +510,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
               {statusFilter === 'all' ? 'No Compliance Items' : `No ${COMPLIANCE_STATUS_STYLES[statusFilter].label} Items`}
             </h3>
             <p className="text-sm text-slate-500">
-              {statusFilter === 'all' 
+              {statusFilter === 'all'
                 ? 'Compliance items will appear here as auctions are created.'
                 : `There are no auctions with ${COMPLIANCE_STATUS_STYLES[statusFilter].label} status.`
               }

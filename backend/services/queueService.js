@@ -197,7 +197,7 @@ const startWorkers = (connection) => {
 // 📧 EMAIL QUEUE FUNCTIONS
 // =============================
 
-const queueEmail = async (to, subject, html, text, options = {}) => {
+export const queueEmail = async (to, subject, html, text, options = {}) => {
   try {
     if (!emailQueue) {
       logError("Email queue not initialized");
@@ -253,7 +253,7 @@ export const queueNotification = async (userId, title, message, type, data, chan
 // 📊 REPORT QUEUE FUNCTIONS
 // =============================
 
-const queueReport = async (reportType, filters, userId, options = {}) => {
+export const queueReport = async (reportType, filters, userId, options = {}) => {
   try {
     if (!reportQueue) {
       logError("Report queue not initialized");
@@ -281,7 +281,7 @@ const queueReport = async (reportType, filters, userId, options = {}) => {
 // 🎯 AUCTION QUEUE FUNCTIONS
 // =============================
 
-const queueAuctionEvent = async (eventType, carId, data, options = {}) => {
+export const queueAuctionEvent = async (eventType, carId, data, options = {}) => {
   try {
     if (!auctionQueue) {
       logError("Auction queue not initialized");
@@ -309,7 +309,7 @@ const queueAuctionEvent = async (eventType, carId, data, options = {}) => {
 // 🖼️ IMAGE PROCESSING QUEUE FUNCTIONS
 // =============================
 
-const queueImageProcessing = async (imageUrl, carId, operations, options = {}) => {
+export const queueImageProcessing = async (imageUrl, carId, operations, options = {}) => {
   try {
     if (!imageProcessingQueue) {
       logError("Image processing queue not initialized");

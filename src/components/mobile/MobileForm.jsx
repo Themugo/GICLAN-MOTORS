@@ -121,13 +121,13 @@ const MobileSelect = memo(forwardRef(function MobileSelect({
 }));
 
 // Checkbox
-function MobileCheckbox({ 
-  label, 
-  checked, 
-  onChange, 
+function MobileCheckbox({
+  label,
+  checked,
+  onChange,
   error,
   className = '',
-  ...props 
+  ...props
 }) {
   return (
     <label className={`mobile-form__checkbox ${checked ? 'mobile-form__checkbox--checked' : ''} ${className}`}>
@@ -149,7 +149,7 @@ function MobileCheckbox({
 }
 
 // Radio group
-function MobileRadioGroup({ 
+function MobileRadioGroup({
   label,
   options = [],
   value,
@@ -164,7 +164,7 @@ function MobileRadioGroup({
       )}
       <div className="mobile-form__radio-group">
         {options.map(opt => (
-          <div 
+          <div
             key={opt.value}
             className={`mobile-form__radio ${value === opt.value ? 'mobile-form__radio--selected' : ''}`}
             onClick={() => onChange?.(opt.value)}
@@ -200,15 +200,15 @@ function MobileRadioGroup({
 }
 
 // Toggle switch
-function MobileToggle({ 
-  label, 
-  checked, 
+function MobileToggle({
+  label,
+  checked,
   onChange,
   description,
   className = '',
 }) {
   return (
-    <label className={`mobile-form__checkbox ${className}`} style={{ 
+    <label className={`mobile-form__checkbox ${className}`} style={{
       background: checked ? 'var(--gold-100)' : 'var(--surface)',
       borderRadius: 'var(--mobile-radius-md)',
       padding: 'var(--mobile-space-4)',
@@ -230,7 +230,7 @@ function MobileToggle({
           </div>
         )}
       </div>
-      <div 
+      <div
         style={{
           width: 52,
           height: 32,
@@ -241,7 +241,7 @@ function MobileToggle({
           flexShrink: 0,
         }}
       >
-        <div 
+        <div
           style={{
             width: 28,
             height: 28,
@@ -308,7 +308,7 @@ function MobilePriceInput({ label, value, onChange, currency = 'KES', ...props }
           value={value}
           onChange={onChange}
           className="mobile-form__input"
-          style={{ 
+          style={{
             borderRadius: '0 var(--mobile-radius-md) var(--mobile-radius-md) 0',
             flex: 1,
           }}
@@ -347,7 +347,7 @@ function MobilePhoneInput({ label, value, onChange, ...props }) {
           onChange={onChange}
           className="mobile-form__input"
           placeholder="712 345 678"
-          style={{ 
+          style={{
             borderRadius: '0 var(--mobile-radius-md) var(--mobile-radius-md) 0',
             flex: 1,
           }}

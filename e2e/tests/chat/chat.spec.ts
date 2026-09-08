@@ -1,6 +1,6 @@
 /**
  * Chat E2E Tests
- * 
+ *
  * Tests for real-time chat workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -18,7 +18,7 @@ test.describe('Chat Workflow', () => {
     // Login as buyer
     const buyerCredentials = AuthHelper.getTestUser('buyer');
     buyerToken = await ApiHelper.loginApi(request, buyerCredentials.email, buyerCredentials.password);
-    
+
     // Login as dealer
     const dealerCredentials = AuthHelper.getTestUser('dealer');
     dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
@@ -152,7 +152,7 @@ test.describe('Chat Workflow', () => {
       await page.goto('/buyer/chats');
 
       const longMessage = 'This is a very long message that exceeds the normal length. '.repeat(20);
-      
+
       await page.click('button:has-text("New Chat")');
       await page.fill('input[name="message"]', longMessage);
       await page.click('button:has-text("Send")');
@@ -305,10 +305,10 @@ test.describe('Chat Workflow', () => {
       await page.goto('/buyer/chats');
 
       await page.click('button:has-text("New Chat")');
-      
+
       // Attach file
       await page.setInputFiles('input[type="file"]', 'test/fixtures/document.pdf');
-      
+
       await page.fill('input[name="message"]', 'Here is the document');
       await page.click('button:has-text("Send")');
 
@@ -323,10 +323,10 @@ test.describe('Chat Workflow', () => {
       await page.goto('/buyer/chats');
 
       await page.click('button:has-text("New Chat")');
-      
+
       // Attach image
       await page.setInputFiles('input[type="file"]', 'test/fixtures/car1.jpg');
-      
+
       await page.click('button:has-text("Send")');
 
       // Verify image displayed

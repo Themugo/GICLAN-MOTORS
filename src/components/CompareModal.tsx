@@ -87,7 +87,7 @@ export const CompareModal: React.FC<CompareModalProps> = ({
                         <X className="w-3.5 h-3.5" />
                       </button>
 
-                      <div 
+                      <div
                         className="h-32 rounded-lg overflow-hidden border border-slate-200 relative group cursor-pointer"
                         onClick={() => onQuickViewVehicle?.(v)}
                         title="View vehicle details"
@@ -100,7 +100,7 @@ export const CompareModal: React.FC<CompareModalProps> = ({
                         )}
                       </div>
 
-                      <div 
+                      <div
                         className="cursor-pointer group"
                         onClick={() => onQuickViewVehicle?.(v)}
                       >

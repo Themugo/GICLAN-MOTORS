@@ -205,7 +205,7 @@ export default function SellerGuide() {
                   <div key={index} className="card p-6">
                     <h3 className="font-display font-bold text-white text-lg mb-3">{item.title}</h3>
                     <p className="text-white/60 text-sm mb-4">{item.description}</p>
-                    
+
                     <div className="bg-gold/5 rounded-lg p-4 border border-gold/10">
                       <div className="flex items-center gap-2 mb-3">
                         <CheckCircle size={16} className="text-gold" />

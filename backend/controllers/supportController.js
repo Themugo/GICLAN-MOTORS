@@ -1,10 +1,6 @@
 import SupportTicket from "../models/SupportTicket.js";
 import User from "../models/User.js";
 import { logError } from '../infrastructure/logging/index.js';
-import { getSupabase } from "../utils/supabase.js";
-
-const isAdminRole = (role) => ["admin", "superadmin", "technical_support", "operations_manager"].includes(role);
-const canAccessTicket = (ticket, user) => isAdminRole(user?.role) || String(ticket.user?.id || ticket.user?._id || ticket.user) === String(user?.id || user?._id);
 
 // =============================
 // 🎫 CREATE SUPPORT TICKET
@@ -113,9 +109,6 @@ export const getTicket = async (req, res) => {
     if (!ticket) {
       return res.status(404).json({ success: false, message: "Ticket not found" });
     }
-    if (!canAccessTicket(ticket, req.user)) {
-      return res.status(403).json({ success: false, message: "Not authorized" });
-    }
 
     res.json({ success: true, ticket });
   } catch (error) {
@@ -136,24 +129,72 @@ export const addMessage = async (req, res) => {
     const userRole = req.user.role;
 
     const ticket = await SupportTicket.findById(ticketId);
-    if (!ticket) return res.status(404).json({ success: false, message: "Ticket not found" });
-    if (!canAccessTicket(ticket, req.user)) return res.status(403).json({ success: false, message: "Not authorized" });
-
-    const { data: message, error } = await getSupabase().rpc("kayad_append_support_message", {
-      p_ticket_id: ticketId,
-      p_sender_id: userId,
-      p_sender_role: userRole || "user",
-      p_content: content,
-      p_is_internal: isAdminRole(userRole) ? Boolean(isInternal) : false,
-      p_attachments: Array.isArray(attachments) ? attachments : [],
-    });
-    if (error) {
-      const code = error.message?.includes("SUPPORT_TICKET_NOT_FOUND") ? 404 : 400;
-      return res.status(code).json({ success: false, message: error.message || "Failed to add message" });
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: "Ticket not found" });
     }
 
-    const updatedTicket = await SupportTicket.findById(ticketId);
-    res.status(201).json({ success: true, message, ticket: updatedTicket });
+    // Update first response SLA if this is the first agent response
+    if (userRole !== "user" && !ticket.sla.firstResponseActual) {
+      ticket.sla.firstResponseActual = new Date();
+      ticket.sla.firstResponseMet = ticket.sla.firstResponseActual <= ticket.sla.firstResponseTarget;
+    }
+
+    ticket.messages.push({
+      sender: userId,
+      senderRole: userRole,
+      content,
+      isInternal: isInternal || false,
+      attachments: attachments || [],
+    });
+
+    // Update status based on message
+    if (userRole === "user") {
+      ticket.status = "waiting_on_internal";
+    } else {
+      ticket.status = "in_progress";
+    }
+
+    await ticket.save();
+
+    // Use aggregation to avoid N+1 query - fetch only the last message with populated sender
+    const updatedTicket = await SupportTicket.aggregate([
+      { $match: { _id: ticket._id } },
+      {
+        $project: {
+          user: 1,
+          status: 1,
+          priority: 1,
+          category: 1,
+          subject: 1,
+          description: 1,
+          createdAt: 1,
+          sla: 1,
+          assignedTo: 1,
+          escalatedTo: 1,
+          relatedEscrow: 1,
+          relatedCar: 1,
+          relatedPayment: 1,
+          satisfactionRating: 1,
+          resolutionNotes: 1,
+          closedAt: 1,
+          closedBy: 1,
+          messages: { $slice: ["$messages", -1] },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "messages.sender",
+          foreignField: "_id",
+          as: "messages.sender",
+        },
+      },
+      {
+        $unwind: "$messages.sender",
+      },
+    ]);
+
+    res.json({ success: true, ticket: updatedTicket[0] || ticket });
   } catch (error) {
     logError("Error adding message:", error);
     res.status(500).json({ success: false, message: "Failed to add message" });

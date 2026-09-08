@@ -49,8 +49,8 @@ export function Progress({
           )}
         </div>
       )}
-      
-      <div 
+
+      <div
         className={`
           w-full rounded-full overflow-hidden
           bg-[var(--surface)]
@@ -162,7 +162,7 @@ export function CircularProgress({
           style={{ transition: 'stroke-dashoffset 0.3s ease' }}
         />
       </svg>
-      
+
       {showValue && (
         <span className="absolute text-sm font-semibold text-[var(--text-primary)]">
           {Math.round(percentage)}%

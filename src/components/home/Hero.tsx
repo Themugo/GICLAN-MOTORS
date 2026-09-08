@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  ArrowRight, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   MapPin,
   Car,
   Tag,
@@ -63,7 +63,7 @@ export const Hero: FC = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-[#23EBFF] animate-pulse" />
               <span>Kenya's Premium Car Market</span>
             </div>
-            
+
             <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-black text-white uppercase tracking-tight leading-tight drop-shadow-xl">
               Drive Your Dream <span className="text-[#23EBFF] underline decoration-[#23EBFF]/40 decoration-wavy decoration-1 underline-offset-4">Today</span>
             </h1>
@@ -112,8 +112,8 @@ export const Hero: FC = () => {
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
                 className={`group relative h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                  idx === currentSlide 
-                    ? 'w-6 sm:w-8 bg-[#23EBFF] shadow-[0_0_8px_#23EBFF]' 
+                  idx === currentSlide
+                    ? 'w-6 sm:w-8 bg-[#23EBFF] shadow-[0_0_8px_#23EBFF]'
                     : 'w-2 bg-white/40 hover:bg-white/80 hover:w-3'
                 }`}
                 aria-label={`Go to slide ${idx + 1}: ${vehicle.title}`}
@@ -127,7 +127,7 @@ export const Hero: FC = () => {
           {/* Bottom Edge Content Banner for Active Vehicle */}
           <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5 lg:p-6 pb-9 sm:pb-10 lg:pb-12 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent z-10">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-end justify-between gap-3 text-white">
-              
+
               {/* Left Side: Navigation Action Tabs */}
               <div className="flex items-center gap-2 sm:gap-3 pb-0.5">
                 <button
@@ -153,7 +153,7 @@ export const Hero: FC = () => {
               </div>
 
               {/* Right Side: Consolidated Vehicle Details + Verified Price + CTA */}
-              <div 
+              <div
                 key={`vehicle-details-${activeVehicle.id}`}
                 className="w-full md:w-auto flex flex-col items-start md:items-end text-left md:text-right gap-1.5 transition-all duration-500 animate-fadeIn"
               >
@@ -170,7 +170,7 @@ export const Hero: FC = () => {
                 </div>
 
                 {/* Vehicle Title */}
-                <h3 
+                <h3
                   onClick={() => navigateTo('vehicle_detail', activeVehicle.id)}
                   className="text-xs sm:text-base lg:text-lg font-serif font-bold text-white hover:text-[#23EBFF] transition-colors cursor-pointer line-clamp-1 max-w-xl"
                 >

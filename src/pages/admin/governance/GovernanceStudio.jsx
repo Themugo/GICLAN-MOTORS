@@ -65,34 +65,34 @@ export default function GovernanceStudio() {
       setLoading(true);
       const { data: dashData } = await govApi.getGovernanceDashboard();
       setDashboard(dashData.data);
-      
+
       const { data: polData } = await govApi.getPolicies();
       setPolicies(polData.data);
-      
+
       const { data: changeData } = await govApi.getChangeRequests();
       setChanges(changeData.data);
-      
+
       const { data: riskData } = await govApi.getRisks();
       setRisks(riskData.data);
-      
+
       const { data: appData } = await govApi.getApprovalRules();
       setApprovals(appData.data);
-      
+
       const { data: featData } = await govApi.getFeatureLifecycles();
       setFeatures(featData.data);
-      
+
       const { data: stdData } = await govApi.getStandards();
       setStandards(stdData.data);
-      
+
       const { data: relData } = await govApi.getReleases();
       setReleases(relData.data);
-      
+
       const { data: decData } = await govApi.getDecisions();
       setDecisions(decData.data);
-      
+
       const { data: auditData } = await govApi.getAuditLogs();
       setAuditLogs(auditData.data);
-      
+
       const { data: compData } = await govApi.getComplianceDashboard();
       setCompliance(compData.data);
     } catch (error) {
@@ -604,7 +604,7 @@ export default function GovernanceStudio() {
       {helpResponse && (
         <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
           <p className="text-slate-700 mb-4">{helpResponse.answer}</p>
-          
+
           {helpResponse.steps && (
             <div className="mb-4">
               <h4 className="font-medium text-slate-800 mb-2">Steps:</h4>

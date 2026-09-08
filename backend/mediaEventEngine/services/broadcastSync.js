@@ -62,7 +62,7 @@ class BroadcastSync {
       clearInterval(auction.syncInterval);
     }
     this.activeAuctions.delete(auctionId);
-    
+
     logInfo('Stopped auction sync', { auctionId });
   }
 
@@ -81,7 +81,7 @@ class BroadcastSync {
 
     // Broadcast state update
     this.broadcastStateUpdate(auctionId);
-    
+
     incrementCounter('broadcast_state_update', { auctionId });
   }
 
@@ -103,10 +103,10 @@ class BroadcastSync {
 
     // Broadcast to public room
     io.to(`auction:${auctionId}:public`).emit('auctionStateUpdate', statePayload);
-    
+
     // Broadcast to bidder room
     io.to(`auction:${auctionId}:bidder`).emit('auctionStateUpdate', statePayload);
-    
+
     // Broadcast to organizer room
     io.to(`auction:${auctionId}:organizer`).emit('auctionStateUpdate', statePayload);
 

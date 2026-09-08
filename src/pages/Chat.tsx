@@ -48,7 +48,7 @@ export default function Chat() {
       try {
         const data = await chatAPI.inbox();
         // Transform API response to Conversation format
-        const convs: Conversation[] = data.chats.map((chat: any) => ({
+        const convs: Conversation[] = (data.chats || data || []).map((chat: any) => ({
           id: chat._id || chat.id,
           name: chat.otherUser?.name || chat.name || 'Unknown',
           avatar: chat.otherUser?.avatar,
@@ -78,12 +78,12 @@ export default function Chat() {
   // Load messages when conversation selected
   useEffect(() => {
     if (!selectedId) return;
-    
+
     const loadMessages = async () => {
       setLoadingMessages(true);
       try {
         const data = await chatAPI.messages(selectedId, { limit: 50 });
-        const msgs: Message[] = data.messages.map((msg: any) => ({
+        const msgs: Message[] = (data.messages || data || []).map((msg: any) => ({
           id: msg._id || msg.id,
           sender: msg.senderId === user?.id ? 'me' : 'them',
           text: msg.text || msg.content,
@@ -122,8 +122,8 @@ export default function Chat() {
       }]);
       setMessage('');
       // Update conversation last message
-      setConversations(prev => prev.map(c => 
-        c.id === selectedId 
+      setConversations(prev => prev.map(c =>
+        c.id === selectedId
           ? { ...c, lastMessage: message, unread: 0 }
           : c
       ));
@@ -147,9 +147,9 @@ export default function Chat() {
   };
 
   const formatMessageTime = (date: string) => {
-    return new Date(date).toLocaleTimeString('en-KE', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(date).toLocaleTimeString('en-KE', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 

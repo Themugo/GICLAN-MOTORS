@@ -21,16 +21,16 @@ class SearchOptimizer {
     // Timeout settings
     defaultTimeout: 5000, // 5 seconds
     maxTimeout: 10000,     // 10 seconds
-    
+
     // Result limits
     defaultLimit: 20,
     maxLimit: 100,
-    
+
     // Cache TTL
     suggestionTTL: 300,      // 5 minutes
     searchResultTTL: 60,     // 1 minute
     autocompleteTTL: 600,    // 10 minutes
-    
+
     // Performance
     enableCache: true,
     enableSuggestions: true,
@@ -72,7 +72,7 @@ class SearchOptimizer {
 
     // Build optimized query
     const searchParams = this.buildVehicleSearchParams(query, filters, sort, page, limit);
-    
+
     // Execute search
     const results = await this.executeVehicleSearch(searchParams);
 
@@ -197,7 +197,7 @@ class SearchOptimizer {
   async executeVehicleSearch(params) {
     // In production, this would execute against PostgreSQL with full-text search
     // or Elasticsearch/Solr for more advanced use cases
-    
+
     // Simulated results
     return {
       data: [],
@@ -218,7 +218,7 @@ class SearchOptimizer {
     }
 
     const cacheKey = `suggestions:${query.toLowerCase()}`;
-    
+
     if (this.SEARCH_CONFIG.enableCache) {
       const cached = await cacheGet(cacheKey);
       if (cached) return cached;
@@ -242,10 +242,10 @@ class SearchOptimizer {
 
     // Popular makes that match
     const popularMakes = ['Toyota', 'Nissan', 'Honda', 'Mercedes-Benz', 'BMW', 'Subaru', 'Mazda', 'Volkswagen'];
-    const matchingMakes = popularMakes.filter(m => 
+    const matchingMakes = popularMakes.filter(m =>
       m.toLowerCase().includes(queryLower)
     );
-    
+
     suggestions.push(...matchingMakes.slice(0, 2).map(make => ({
       type: 'make',
       text: make,
@@ -261,7 +261,7 @@ class SearchOptimizer {
 
     for (const [make, models] of Object.entries(popularModels)) {
       if (queryLower.includes(make.toLowerCase())) {
-        const matchingModels = models.filter(m => 
+        const matchingModels = models.filter(m =>
           m.toLowerCase().includes(queryLower.replace(make.toLowerCase(), ''))
         );
         suggestions.push(...matchingModels.slice(0, 2).map(model => ({
@@ -287,7 +287,7 @@ class SearchOptimizer {
    */
   async getAutocomplete(query, type = 'all') {
     const startTime = Date.now();
-    
+
     if (!query || query.length < 2) {
       return {
         suggestions: [],
@@ -309,7 +309,7 @@ class SearchOptimizer {
 
     // Calculate response time
     const responseTimeMs = Date.now() - startTime;
-    
+
     // Log if slow
     if (responseTimeMs > 100) {
       logWarn('Slow autocomplete', { query, responseTimeMs });
@@ -349,7 +349,7 @@ class SearchOptimizer {
 
     // In production, batch insert to search_logs table
     // Or push to a queue for async processing
-    
+
     return record;
   }
 
@@ -367,7 +367,7 @@ class SearchOptimizer {
 
     // Generate phonetic variations
     const phonetic = this.phoneticVariation(query);
-    
+
     // Generate common typos
     const typos = this.commonTypos(query);
 
@@ -400,7 +400,7 @@ class SearchOptimizer {
    */
   commonTypos(word) {
     const typos = [];
-    
+
     // Common letter swaps
     const swaps = [
       ['honda', 'honad'],
@@ -438,12 +438,12 @@ class SearchOptimizer {
     for (const vehicle of results) {
       // Count makes
       facets.makes[vehicle.make] = (facets.makes[vehicle.make] || 0) + 1;
-      
+
       // Count body types
       if (vehicle.body_type) {
         facets.bodyTypes[vehicle.body_type] = (facets.bodyTypes[vehicle.body_type] || 0) + 1;
       }
-      
+
       // Count fuel types
       if (vehicle.fuel_type) {
         facets.fuelTypes[vehicle.fuel_type] = (facets.fuelTypes[vehicle.fuel_type] || 0) + 1;
@@ -469,7 +469,7 @@ class SearchOptimizer {
       page: params.page,
       limit: params.limit,
     };
-    
+
     const hash = crypto.createHash('md5').update(JSON.stringify(normalized)).digest('hex');
     return `search:${type}:${hash}`;
   }
@@ -522,13 +522,13 @@ class SearchOptimizer {
    * Search auctions
    */
   async searchAuctions(params) {
-    const { 
-      query, 
+    const {
+      query,
       status = 'active',
       upcoming = false,
       ended = false,
-      page = 1, 
-      limit = 20 
+      page = 1,
+      limit = 20
     } = params;
 
     const results = {

@@ -15,7 +15,7 @@ class BusinessAnalyticsService {
   async getBusinessAnalytics(providerId, period = 'monthly') {
     let startDate = new Date();
     let comparisonStart;
-    
+
     if (period === 'weekly') {
       startDate.setDate(startDate.getDate() - 7);
       comparisonStart = new Date(startDate);
@@ -53,11 +53,11 @@ class BusinessAnalyticsService {
         completedJobs: completedJobs.length,
         cancelledJobs: currentBookings.filter(b => b.status === 'cancelled').length,
         grossRevenue: currentGross,
-        averageJobValue: completedJobs.length > 0 
-          ? currentGross / completedJobs.length 
+        averageJobValue: completedJobs.length > 0
+          ? currentGross / completedJobs.length
           : 0,
-        revenueGrowth: previousGross > 0 
-          ? Math.round(((currentGross - previousGross) / previousGross) * 100) 
+        revenueGrowth: previousGross > 0
+          ? Math.round(((currentGross - previousGross) / previousGross) * 100)
           : 0,
         jobGrowth: previousBookings.length > 0
           ? Math.round(((currentBookings.length - previousBookings.length) / previousBookings.length) * 100)
@@ -123,7 +123,7 @@ class BusinessAnalyticsService {
    */
   calculateAvgInspectionTime(bookings) {
     if (bookings.length === 0) return 0;
-    
+
     const totalMinutes = bookings.reduce((sum, b) => {
       const start = new Date(b.started_at).getTime();
       const end = new Date(b.completed_at).getTime();
@@ -181,7 +181,7 @@ class BusinessAnalyticsService {
   calculateJobTrend(current, previous) {
     const currentDaily = this.groupByDayOfWeek(current);
     const previousDaily = this.groupByDayOfWeek(previous);
-    
+
     return Object.keys(currentDaily).map(day => ({
       day,
       current: currentDaily[day] || 0,
@@ -236,10 +236,10 @@ class BusinessAnalyticsService {
    */
   calculateUtilizationRate(engineers, bookings) {
     if (engineers.length === 0) return 0;
-    
+
     const totalSlots = engineers.length * 8 * 5; // Assume 5 day week, 8 hours
     const bookedSlots = bookings.filter(b => b.status === 'closed').length * 1.5; // 1.5 hours per job
-    
+
     return totalSlots > 0 ? Math.round((bookedSlots / totalSlots) * 100) : 0;
   }
 
@@ -250,9 +250,9 @@ class BusinessAnalyticsService {
     const engineers = await db.find('inspection_engineers', {
       provider_id: providerId,
       is_active: true
-    }, { 
+    }, {
       sort: { average_rating: -1 },
-      limit 
+      limit
     });
 
     return engineers.map(e => ({
@@ -275,8 +275,8 @@ class BusinessAnalyticsService {
         engineerId: e.id,
         name: `${e.first_name} ${e.last_name}`,
         jobsAssigned: assigned,
-        percentage: engineers.length > 0 
-          ? Math.round((assigned / bookings.length) * 100) 
+        percentage: engineers.length > 0
+          ? Math.round((assigned / bookings.length) * 100)
           : 0,
       };
     });
@@ -313,9 +313,9 @@ class BusinessAnalyticsService {
       provider_id: providerId,
       is_published: true
     });
-    
+
     if (reviews.length === 0) return 0;
-    
+
     const total = reviews.reduce((sum, r) => sum + r.overall_rating, 0);
     return Math.round((total / reviews.length) * 10) / 10;
   }
@@ -328,7 +328,7 @@ class BusinessAnalyticsService {
       provider_id: providerId,
       is_active: true
     });
-    
+
     const groups = {};
     customers.forEach(c => {
       const type = c.customer_type || 'other';
@@ -346,9 +346,9 @@ class BusinessAnalyticsService {
     const reports = await db.find('inspection_reports', {
       provider_id: providerId
     });
-    
+
     if (reports.length === 0) return 0;
-    
+
     const total = reports.reduce((sum, r) => sum + (r.quality_score || 100), 0);
     return Math.round((total / reports.length) * 10) / 10;
   }

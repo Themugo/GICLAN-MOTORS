@@ -68,7 +68,7 @@ function generateHistoryEntries(risks: RiskItem[]): HistoryEntry[] {
     }
   });
 
-  return entries.sort((a, b) => 
+  return entries.sort((a, b) =>
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 }
@@ -140,7 +140,7 @@ export const RiskHistory: React.FC<RiskHistoryProps> = ({
   // Group by date
   const groupedEntries = useMemo(() => {
     const groups: Record<string, HistoryEntry[]> = {};
-    
+
     historyEntries.forEach(entry => {
       const date = new Date(entry.timestamp).toLocaleDateString('en-US', {
         weekday: 'long',
@@ -162,7 +162,7 @@ export const RiskHistory: React.FC<RiskHistoryProps> = ({
     const created = risks.filter(r => r.status === 'active').length;
     const resolved = risks.filter(r => r.resolvedAt).length;
     const dismissed = risks.filter(r => r.status === 'dismissed').length;
-    
+
     return { created, resolved, dismissed, total: risks.length };
   }, [risks]);
 
@@ -256,11 +256,11 @@ export const RiskHistory: React.FC<RiskHistoryProps> = ({
               {entries.map((entry) => {
                 const actionStyle = ACTION_STYLES[entry.action];
                 const severityStyle = SEVERITY_STYLES[entry.severity as keyof typeof SEVERITY_STYLES];
-                
+
                 return (
                   <div key={entry.id} className="relative">
                     {/* Timeline dot */}
-                    <div 
+                    <div
                       className="absolute -left-[29px] w-5 h-5 rounded-full flex items-center justify-center"
                       style={{ backgroundColor: actionStyle.bgColor, color: actionStyle.color }}
                     >
@@ -272,17 +272,17 @@ export const RiskHistory: React.FC<RiskHistoryProps> = ({
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge 
+                            <Badge
                               size="sm"
-                              style={{ 
-                                backgroundColor: severityStyle.bgColor, 
+                              style={{
+                                backgroundColor: severityStyle.bgColor,
                                 color: severityStyle.color,
                                 borderColor: severityStyle.borderColor
                               }}
                             >
                               {severityStyle.label}
                             </Badge>
-                            <span 
+                            <span
                               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
                               style={{ backgroundColor: actionStyle.bgColor, color: actionStyle.color }}
                             >
@@ -292,7 +292,7 @@ export const RiskHistory: React.FC<RiskHistoryProps> = ({
                           </div>
                           <h4 className="font-bold text-slate-800">{entry.riskTitle}</h4>
                           <p className="text-xs text-slate-500 font-mono mt-0.5">{entry.riskCode}</p>
-                          
+
                           {/* Metadata */}
                           <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                             <span className="flex items-center gap-1">

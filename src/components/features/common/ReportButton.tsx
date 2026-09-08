@@ -40,12 +40,12 @@ export default function ReportButton({ targetType, targetId, onReported }: Repor
 
   const handleSubmit = async () => {
     if (!reason) return;
-    
+
     setSubmitting(true);
     try {
       // API call would go here
       // await reportAPI.submit({ targetType, targetId, category: reason, description });
-      
+
       // Simulate success
       await new Promise(resolve => setTimeout(resolve, 1000));
       setDone(true);

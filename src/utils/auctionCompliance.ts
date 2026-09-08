@@ -9,7 +9,7 @@ import type { AuctionSession, Vehicle } from '../types';
 // Compliance Types & Interfaces
 // ============================================================
 
-export type ComplianceStatus = 
+export type ComplianceStatus =
   | 'pending'
   | 'under_review'
   | 'approved'
@@ -18,7 +18,7 @@ export type ComplianceStatus =
   | 'rejected'
   | 'expired';
 
-export type ComplianceCategory = 
+export type ComplianceCategory =
   | 'organization'
   | 'vehicle'
   | 'auction'
@@ -105,7 +105,7 @@ export interface ComplianceAuditEntry {
   evidence?: string[];
 }
 
-export type ComplianceAuditAction = 
+export type ComplianceAuditAction =
   | 'created'
   | 'submitted'
   | 'under_review'
@@ -634,12 +634,12 @@ export function validateCompliance(
 
   // Check if payment recipient is clearly identified (never allow auction without this)
   const paymentRecipientConfigured = session.organizer?.name && session.organizer?.paymentDetails;
-  
+
   // Check if inspection is available
   const inspectionAvailable = vehicle.inspectionPassed || vehicle.inspectionBookingAvailable;
 
   const blockingIssues: string[] = [];
-  
+
   if (!paymentRecipientConfigured) {
     blockingIssues.push('Payment recipient must be configured before publishing');
   }
@@ -764,11 +764,11 @@ export function getChecksByCategory(
   checks: ComplianceCheck[]
 ): Record<ComplianceCategory, ComplianceCheck[]> {
   const grouped: Record<ComplianceCategory, ComplianceCheck[]> = {} as Record<ComplianceCategory, ComplianceCheck[]>;
-  
+
   for (const category of Object.keys(COMPLIANCE_CATEGORIES) as ComplianceCategory[]) {
     grouped[category] = checks.filter(c => c.category === category);
   }
-  
+
   return grouped;
 }
 

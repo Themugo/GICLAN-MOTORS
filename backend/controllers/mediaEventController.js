@@ -3,9 +3,9 @@
 // ============================================================
 
 import asyncHandler from '../middleware/asyncHandler.js';
-import { 
-  getCompleteDashboard, 
-  getDashboardOverview, 
+import {
+  getCompleteDashboard,
+  getDashboardOverview,
   getChannelStatus,
   getEventTimeline,
   getReplayStatus,
@@ -14,7 +14,7 @@ import {
   getAdapterStatus,
   getFailoverStatus,
 } from '../mediaEventEngine/monitoring/index.js';
-import { 
+import {
   mediaEventEngine,
   broadcastSync,
   commentaryService,
@@ -133,12 +133,12 @@ export const getMetrics = asyncHandler(async (req, res) => {
 export const getAuctionReplay = asyncHandler(async (req, res) => {
   const { auctionId } = req.params;
   const replay = replayEngine.getTimeline(auctionId);
-  
+
   if (!replay) {
     response.notFound(res, 'Replay not found for this auction');
     return;
   }
-  
+
   response.success(res, replay);
 });
 
@@ -170,12 +170,12 @@ export const getAuctionAudit = asyncHandler(async (req, res) => {
  */
 export const publishEvent = asyncHandler(async (req, res) => {
   const { type, auctionId, vehicleId, payload, userId } = req.body;
-  
+
   if (!type || !auctionId) {
     response.badRequest(res, 'Event type and auctionId are required');
     return;
   }
-  
+
   const result = await mediaEventEngine.publish({
     type,
     auctionId,
@@ -183,7 +183,7 @@ export const publishEvent = asyncHandler(async (req, res) => {
     payload,
     userId,
   });
-  
+
   if (result.success) {
     response.created(res, result);
   } else {
@@ -197,17 +197,17 @@ export const publishEvent = asyncHandler(async (req, res) => {
  */
 export const sendCommentary = asyncHandler(async (req, res) => {
   const { auctionId, text, announcerName } = req.body;
-  
+
   if (!auctionId || !text) {
     response.badRequest(res, 'AuctionId and text are required');
     return;
   }
-  
+
   const result = await commentaryService.sendManualCommentary(auctionId, text, {
     announcerName,
     source: 'manual',
   });
-  
+
   response.success(res, result);
 });
 
@@ -220,7 +220,7 @@ export const getSupportedEvents = asyncHandler(async (req, res) => {
     type,
     displayName: type.replace(/\./g, ' - ').replace(/\b\w/g, l => l.toUpperCase()),
   }));
-  
+
   response.success(res, { events });
 });
 

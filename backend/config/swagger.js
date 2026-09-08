@@ -17,17 +17,17 @@ const options = {
       },
     },
     servers: [
-      { 
-        url: "/api/v1", 
-        description: "API v1 - Current stable version" 
+      {
+        url: "/api/v1",
+        description: "API v1 - Current stable version"
       },
-      { 
-        url: "https://api.kayad.co.ke/api/v1", 
-        description: "Production API v1" 
+      {
+        url: "https://api.kayad.co.ke/api/v1",
+        description: "Production API v1"
       },
-      { 
-        url: "https://staging-api.kayad.co.ke/api/v1", 
-        description: "Staging API v1" 
+      {
+        url: "https://staging-api.kayad.co.ke/api/v1",
+        description: "Staging API v1"
       },
     ],
     components: {

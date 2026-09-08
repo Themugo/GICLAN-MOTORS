@@ -39,7 +39,7 @@ export const FilterSidebar: FC = () => {
   const bodyStyles: BodyStyle[] = ['SUV', 'Sedan', 'Coupe', 'Truck', 'Convertible', 'Hatchback'];
   const transmissions: TransmissionType[] = ['Automatic', 'Manual', 'Dual-Clutch', 'CVT'];
   const cities = ['Nairobi', 'Mombasa', 'Nakuru', 'Eldoret', 'Kisumu'];
-  
+
   const fuelTypes: { id: FuelType; label: string }[] = [
     { id: 'Gasoline', label: 'Petrol' },
     { id: 'Diesel', label: 'Diesel' },
@@ -297,7 +297,7 @@ export const FilterSidebar: FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-xs sm:text-sm font-bold text-[#2E4080] font-serif">Max Budget</span>
             <span className="font-mono font-bold text-xs text-[#2E4080] bg-[#23EBFF]/20 border border-[#23EBFF]/40 px-2 py-0.5 rounded-lg">
-              {filters.maxPrice < 1000000 
+              {filters.maxPrice < 1000000
                 ? `KES ${(filters.maxPrice / 1000).toLocaleString()}K`
                 : `KES ${(filters.maxPrice / 1000000).toFixed(1)}M`}
             </span>

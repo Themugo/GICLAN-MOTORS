@@ -28,9 +28,9 @@ export const DashboardColors = {
 export function getDashboardOverview() {
   const health = getSystemHealth();
   const metrics = getSystemMetrics();
-  
-  const activeAuctions = mediaEventEngine.metrics.eventsProcessed > 0 
-    ? Math.floor(mediaEventEngine.metrics.eventsProcessed / 100) 
+
+  const activeAuctions = mediaEventEngine.metrics.eventsProcessed > 0
+    ? Math.floor(mediaEventEngine.metrics.eventsProcessed / 100)
     : 0;
 
   return {
@@ -55,12 +55,12 @@ function calculateDeliverySuccess(channelMetrics) {
   const byChannel = channelMetrics.byChannel || {};
   let totalDelivered = 0;
   let totalFailed = 0;
-  
+
   for (const channel of Object.values(byChannel)) {
     totalDelivered += channel.delivered || 0;
     totalFailed += channel.failed || 0;
   }
-  
+
   const total = totalDelivered + totalFailed;
   return total > 0 ? ((totalDelivered / total) * 100).toFixed(2) : 100;
 }
@@ -71,7 +71,7 @@ function calculateDeliverySuccess(channelMetrics) {
 export function getChannelStatus() {
   const metrics = getSystemMetrics();
   const channelMetrics = metrics.channelManager?.byChannel || {};
-  
+
   return Object.entries(channelMetrics).map(([channel, data]) => ({
     name: formatChannelName(channel),
     delivered: data.delivered || 0,
@@ -114,7 +114,7 @@ function getChannelHealthStatus(failed) {
 export function getEventTimeline(limit = 20) {
   const metrics = getSystemMetrics();
   const byType = metrics.mediaEventEngine?.byType || {};
-  
+
   return Object.entries(byType)
     .map(([type, data]) => ({
       eventType: type,
@@ -143,7 +143,7 @@ function formatEventType(type) {
 export function getReplayStatus() {
   const metrics = getSystemMetrics();
   const replayMetrics = metrics.replayEngine || {};
-  
+
   return {
     activeRecordings: replayMetrics.activeRecordings || 0,
     totalEventsRecorded: replayMetrics.totalEventsRecorded || 0,
@@ -158,7 +158,7 @@ export function getReplayStatus() {
 export function getCommentaryStatus() {
   const metrics = getSystemMetrics();
   const commentaryMetrics = metrics.commentaryService || {};
-  
+
   return {
     activeAuctions: commentaryMetrics.activeAuctions || 0,
     totalComments: commentaryMetrics.totalComments || 0,
@@ -172,7 +172,7 @@ export function getCommentaryStatus() {
 export function getAuditSummary() {
   const metrics = getSystemMetrics();
   const auditMetrics = metrics.auditLogger || {};
-  
+
   return {
     logsCreated: auditMetrics.logsCreated || 0,
     logsPersisted: auditMetrics.logsPersisted || 0,
@@ -187,7 +187,7 @@ export function getAuditSummary() {
 export function getAdapterStatus() {
   const health = getSystemHealth();
   const adapters = health.outputAdapterManager?.adapters || {};
-  
+
   return Object.entries(adapters).map(([name, data]) => ({
     name: formatChannelName(name),
     enabled: data.enabled,
@@ -203,7 +203,7 @@ export function getAdapterStatus() {
 export function getFailoverStatus() {
   const health = getSystemHealth();
   const failover = health.failoverService || {};
-  
+
   return {
     totalServices: failover.totalServices || 0,
     healthyServices: failover.healthyServices || 0,
@@ -235,7 +235,7 @@ export function getCompleteDashboard() {
  */
 export function getStatusIndicator(status) {
   const colors = DashboardColors;
-  
+
   const statusMap = {
     healthy: { color: colors.emerald, label: 'Healthy', icon: '✓' },
     degraded: { color: colors.warning, label: 'Degraded', icon: '⚠' },
@@ -243,7 +243,7 @@ export function getStatusIndicator(status) {
     recording: { color: colors.info, label: 'Recording', icon: '●' },
     idle: { color: colors.softBlue, label: 'Idle', icon: '○' },
   };
-  
+
   return statusMap[status] || statusMap.idle;
 }
 

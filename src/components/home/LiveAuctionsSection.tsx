@@ -20,8 +20,8 @@ export const LiveAuctionsSection: FC<LiveAuctionsSectionProps> = ({ isLoading: p
   const auctionVehicles = vehicles.filter(v => v.listingType === 'auction' || v.listingType === 'both');
 
   const featuredAuction = auctionVehicles[0] || vehicles[0];
-  const additionalAuctions = auctionVehicles.slice(1, 4).length === 3 
-    ? auctionVehicles.slice(1, 4) 
+  const additionalAuctions = auctionVehicles.slice(1, 4).length === 3
+    ? auctionVehicles.slice(1, 4)
     : vehicles.slice(1, 4);
 
   // Timer simulation
@@ -42,7 +42,7 @@ export const LiveAuctionsSection: FC<LiveAuctionsSectionProps> = ({ isLoading: p
   return (
     <section className="py-14 sm:py-20 bg-[#FCF9F4] text-[#2E4080] border-b border-[#E8E1D5] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 pb-6 border-b border-[#E2D8C7]">
           <div className="space-y-2">
@@ -69,7 +69,7 @@ export const LiveAuctionsSection: FC<LiveAuctionsSectionProps> = ({ isLoading: p
 
         {/* Featured + 3 Additional Auctions Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Highlighted Featured Auction (Left - 5 Cols) */}
           {featuredAuction && (
             <div

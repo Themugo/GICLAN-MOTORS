@@ -1,8 +1,8 @@
 # Stitch Design Migration Report
 
-**Date:** 2026-07-23  
-**Source:** `/workspace/stitch_package/` (Stitch Visual Design Specification)  
-**Target:** KAYAD React Frontend  
+**Date:** 2026-07-23
+**Source:** `/workspace/stitch_package/` (Stitch Visual Design Specification)
+**Target:** KAYAD React Frontend
 **Scope:** UI Layer Only
 
 ---

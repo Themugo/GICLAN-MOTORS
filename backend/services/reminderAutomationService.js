@@ -114,7 +114,7 @@ export const checkAndCreateReminders = async () => {
  */
 const checkUnrespondedInquiries = async () => {
   const reminders = [];
-  
+
   try {
     // Find leads with no messages, created more than 2 hours ago
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
@@ -128,7 +128,7 @@ const checkUnrespondedInquiries = async () => {
     for (const lead of leads) {
       // Check if lead has any engagement
       if (lead.totalMessages && lead.totalMessages > 0) continue;
-      
+
       // Check if we already sent a reminder
       const existing = await findAll("reminders", {
         filters: {
@@ -137,7 +137,7 @@ const checkUnrespondedInquiries = async () => {
           createdAt: { $gte: twoHoursAgo },
         },
       });
-      
+
       if (existing.length > 0) continue;
 
       // Create reminder
@@ -149,10 +149,10 @@ const checkUnrespondedInquiries = async () => {
         urgency: 'high',
         data: { buyerId: lead.buyer },
       });
-      
+
       if (reminder) {
         reminders.push(reminder);
-        
+
         // Send immediate notification
         await sendReminderNotification(reminder, lead.dealer);
       }
@@ -169,7 +169,7 @@ const checkUnrespondedInquiries = async () => {
  */
 const checkPendingInspections = async () => {
   const reminders = [];
-  
+
   try {
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const inspections = await findAll("inspections", {
@@ -187,7 +187,7 @@ const checkPendingInspections = async () => {
           createdAt: { $gte: dayAgo },
         },
       });
-      
+
       if (existing.length > 0) continue;
 
       const reminder = await createReminder({
@@ -198,7 +198,7 @@ const checkPendingInspections = async () => {
         urgency: 'high',
         data: { buyerId: inspection.buyer },
       });
-      
+
       if (reminder) {
         reminders.push(reminder);
         await sendReminderNotification(reminder, reminder.userId);
@@ -216,11 +216,11 @@ const checkPendingInspections = async () => {
  */
 const checkEndingAuctions = async () => {
   const reminders = [];
-  
+
   try {
     const oneHour = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const sixHours = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
-    
+
     const auctions = await findAll("cars", {
       filters: {
         deletedAt: null,
@@ -237,7 +237,7 @@ const checkEndingAuctions = async () => {
           createdAt: { $gte: oneHour },
         },
       });
-      
+
       if (existing.length > 0) continue;
 
       const timeLeft = Math.round((new Date(auction.auctionEnd) - Date.now()) / (60 * 60 * 1000));
@@ -249,7 +249,7 @@ const checkEndingAuctions = async () => {
         urgency: 'medium',
         data: { currentBids: auction.currentBids },
       });
-      
+
       if (reminder) {
         reminders.push(reminder);
         await sendReminderNotification(reminder, reminder.userId);
@@ -267,7 +267,7 @@ const checkEndingAuctions = async () => {
  */
 const checkPendingEscrows = async () => {
   const reminders = [];
-  
+
   try {
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const escrows = await findAll("escrows", {
@@ -285,7 +285,7 @@ const checkPendingEscrows = async () => {
           createdAt: { $gte: dayAgo },
         },
       });
-      
+
       if (existing.length > 0) continue;
 
       const reminder = await createReminder({
@@ -296,7 +296,7 @@ const checkPendingEscrows = async () => {
         urgency: 'high',
         data: { amount: escrow.amount },
       });
-      
+
       if (reminder) {
         reminders.push(reminder);
         await sendReminderNotification(reminder, escrow.buyer);
@@ -404,15 +404,15 @@ const sendReminderNotification = async (reminder, userId) => {
 const generateReminderEmailHtml = (reminder) => {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-      <div style="background: ${reminder.urgency === 'high' ? '#fef2f2' : '#fef9c3'}; 
-                  border: 1px solid ${reminder.urgency === 'high' ? '#ef4444' : '#f59e0b'}; 
+      <div style="background: ${reminder.urgency === 'high' ? '#fef2f2' : '#fef9c3'};
+                  border: 1px solid ${reminder.urgency === 'high' ? '#ef4444' : '#f59e0b'};
                   border-radius: 8px; padding: 20px;">
         <h2 style="color: ${reminder.urgency === 'high' ? '#dc2626' : '#d97706'}; margin-top: 0;">
           ${REMINDER_TYPES[reminder.type]?.name || reminder.type}
         </h2>
         <p style="font-size: 16px; color: #374151;">${reminder.message}</p>
-        <a href="https://www.kayad.space/dashboard" 
-           style="display: inline-block; background: #0A1628; color: #fff; padding: 12px 24px; 
+        <a href="https://www.kayad.space/dashboard"
+           style="display: inline-block; background: #0A1628; color: #fff; padding: 12px 24px;
                   border-radius: 6px; text-decoration: none; margin-top: 16px;">
           Take Action
         </a>
@@ -434,7 +434,7 @@ const generateReminderEmailHtml = (reminder) => {
 export const getUserReminders = async (userId, options = {}) => {
   try {
     const { unreadOnly = false, limit = 20 } = options;
-    
+
     const filters = { user: userId };
     if (unreadOnly) {
       filters.read = false;

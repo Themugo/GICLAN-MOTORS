@@ -43,7 +43,7 @@ export const createEscrow = async (data) => {
   }
 };
 
-const fundEscrow = async (escrowId, { idempotencyKey, paymentId } = {}) => {
+export const fundEscrow = async (escrowId, { idempotencyKey, paymentId } = {}) => {
   const result = await atomicTransitionEscrow({
     escrowId, nextStatus: STATES.FUNDED, actorId: null, role: "system",
     idempotencyKey,

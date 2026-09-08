@@ -27,10 +27,10 @@ function MessageRow({ msg, isMine, showDate, formatDate, formatTime }) {
           <div className={`chat-bubble ${isMine ? 'mine' : 'theirs'}`}>
             {msg.message || msg.content || msg.text}
             {msg.isDeliveryConfirmation && (
-              <div style={{ 
-                marginTop: 8, 
-                padding: '8px 10px', 
-                background: 'rgba(34, 197, 94, 0.1)', 
+              <div style={{
+                marginTop: 8,
+                padding: '8px 10px',
+                background: 'rgba(34, 197, 94, 0.1)',
                 borderRadius: 6,
                 border: '1px solid rgba(34, 197, 94, 0.2)',
                 fontSize: 11,
@@ -43,13 +43,13 @@ function MessageRow({ msg, isMine, showDate, formatDate, formatTime }) {
                 </div>
                 {!msg.confirmed && (
                   <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
-                    <button 
+                    <button
                       className="btn btn-sm btn-gold"
                       onClick={() => msg.onConfirmDelivery?.(msg._id, true)}
                     >
                       ✓ Confirm Received
                     </button>
-                    <button 
+                    <button
                       className="btn btn-sm btn-outline"
                       onClick={() => msg.onConfirmDelivery?.(msg._id, false)}
                     >
@@ -126,7 +126,7 @@ export default function ChatPage() {
     const handleMessageDelivered = (data) => {
       if (!mountedRef.current) return;
       if (data.chatId === active) {
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m._id === data.messageId ? { ...m, status: 'delivered' } : m
         ));
       }
@@ -135,7 +135,7 @@ export default function ChatPage() {
     const handleMessageRead = (data) => {
       if (!mountedRef.current) return;
       if (data.chatId === active) {
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m._id === data.messageId ? { ...m, seen: true, status: 'read' } : m
         ));
       }
@@ -161,7 +161,7 @@ export default function ChatPage() {
     const handleDeliveryConfirmed = (data) => {
       if (!mountedRef.current) return;
       if (data.chatId === active) {
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m._id === data.messageId ? { ...m, confirmed: true, confirmedBy: data.confirmedBy } : m
         ));
         toast.success(`✓ Delivery confirmed by ${data.confirmedBy}`);
@@ -202,7 +202,7 @@ export default function ChatPage() {
   const handleConfirmDelivery = useCallback(async (messageId, confirmed) => {
     const currentChat = chats.find(c => c._id === active);
     const escrowId = currentChat?.escrowId;
-    
+
     if (!escrowId) {
       toast.error('No escrow associated with this chat');
       return;
@@ -211,7 +211,7 @@ export default function ChatPage() {
     try {
       if (confirmed) {
         await chatAPI.confirmDelivery(active, { messageId, escrowId });
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           m._id === messageId ? { ...m, confirmed: true, confirmedBy: user?.role === 'dealer' ? 'seller' : 'buyer' } : m
         ));
         toast.success('✓ Delivery confirmed!');

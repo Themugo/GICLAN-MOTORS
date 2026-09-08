@@ -49,7 +49,7 @@ export default function Favorites({ setPage, viewCar }: FavoritesProps) {
   const togglePriceAlert = async (id: string | number, currentState: boolean) => {
     try {
       await favoritesAPI.setPriceAlert(String(id), !currentState);
-      setFavorites(prev => prev.map(f => 
+      setFavorites(prev => prev.map(f =>
         f.id === id ? { ...f, priceAlert: !currentState } : f
       ));
       toast(!currentState ? 'Price alert enabled' : 'Price alert disabled', 'success');
@@ -64,7 +64,7 @@ export default function Favorites({ setPage, viewCar }: FavoritesProps) {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -132,13 +132,13 @@ export default function Favorites({ setPage, viewCar }: FavoritesProps) {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-4">
           {favorites.map(favorite => (
-            <div 
+            <div
               key={favorite.id}
               className="bg-white rounded-2xl border border-cream-200 overflow-hidden hover:shadow-lg hover:border-gold-500/30 transition-all duration-200"
             >
               <div className="flex flex-col sm:flex-row">
                 {/* Image */}
-                <div 
+                <div
                   className="sm:w-64 h-48 sm:h-auto flex-shrink-0 cursor-pointer group"
                   onClick={() => viewCar(favorite)}
                 >
@@ -156,7 +156,7 @@ export default function Favorites({ setPage, viewCar }: FavoritesProps) {
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <p className="section-label mb-1">{favorite.make}</p>
-                      <h3 
+                      <h3
                         className="font-serif text-xl text-charcoal-900 font-semibold cursor-pointer hover:text-gold-600 transition-colors"
                         onClick={() => viewCar(favorite)}
                       >
@@ -202,8 +202,8 @@ export default function Favorites({ setPage, viewCar }: FavoritesProps) {
                       <button
                         onClick={() => togglePriceAlert(favorite.id, favorite.priceAlert)}
                         className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                          favorite.priceAlert 
-                            ? 'text-emerald-600' 
+                          favorite.priceAlert
+                            ? 'text-emerald-600'
                             : 'text-warm-400 hover:text-warm-600'
                         }`}
                       >

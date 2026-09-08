@@ -43,7 +43,7 @@ export default function HeroCarousel({ onViewCar }: HeroCarouselProps) {
         const data = await carsAPI.list({ page: 1, limit: 20, status: 'active' });
         const fetchedCars = data?.cars || data?.data || [];
         // Filter for promoted or top viewed
-        const featured = fetchedCars.filter((car: FeaturedCar) => 
+        const featured = fetchedCars.filter((car: FeaturedCar) =>
           car.isPromoted || (car.views && car.views > 100)
         ).slice(0, 5);
         setCars(featured.length > 0 ? featured : fetchedCars.slice(0, 5));
@@ -115,7 +115,7 @@ export default function HeroCarousel({ onViewCar }: HeroCarouselProps) {
   };
 
   return (
-    <div 
+    <div
       className="relative w-full overflow-hidden rounded-2xl"
       onMouseEnter={pauseAutoplay}
       onMouseLeave={resumeAutoplay}
@@ -123,7 +123,7 @@ export default function HeroCarousel({ onViewCar }: HeroCarouselProps) {
       onTouchEnd={handleTouchEnd}
     >
       {/* Slides Container */}
-      <div 
+      <div
         className="flex transition-transform duration-500 ease-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
@@ -140,7 +140,7 @@ export default function HeroCarousel({ onViewCar }: HeroCarouselProps) {
                 className="w-full h-full object-cover"
                 loading={idx === 0 ? 'eager' : 'lazy'}
               />
-              
+
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-charcoal-950/90 via-charcoal-950/50 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950/80 via-transparent to-transparent" />
@@ -195,7 +195,7 @@ export default function HeroCarousel({ onViewCar }: HeroCarouselProps) {
                           {formatKES(car.currentBid || car.price)}
                         </p>
                       </div>
-                      
+
                       <div className="hidden sm:flex items-center gap-4 text-white/50 text-xs">
                         {car.views && (
                           <span className="flex items-center gap-1">
@@ -251,8 +251,8 @@ export default function HeroCarousel({ onViewCar }: HeroCarouselProps) {
               key={idx}
               onClick={(e) => { e.stopPropagation(); goToSlide(idx); }}
               className={`w-2 h-2 rounded-full transition-all ${
-                idx === currentIndex 
-                  ? 'w-6 bg-gold-400' 
+                idx === currentIndex
+                  ? 'w-6 bg-gold-400'
                   : 'bg-white/40 hover:bg-white/60'
               }`}
             />

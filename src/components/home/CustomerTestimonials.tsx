@@ -6,7 +6,7 @@ export const CustomerTestimonials: FC = () => {
   return (
     <section className="py-14 sm:py-20 bg-[#FCF9F4] dark:bg-[#0B132B] text-[#1E3063] dark:text-slate-100 border-b border-[#E8E1D5] dark:border-white/10 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
+
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1E3063]/10 dark:bg-white/10 border border-[#1E3063]/20 dark:border-white/20 text-[#1E3063] dark:text-slate-100 font-mono font-black text-xs uppercase tracking-wider">
@@ -32,7 +32,7 @@ export const CustomerTestimonials: FC = () => {
               className="p-6 rounded-3xl bg-white dark:bg-[#121D33] border border-[#E2D8C7] dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-6"
             >
               <div className="space-y-4">
-                
+
                 {/* Top Rating & Escrow Badge */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 text-amber-500">

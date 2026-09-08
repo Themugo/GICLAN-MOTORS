@@ -1,15 +1,15 @@
-import { 
-  ShieldCheck, 
-  Lock, 
-  FileCheck2, 
-  Truck, 
-  CheckCircle2, 
-  DollarSign, 
-  ArrowRight, 
-  Shield, 
-  KeyRound, 
+import {
+  ShieldCheck,
+  Lock,
+  FileCheck2,
+  Truck,
+  CheckCircle2,
+  DollarSign,
+  ArrowRight,
+  Shield,
+  KeyRound,
   Award,
-  BadgeCheck 
+  BadgeCheck
 } from 'lucide-react';
 import { useMarketplace } from '../../context/MarketplaceContext';
 import type { FC } from 'react';
@@ -59,7 +59,7 @@ export const EscrowTrustBanner: FC = () => {
   return (
     <section className="py-10 sm:py-14 bg-[#FCF9F4] text-[#2E4080] relative overflow-hidden border-b border-[#E8E1D5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
-        
+
         {/* Header Bar */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#E2D8C7]">
           <div className="space-y-3 max-w-2xl">
@@ -67,11 +67,11 @@ export const EscrowTrustBanner: FC = () => {
               <ShieldCheck className="w-4 h-4 text-[#23EBFF]" />
               <span>MULTI-SIGNATURE ESCROW VAULT</span>
             </div>
-            
+
             <h2 className="text-2xl sm:text-4xl font-black text-[#2E4080] font-serif tracking-tight leading-tight">
               6-Step Bank Escrow Workflow
             </h2>
-            
+
             <p className="text-xs sm:text-sm text-[#6B7A99] font-sans font-medium leading-relaxed">
               Your funds remain 100% protected in CBK-regulated bank escrow until you physically inspect and approve the vehicle.
             </p>
@@ -104,11 +104,11 @@ export const EscrowTrustBanner: FC = () => {
                     STEP {item.step}
                   </span>
                 </div>
-                
+
                 <h3 className="text-base font-serif font-black text-[#2E4080] leading-snug">
                   {item.title}
                 </h3>
-                
+
                 <p className="text-xs text-[#6B7A99] font-sans font-normal leading-relaxed">
                   {item.desc}
                 </p>
@@ -119,7 +119,7 @@ export const EscrowTrustBanner: FC = () => {
 
         {/* Trust Seal Footer Bar */}
         <div className="p-5 sm:p-6 rounded-3xl bg-[#2E4080] text-white border border-[#2E4080] shadow-lg grid grid-cols-2 md:grid-cols-4 gap-4 divide-y-0 sm:divide-x divide-white/15">
-          
+
           <div className="flex items-center gap-3 sm:px-2">
             <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
               <Shield className="w-5 h-5 text-[#23EBFF]" />

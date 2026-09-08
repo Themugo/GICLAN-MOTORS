@@ -6,8 +6,8 @@ interface SkipLinkProps {
   className?: string;
 }
 
-export default function SkipLink({ 
-  targetId = 'main-content', 
+export default function SkipLink({
+  targetId = 'main-content',
   label = 'Skip to main content',
   className = ''
 }: SkipLinkProps) {
@@ -26,9 +26,9 @@ export default function SkipLink({
       href={`#${targetId}`}
       onClick={handleClick}
       className={`
-        fixed top-4 left-4 z-[100] 
-        px-4 py-2 
-        bg-gold-500 text-charcoal-900 
+        fixed top-4 left-4 z-[100]
+        px-4 py-2
+        bg-gold-500 text-charcoal-900
         font-sans font-semibold text-sm
         rounded-lg shadow-lg
         transform -translate-y-full opacity-0
@@ -49,9 +49,9 @@ interface LiveRegionProps {
   children: React.ReactNode;
 }
 
-export function LiveRegion({ 
-  politeness = 'polite', 
-  children 
+export function LiveRegion({
+  politeness = 'polite',
+  children
 }: LiveRegionProps) {
   return (
     <div
@@ -66,11 +66,11 @@ export function LiveRegion({
 }
 
 // Screen reader only text
-export function VisuallyHidden({ 
-  children, 
-  className = '' 
-}: { 
-  children: React.ReactNode; 
+export function VisuallyHidden({
+  children,
+  className = ''
+}: {
+  children: React.ReactNode;
   className?: string;
 }) {
   return (
@@ -85,11 +85,11 @@ interface ExternalLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement
   children: React.ReactNode;
 }
 
-export function ExternalLink({ 
-  children, 
-  href, 
+export function ExternalLink({
+  children,
+  href,
   className = '',
-  ...props 
+  ...props
 }: ExternalLinkProps) {
   return (
     <a

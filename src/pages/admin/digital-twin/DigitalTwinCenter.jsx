@@ -76,16 +76,16 @@ export default function DigitalTwinCenter() {
       setLoading(true);
       const { data: dashData } = await dtApi.getDigitalTwinDashboard();
       setDashboard(dashData.data);
-      
+
       const { data: simData } = await dtApi.getSimulations({ limit: 20 });
       setSimulations(simData.data);
-      
+
       const { data: scenarioData } = await dtApi.getScenarios();
       setScenarios(scenarioData.data);
-      
+
       const { data: templateData } = await dtApi.getScenarioTemplates();
       setTemplates(templateData.data);
-      
+
       const { data: historyData } = await dtApi.getSimulationHistory({ limit: 10 });
       setHistory(historyData.data);
     } catch (error) {
@@ -139,7 +139,7 @@ export default function DigitalTwinCenter() {
         duration: 90,
         parameters: {},
       });
-      
+
       const result = await dtApi.runSimulation(data.data.id);
       setSimulationResults(result.data.results);
       setSelectedSimulation(data.data);
@@ -167,7 +167,7 @@ export default function DigitalTwinCenter() {
 
   const handleWhatIf = async () => {
     if (!whatIfQuestion.trim()) return;
-    
+
     setLoading(true);
     try {
       const { data } = await dtApi.whatIfAnalysis(whatIfQuestion);

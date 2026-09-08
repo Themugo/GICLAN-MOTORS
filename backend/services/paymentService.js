@@ -16,14 +16,13 @@ const formatPhone = (phone) => {
 };
 
 // ── INITIATE ─────────────────────────────────────────────────
-export const initiatePayment = async ({ userId, carId, type, amount, phone, metadata = {}, referenceId = carId, referenceModel = "Car" }) => {
+export const initiatePayment = async ({ userId, carId, type, amount, phone, metadata = {} }) => {
   const formattedPhone = formatPhone(phone);
   if (!formattedPhone) return { success: false, message: "Invalid Safaricom number" };
 
-  const pendingFilter = { user: userId, status: "pending", type };
-  if (type === "inspection" && referenceId) pendingFilter.referenceId = referenceId;
-  else pendingFilter.car = carId;
-  const existing = await findOne("payments", pendingFilter);
+  const existing = await findOne("payments", {
+    user: userId, car: carId, status: "pending", type,
+  });
   if (existing) {
     return { success: false, message: "Payment already in progress", payment: existing };
   }
@@ -40,8 +39,8 @@ export const initiatePayment = async ({ userId, carId, type, amount, phone, meta
       car: carId,
       type,
       amount,
-      referenceId,
-      referenceModel,
+      referenceId: carId,
+      referenceModel: "Car",
       phone: formattedPhone,
       status: "pending",
       processed: false,
@@ -67,10 +66,7 @@ export const initiatePayment = async ({ userId, carId, type, amount, phone, meta
     // The partial unique pending-operation index is the final concurrency
     // guard. If another request won the race, return its authoritative row.
     if (error?.code === "23505") {
-      const retryFilter = { user: userId, status: "pending", type };
-      if (type === "inspection" && referenceId) retryFilter.referenceId = referenceId;
-      else retryFilter.car = carId;
-      const existing = await findOne("payments", retryFilter);
+      const existing = await findOne("payments", { user: userId, car: carId, status: "pending", type });
       if (existing) return { success: false, message: "Payment already in progress", payment: existing };
     }
     throw error;
@@ -191,7 +187,7 @@ export const confirmPayment = async ({ checkoutRequestID, receipt, amount }) => 
 };
 
 // ── FAIL ──────────────────────────────────────────────────────
-const failPayment = async (checkoutRequestID, resultDesc = "") => {
+export const failPayment = async (checkoutRequestID, resultDesc = "") => {
   const payment = await findOne("payments", { checkoutRequestId: checkoutRequestID });
 
   if (!payment || payment.status === "success") return;

@@ -30,7 +30,7 @@ export const ChatDrawer: FC = () => {
       if (!id || cancelled) return;
       setChatId(id);
       const data = await chatAPI.messages(id, { limit: 100 });
-      if (!cancelled) setChatHistory(data.messages);
+      if (!cancelled) setChatHistory(data.messages || data.data || []);
     }).catch((error: any) => {
       if (!cancelled) setChatError(error?.response?.data?.message || error?.message || 'Unable to load conversation.');
     }).finally(() => { if (!cancelled) setChatLoading(false); });
@@ -40,7 +40,7 @@ export const ChatDrawer: FC = () => {
   useEffect(() => {
     if (!isChatOpen || !chatId) return;
     const timer = window.setInterval(async () => {
-      try { const data = await chatAPI.messages(chatId, { limit: 100 }); setChatHistory(data.messages); } catch { /* retain last good snapshot */ }
+      try { const data = await chatAPI.messages(chatId, { limit: 100 }); setChatHistory(data.messages || data.data || []); } catch { /* retain last good snapshot */ }
     }, 5000);
     return () => window.clearInterval(timer);
   }, [isChatOpen, chatId]);
@@ -54,7 +54,7 @@ export const ChatDrawer: FC = () => {
     const text = messageText.trim(); setMessageText('');
     try {
       const result = await chatAPI.send(chatId, { content: text });
-      const sent = result;
+      const sent = result?.message?.id ? result.message : result;
       setChatHistory(prev => [...prev, sent]);
     } catch (error: any) {
       setMessageText(text); setChatError(error?.message || 'Failed to send message.');

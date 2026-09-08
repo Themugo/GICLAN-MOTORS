@@ -60,12 +60,12 @@ function getColorFromName(name: string): string {
     'bg-amber-500',
     'bg-orange-500',
   ];
-  
+
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
+
   return colors[Math.abs(hash) % colors.length];
 }
 
@@ -161,7 +161,7 @@ export function AvatarGroup({
           className="ring-2 ring-white"
         />
       ))}
-      
+
       {remaining > 0 && (
         <div
           className={`

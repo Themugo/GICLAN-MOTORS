@@ -68,7 +68,7 @@ export async function recordLedgerEntry({
   }
 }
 
-async function recordEscrowDeposit({ payment_id, user_id, amount }) {
+export async function recordEscrowDeposit({ payment_id, user_id, amount }) {
   return recordLedgerEntry({
     external_reference: String(payment_id),
     user_id,
@@ -82,7 +82,7 @@ async function recordEscrowDeposit({ payment_id, user_id, amount }) {
   });
 }
 
-async function recordEscrowRelease({ escrow_id, user_id, amount, commission }) {
+export async function recordEscrowRelease({ escrow_id, user_id, amount, commission }) {
   const sellerAmount = amount - commission;
   const releaseEntry = await recordLedgerEntry({
     external_reference: String(escrow_id),
@@ -111,7 +111,7 @@ async function recordEscrowRelease({ escrow_id, user_id, amount, commission }) {
   return releaseEntry;
 }
 
-async function recordRefund({ escrow_id, user_id, amount }) {
+export async function recordRefund({ escrow_id, user_id, amount }) {
   return recordLedgerEntry({
     external_reference: String(escrow_id),
     user_id,
@@ -125,7 +125,7 @@ async function recordRefund({ escrow_id, user_id, amount }) {
   });
 }
 
-async function recordSubscriptionPayment({ subscription_id, user_id, amount }) {
+export async function recordSubscriptionPayment({ subscription_id, user_id, amount }) {
   return recordLedgerEntry({
     external_reference: String(subscription_id),
     user_id,
@@ -139,7 +139,7 @@ async function recordSubscriptionPayment({ subscription_id, user_id, amount }) {
   });
 }
 
-async function recordInspectionFee({ inspection_id, user_id, amount }) {
+export async function recordInspectionFee({ inspection_id, user_id, amount }) {
   return recordLedgerEntry({
     external_reference: String(inspection_id),
     user_id,
@@ -153,7 +153,7 @@ async function recordInspectionFee({ inspection_id, user_id, amount }) {
   });
 }
 
-async function recordAuctionPayment({ payment_id, user_id, amount, commission }) {
+export async function recordAuctionPayment({ payment_id, user_id, amount, commission }) {
   const sellerAmount = amount - (commission || 0);
   const paymentEntry = await recordLedgerEntry({
     external_reference: String(payment_id),

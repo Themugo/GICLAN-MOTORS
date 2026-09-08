@@ -63,7 +63,7 @@ function MobileEmptyState({
 }) {
   // Use template if provided
   const templateData = template ? EMPTY_TEMPLATES[template] : null;
-  
+
   const displayIcon = icon || templateData?.icon || '📭';
   const displayTitle = title || templateData?.title || 'Nothing here yet';
   const displayDescription = description || templateData?.description;
@@ -79,7 +79,7 @@ function MobileEmptyState({
         <p className="mobile-empty__description">{displayDescription}</p>
       )}
       {displayActionLabel && onAction && (
-        <button 
+        <button
           className="mobile-btn mobile-btn--primary mobile-empty__action"
           onClick={onAction}
         >

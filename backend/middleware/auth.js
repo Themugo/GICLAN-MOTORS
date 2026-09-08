@@ -307,21 +307,3 @@ export const optionalAuth = async (req, res, next) => {
     next(); // 🔥 ignore errors (public route)
   }
 };
-
-// Compatibility aliases for inspection/media routes using the canonical auth middleware.
-export const requireAuth = protect;
-export const requireRole = (...roles) => {
-  const normalizedRoles = roles.flat();
-  return (req, res, next) => {
-    if (req.user?.effectiveRole === "webhoist" || req.user?.role === "webhoist" || req.user?.role === "superadmin") {
-      return next();
-    }
-    if (!req.user || !normalizedRoles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied",
-      });
-    }
-    next();
-  };
-};

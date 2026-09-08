@@ -49,10 +49,10 @@ export const Modal: React.FC<ModalProps> = ({
     if (isOpen) {
       // Store current focus
       previousFocusRef.current = document.activeElement as HTMLElement;
-      
+
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
-      
+
       // Focus the close button after a brief delay
       setTimeout(() => {
         closeButtonRef.current?.focus();
@@ -158,8 +158,8 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div 
-      style={backdropStyle} 
+    <div
+      style={backdropStyle}
       onClick={closeOnBackdrop ? onClose : undefined}
       role="presentation"
     >

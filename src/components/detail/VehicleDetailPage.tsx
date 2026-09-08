@@ -1,18 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  Gavel, 
-  MapPin, 
-  Gauge, 
-  Fuel, 
-  FileText, 
-  CheckCircle2, 
-  Calculator, 
-  MessageSquareText, 
-  Heart, 
+import {
+  ShieldCheck,
+  Gavel,
+  MapPin,
+  Gauge,
+  Fuel,
+  FileText,
+  CheckCircle2,
+  Calculator,
+  MessageSquareText,
+  Heart,
   ChevronLeft,
   ChevronRight,
-  Lock, 
+  Lock,
   Phone,
   Sparkles,
   Wrench,
@@ -45,13 +45,13 @@ import { Skeleton, VehicleDetailSkeleton } from '../ui/Skeleton';
 import { PriceAlertModal } from './PriceAlertModal';
 
 export const VehicleDetailPage: FC = () => {
-  const { 
-    selectedVehicle, 
-    placeBid, 
-    initiateEscrow, 
-    navigateTo, 
-    openChat, 
-    savedVehicleIds, 
+  const {
+    selectedVehicle,
+    placeBid,
+    initiateEscrow,
+    navigateTo,
+    openChat,
+    savedVehicleIds,
     toggleSaveVehicle,
     getPriceAlertForVehicle
   } = useMarketplace();
@@ -262,7 +262,7 @@ export const VehicleDetailPage: FC = () => {
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 bg-[#FCF9F4] pb-28 md:pb-12 text-[#2E4080] font-sans">
-      
+
       {/* Toast Notification Floating Alert */}
       {toastMessage && (
         <div className="fixed top-20 right-4 z-50 bg-[#2E4080] text-white px-4 py-3 rounded-2xl shadow-2xl border border-[#23EBFF]/40 flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-top-4 duration-200">
@@ -279,8 +279,8 @@ export const VehicleDetailPage: FC = () => {
         <div className="space-y-2.5 max-w-3xl">
           {/* Breadcrumb path */}
           <div className="flex items-center gap-2 text-xs text-[#6B7A99] font-semibold">
-            <button 
-              className="hover:underline hover:text-[#2E4080] cursor-pointer" 
+            <button
+              className="hover:underline hover:text-[#2E4080] cursor-pointer"
               onClick={() => navigateTo('gallery')}
             >
               Inventory
@@ -352,7 +352,7 @@ export const VehicleDetailPage: FC = () => {
               <code className="font-mono bg-[#F6F1E8] border border-[#E2D8C7] px-2 py-0.5 rounded text-[#2E4080] font-bold">
                 {vehicle.vin}
               </code>
-              <button 
+              <button
                 onClick={handleCopyVin}
                 className="p-1 text-[#6B7A99] hover:text-[#2E4080] transition-colors cursor-pointer"
                 title="Copy VIN"
@@ -424,13 +424,13 @@ export const VehicleDetailPage: FC = () => {
 
       {/* Main Gallery & Details Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-        
+
         {/* Left 2 Cols: Main Interactive Image Gallery + Specs & Inspection */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Main Hero Gallery Image Frame */}
           <div className="space-y-3">
-            <div 
+            <div
               className="relative h-[420px] sm:h-[520px] lg:h-[580px] rounded-3xl overflow-hidden border border-[#E2D8C7] shadow-xl bg-slate-900 select-none cursor-crosshair group"
               onMouseEnter={() => setIsHoverZooming(true)}
               onMouseLeave={() => setIsHoverZooming(false)}
@@ -468,10 +468,10 @@ export const VehicleDetailPage: FC = () => {
                   }}
                   style={{
                     transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-                    transform: isDoubleTapZoomed 
-                      ? 'scale(2.5)' 
-                      : isHoverZooming 
-                        ? 'scale(2)' 
+                    transform: isDoubleTapZoomed
+                      ? 'scale(2.5)'
+                      : isHoverZooming
+                        ? 'scale(2)'
                         : 'scale(1)',
                   }}
                   className={`w-full h-full object-cover transition-transform duration-200 ease-out ${
@@ -696,7 +696,7 @@ export const VehicleDetailPage: FC = () => {
           {/* KAYAD Guarantees & Buyer Protection - Redesigned with Brand Theme Colors */}
           <div className="p-6 rounded-3xl bg-[#2E4080] text-white border border-[#2E4080] space-y-4 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#23EBFF]/15 rounded-full blur-2xl pointer-events-none" />
-            
+
             <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3.5 relative z-10">
               <h3 className="text-base font-bold text-white font-serif flex items-center gap-2.5">
                 <ShieldCheck className="w-5 h-5 text-[#23EBFF]" />
@@ -791,10 +791,10 @@ export const VehicleDetailPage: FC = () => {
 
         {/* Right Col: Sticky Action Box, Bidding & Dealer Card */}
         <div className="space-y-6 lg:sticky lg:top-24 h-fit">
-          
+
           {/* Purchase / Bidding Action Card */}
           <div className="p-6 rounded-3xl bg-white border border-[#E2D8C7] shadow-lg space-y-5">
-            
+
             {/* Price Header */}
             <div className="space-y-3 border-b border-[#E8E1D5] pb-4">
               <span className="text-[10px] font-bold text-[#6B7A99] uppercase tracking-wider block">
@@ -1051,7 +1051,7 @@ export const VehicleDetailPage: FC = () => {
       {/* Fullscreen Lightbox Gallery Modal */}
       {isFullscreen && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col justify-between p-4 sm:p-6 animate-in fade-in duration-200">
-          
+
           {/* Modal Top Bar */}
           <div className="flex items-center justify-between text-white border-b border-white/10 pb-4">
             <div className="space-y-0.5">

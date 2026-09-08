@@ -53,7 +53,7 @@ export default function VirtualList<T>({
   // Calculate total height based on item heights
   const totalHeight = useMemo(() => {
     if (horizontal) return estimatedItemHeight;
-    
+
     let total = 0;
     for (let i = 0; i < items.length; i++) {
       total += itemHeightsRef.current.get(i) || estimatedItemHeight;
@@ -67,8 +67,8 @@ export default function VirtualList<T>({
 
     const rect = containerRef.current.getBoundingClientRect();
     const containerHeight = horizontal ? rect.width : rect.height;
-    const scrollOffset = horizontal 
-      ? containerRef.current.scrollLeft 
+    const scrollOffset = horizontal
+      ? containerRef.current.scrollLeft
       : state.scrollTop;
 
     if (items.length === 0 || containerHeight === 0) {
@@ -124,16 +124,16 @@ export default function VirtualList<T>({
   const handleScroll = useCallback((e: UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
     const scrollTop = horizontal ? target.scrollLeft : target.scrollTop;
-    
+
     setState(prev => ({ ...prev, scrollTop }));
   }, [horizontal]);
 
   // Measure item after render
   const measureItemRef = useCallback((index: number, element: HTMLElement | null) => {
     if (!element) return;
-    
+
     const height = horizontal ? element.offsetWidth : element.offsetHeight;
-    
+
     if (itemHeightsRef.current.get(index) !== height) {
       itemHeightsRef.current.set(index, height);
       measuredItemsRef.current.add(index);
@@ -154,7 +154,7 @@ export default function VirtualList<T>({
     const resizeObserver = new ResizeObserver(() => {
       calculateVisibleRange();
     });
-    
+
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
   }, [calculateVisibleRange]);
@@ -162,7 +162,7 @@ export default function VirtualList<T>({
   // Infinite scroll trigger
   useEffect(() => {
     if (!onEndReached) return;
-    
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -170,7 +170,7 @@ export default function VirtualList<T>({
       const scrollHeight = horizontal ? container.scrollWidth : container.scrollHeight;
       const scrollPosition = horizontal ? container.scrollLeft + container.clientWidth : container.scrollTop + container.clientHeight;
       const threshold = scrollHeight * onEndReachedThreshold;
-      
+
       if (scrollPosition >= threshold) {
         onEndReached();
       }

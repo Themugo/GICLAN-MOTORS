@@ -1,6 +1,6 @@
 # KAYAD Governance & Risk Domain — End to End
 
-Implemented and activated the governance contract around authoritative Supabase/Postgres tables; the previous 501 controller boundary has been removed.
+Implemented the governance contract around authoritative Supabase/Postgres tables rather than returning 501 placeholders.
 
 ## Scope
 - Policies

@@ -59,7 +59,7 @@ export default function MonetizationCenter() {
           background: 'linear-gradient(90deg, transparent, var(--gold), transparent)',
           opacity: 0.5,
         }} />
-        
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
           <div style={{
             width: 48, height: 48, borderRadius: 12,

@@ -201,12 +201,12 @@ const KAYAD_THEME = {
 // MAIN COMPONENT
 // ============================================================
 
-type PlatformSection = 
-  | 'home' 
-  | 'listing-wizard' 
-  | 'trust-center' 
-  | 'listing-quality' 
-  | 'escrow' 
+type PlatformSection =
+  | 'home'
+  | 'listing-wizard'
+  | 'trust-center'
+  | 'listing-quality'
+  | 'escrow'
   | 'help';
 
 interface PrivateSellerPlatformProps {
@@ -259,8 +259,8 @@ export default function PrivateSellerPlatform({ user, onOpenAuth }: PrivateSelle
     <div className="min-h-screen flex" style={{ backgroundColor: KAYAD_THEME.warmBeige }}>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 sticky top-0 h-screen" style={{ backgroundColor: KAYAD_THEME.navy }}>
-        <SidebarContent 
-          activeSection={activeSection} 
+        <SidebarContent
+          activeSection={activeSection}
           onSectionChange={handleSectionChange}
         />
       </aside>
@@ -274,7 +274,7 @@ export default function PrivateSellerPlatform({ user, onOpenAuth }: PrivateSelle
             </div>
             <span className="text-white font-bold">Sell</span>
           </div>
-          <button 
+          <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 rounded-lg"
             style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
@@ -304,8 +304,8 @@ export default function PrivateSellerPlatform({ user, onOpenAuth }: PrivateSelle
               style={{ backgroundColor: KAYAD_THEME.navy }}
               onClick={(e) => e.stopPropagation()}
             >
-              <SidebarContent 
-                activeSection={activeSection} 
+              <SidebarContent
+                activeSection={activeSection}
                 onSectionChange={handleSectionChange}
               />
             </motion.div>
@@ -342,10 +342,10 @@ export default function PrivateSellerPlatform({ user, onOpenAuth }: PrivateSelle
 // SIDEBAR COMPONENT
 // ============================================================
 
-function SidebarContent({ 
-  activeSection, 
-  onSectionChange, 
-}: { 
+function SidebarContent({
+  activeSection,
+  onSectionChange,
+}: {
   activeSection: PlatformSection;
   onSectionChange: (s: PlatformSection) => void;
 }) {
@@ -379,8 +379,8 @@ function SidebarContent({
               key={item.id}
               onClick={() => onSectionChange(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative ${
-                activeSection === item.id 
-                  ? 'bg-orange-500/20 text-orange-400' 
+                activeSection === item.id
+                  ? 'bg-orange-500/20 text-orange-400'
                   : 'text-white/70 hover:bg-white/5 hover:text-white'
               }`}
             >
@@ -441,7 +441,7 @@ function SellerHomeSection({ listings, loading, userName, onNavigate }: {
             </h1>
             <p className="text-white/70">Manage your listings and track your sales</p>
           </div>
-          <button 
+          <button
             onClick={() => onNavigate('listing-wizard')}
             className="px-6 py-3 rounded-xl font-bold text-white flex items-center gap-2"
             style={{ backgroundColor: KAYAD_THEME.orange }}
@@ -645,9 +645,9 @@ function ListingWizardSection({ draft, setDraft, onNavigate }: {
             <div
               key={step.id}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                step.id === currentStep 
+                step.id === currentStep
                   ? 'bg-orange-500 text-white'
-                  : step.id < currentStep 
+                  : step.id < currentStep
                     ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-slate-100 text-slate-500'
               }`}

@@ -56,7 +56,6 @@ import userRoutes from "./routes/userRoutes.js";
 import savedSearchRoutes from "./routes/savedSearchRoutes.js";
 import ntsaVerificationRoutes from "./routes/ntsaVerificationRoutes.js";
 import inspectionRoutes from "./routes/inspectionRoutes.js";
-import inspectionMarketplaceRoutes from "./inspection/routes/inspectionRoutes.js";
 import referralRoutes from "./routes/referralRoutes.js";
 import securityLogRoutes from "./routes/securityLogRoutes.js";
 import smsBiddingRoutes from "./routes/smsBiddingRoutes.js";
@@ -224,7 +223,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        // Removed 'unsafe-inline' for better security. 
+        // Removed 'unsafe-inline' for better security.
         // For inline scripts/styles, implement nonce-based CSP in future
         scriptSrc: ["'self'"],
         styleSrc: ["'self'"],
@@ -316,11 +315,6 @@ app.use(globalLimiter);
 // ─── CORS ─────────────────────────────────────────────────────
 const allowedOrigins = [
   FRONTEND,
-  // Stable production origins are explicit defaults so a correct backend
-  // deployment remains reachable even if FRONTEND_URL is omitted or a
-  // deployment secret temporarily lags the application configuration.
-  "https://kayad.space",
-  "https://www.kayad.space",
   ...(FRONTEND_HOSTNAME ? [`https://${FRONTEND_HOSTNAME}`, `https://www.${FRONTEND_HOSTNAME}`] : []),
   ...(process.env.EXTRA_CORS_ORIGINS || "")
     .split(",")
@@ -349,21 +343,21 @@ app.use(
         if (!IS_DEVELOPMENT && !IS_TEST) return cb(null, false);
         return cb(null, true);
       }
-      
+
       // Allow all origins in development
       if (IS_DEVELOPMENT || IS_TEST) return cb(null, true);
-      
+
       // Check against explicit allowed origins list
       if (allowedOrigins.includes(origin)) return cb(null, true);
-      
+
       // Check against Vercel pattern (stricter than before)
       if (vercelPattern.test(origin)) return cb(null, true);
-      
+
       // Allow localhost with specific ports only in non-production
       if (IS_DEVELOPMENT || IS_TEST) {
         if (/^https?:\/\/localhost(:3000|:5173|:8080)?$/.test(origin)) return cb(null, true);
       }
-      
+
       logWarn("CORS blocked", { origin, message: "Origin not in allowed list" });
       cb(new Error(`CORS blocked: ${origin}`));
     },
@@ -509,21 +503,21 @@ const io = new Server(server, {
         if (!IS_DEVELOPMENT && !IS_TEST) return cb(null, false);
         return cb(null, true);
       }
-      
+
       // Allow all origins in development
       if (IS_DEVELOPMENT || IS_TEST) return cb(null, true);
-      
+
       // Check against explicit allowed origins list
       if (allowedOrigins.includes(origin)) return cb(null, true);
-      
+
       // Check against Vercel pattern (stricter than before)
       if (vercelPattern.test(origin)) return cb(null, true);
-      
+
       // Allow localhost with specific ports only in non-production
       if (IS_DEVELOPMENT || IS_TEST) {
         if (/^https?:\/\/localhost(:3000|:5173|:8080)?$/.test(origin)) return cb(null, true);
       }
-      
+
       logWarn("Socket CORS blocked", { origin, message: "Origin not in allowed list" });
       cb(new Error(`Socket CORS blocked: ${origin}`));
     },
@@ -709,7 +703,7 @@ app.use("/api/users", csrfProtection, userRoutes);
 app.use("/api/saved-searches", csrfProtection, savedSearchRoutes);
 app.use("/api/referral", referralRoutes);
 app.use("/api/ntsa-verification", ntsaVerificationRoutes);
-app.use("/api/inspection", inspectionMarketplaceRoutes);
+app.use("/api/inspection", inspectionRoutes);
 // Backward-compatible alias for clients using the earlier plural path.
 app.use("/api/inspections", inspectionRoutes);
 app.use("/api/security-logs", securityLogRoutes);

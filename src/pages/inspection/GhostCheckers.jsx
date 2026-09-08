@@ -318,7 +318,7 @@ const BookingWizard = ({ packages, onComplete }) => {
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#17244B] h-24 resize-none"
             />
-            
+
             {/* Summary */}
             <div className="p-4 bg-slate-50 rounded-xl">
               <h4 className="font-semibold text-slate-800 mb-2">Booking Summary</h4>
@@ -455,7 +455,7 @@ export default function GhostCheckers() {
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }} />
         </div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
@@ -463,13 +463,13 @@ export default function GhostCheckers() {
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 <span className="text-white font-medium">Africa's Most Trusted Inspection Service</span>
               </div>
-              
+
               <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
                 Know Exactly What<br />You're Buying
               </h1>
-              
+
               <p className="text-lg text-slate-300">
-                Comprehensive 150-point inspections by certified engineers. AI-powered damage detection. 
+                Comprehensive 150-point inspections by certified engineers. AI-powered damage detection.
                 Digital Vehicle Passports. The truth about every vehicle.
               </p>
 
@@ -622,7 +622,7 @@ export default function GhostCheckers() {
               <div>
                 <h3 className="text-lg font-bold text-slate-800 mb-2">AI-Powered Analysis</h3>
                 <p className="text-slate-600">
-                  Our advanced AI detects panel repairs, paint mismatches, rust, and other issues that even trained eyes might miss. 
+                  Our advanced AI detects panel repairs, paint mismatches, rust, and other issues that even trained eyes might miss.
                   Each AI finding includes a confidence score to help you make informed decisions.
                 </p>
               </div>

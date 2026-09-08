@@ -85,7 +85,7 @@ export const deleteTaxonomy = (id) => api.delete(`/cms/taxonomies/${id}`);
 // REVISIONS
 // ============================================
 
-export const getRevisions = (contentId, contentType) => 
+export const getRevisions = (contentId, contentType) =>
   api.get('/cms/revisions', { params: { contentId, contentType } });
 export const getRevisionById = (id) => api.get(`/cms/revisions/${id}`);
 

@@ -52,22 +52,22 @@ function useIsMobile(breakpoint = 768) {
   --touch-target-min: 44px;
   --touch-target-comfortable: 48px;
   --touch-target-spacious: 56px;
-  
+
   /* Safe area insets */
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  
+
   /* Bottom nav height */
   --bottom-nav-height: 72px;
   --header-height: 56px;
-  
+
   /* Mobile typography scale */
   --mobile-text-xs: 0.6875rem;    /* 11px */
   --mobile-text-sm: 0.8125rem;    /* 13px */
   --mobile-text-base: 0.9375rem;  /* 15px */
   --mobile-text-lg: 1.0625rem;    /* 17px */
   --mobile-text-xl: 1.25rem;      /* 20px */
-  
+
   /* Mobile animation durations */
   --mobile-duration-instant: 100ms;
   --mobile-duration-fast: 200ms;
@@ -149,8 +149,8 @@ Swipeable card with:
 import { MobileCarCard, MobileCarCardSkeleton } from './components/mobile';
 
 // Card
-<MobileCarCard 
-  car={vehicleData} 
+<MobileCarCard
+  car={vehicleData}
   onFavorite={handleFavorite}
 />
 
@@ -169,14 +169,14 @@ Touch-optimized form inputs:
 ```jsx
 import { Input, Textarea, Select, Checkbox, Toggle } from './components/mobile';
 
-<Input 
+<Input
   label="Vehicle Title"
   required
   error={errors.title}
   placeholder="e.g., Toyota Land Cruiser V8"
 />
 
-<Toggle 
+<Toggle
   label="Featured Listing"
   description="Appear at top of search results"
   checked={isFeatured}
@@ -364,7 +364,7 @@ The **Obsidian & Linen** design system from Stitch is fully integrated into the 
 ### Typography
 
 **The Editorial Layer:** Playfair Display for vehicle titles, prices, and headings
-**The Functional Layer:** Inter for body content and descriptions  
+**The Functional Layer:** Inter for body content and descriptions
 **The Technical Layer:** Outfit for interactive labels, buttons, and caps labels
 
 ```css

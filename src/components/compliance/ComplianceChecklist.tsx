@@ -62,8 +62,8 @@ const ComplianceCheckItem: React.FC<{
 
   return (
     <div className={`flex items-start gap-3 p-3 rounded-lg border ${
-      check.isComplete 
-        ? 'bg-emerald-50 border-emerald-200' 
+      check.isComplete
+        ? 'bg-emerald-50 border-emerald-200'
         : check.severity === 'required'
           ? 'bg-red-50 border-red-200'
           : 'bg-slate-50 border-slate-200'
@@ -113,7 +113,7 @@ const ComplianceCheckItem: React.FC<{
         </div>
         <p className="text-xs text-slate-500 mt-0.5">{check.description}</p>
         {check.documentUrl && (
-          <a 
+          <a
             href={check.documentUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -269,12 +269,12 @@ export const ComplianceChecklist: React.FC<ComplianceChecklistProps> = ({
               Compliance Checklist
             </h3>
             <p className="text-slate-300 text-sm mb-4">
-              {canSubmitForReview 
+              {canSubmitForReview
                 ? 'All required items are complete. Ready to submit for review.'
                 : `${summary.required - summary.requiredCompleted} required items must be completed before submitting.`
               }
             </p>
-            
+
             <div className="flex flex-wrap justify-center md:justify-start gap-4">
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${summary.requiredCompleted === summary.required ? 'bg-emerald-400' : 'bg-red-400'}`} />

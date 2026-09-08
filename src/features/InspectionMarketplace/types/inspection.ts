@@ -223,7 +223,7 @@ export interface EarningsSummary {
 }
 
 // Enums and Constants
-export type InspectionType = 
+export type InspectionType =
   | 'pre_purchase'
   | 'dealer'
   | 'auction'
@@ -235,7 +235,7 @@ export type InspectionType =
   | 'import'
   | 'commercial';
 
-export type BookingStatus = 
+export type BookingStatus =
   | 'booked'
   | 'confirmed'
   | 'inspector_assigned'
@@ -248,27 +248,27 @@ export type BookingStatus =
   | 'cancelled'
   | 'no_show';
 
-export type PaymentStatus = 
+export type PaymentStatus =
   | 'pending'
   | 'deposit_paid'
   | 'fully_paid'
   | 'refunded';
 
-export type ConditionRating = 
+export type ConditionRating =
   | 'excellent'
   | 'good'
   | 'fair'
   | 'poor'
   | 'bad';
 
-export type ChecklistStatus = 
+export type ChecklistStatus =
   | 'pass'
   | 'fail'
   | 'warning'
   | 'not_applicable'
   | 'not_inspected';
 
-export type Severity = 
+export type Severity =
   | 'critical'
   | 'major'
   | 'minor';

@@ -22,7 +22,7 @@ export default function InlineBidding({ car, onBidPlaced }: InlineBiddingProps) 
   const auctionEnd = car?.auctionEnd ? new Date(car.auctionEnd).getTime() : 0;
   const now = Date.now();
   const timeLeft = auctionEnd > now ? auctionEnd - now : 0;
-  
+
   const hours = Math.floor(timeLeft / (1000 * 60 * 60));
   const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
   const isLive = car?.auctionStatus === 'live' && timeLeft > 0;
@@ -51,7 +51,7 @@ export default function InlineBidding({ car, onBidPlaced }: InlineBiddingProps) 
     try {
       // API call would go here
       // await bidsAPI.place(car._id, { amount });
-      
+
       // Simulate success
       await new Promise(resolve => setTimeout(resolve, 1000));
       setSuccess(true);
@@ -71,7 +71,7 @@ export default function InlineBidding({ car, onBidPlaced }: InlineBiddingProps) 
           <div>
             <p className="font-sans text-sm font-semibold">Auction Not Active</p>
             <p className="font-sans text-xs opacity-70">
-              {car?.auctionStatus === 'ended' 
+              {car?.auctionStatus === 'ended'
                 ? 'This auction has ended'
                 : 'Auction has not started yet'
               }

@@ -66,7 +66,7 @@ export default function InspectorChecklistView({ activeTask, setActiveTask, chec
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      
+
       if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         handleSubmit();
@@ -216,7 +216,7 @@ export default function InspectorChecklistView({ activeTask, setActiveTask, chec
                         const globalIdx = checklist.indexOf(item);
                         return (
                           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0' }}>
-                            <button 
+                            <button
                               onClick={() => toggleCheck(globalIdx)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {

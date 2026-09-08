@@ -1,17 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { EscrowTransaction, EscrowLogEntry, EscrowDispute, UserProfile } from '../types';
 import { getMyEscrows, confirmVehicle, disputeEscrow, releaseEscrow, mapBackendEscrowToTransaction, EscrowApiError } from '../services/escrowApi';
-import { 
-  Shield, 
-  Lock, 
-  CheckCircle2, 
-  Landmark, 
-  Clock, 
-  ArrowRight, 
-  Search, 
-  ShieldCheck, 
-  FileCheck, 
-  UserCheck, 
+import {
+  Shield,
+  Lock,
+  CheckCircle2,
+  Landmark,
+  Clock,
+  ArrowRight,
+  Search,
+  ShieldCheck,
+  FileCheck,
+  UserCheck,
   Building2,
   Sparkles,
   ChevronRight,
@@ -143,45 +143,45 @@ export const EscrowView: React.FC<EscrowViewProps> = ({ user, onOpenAuth }) => {
 
   // 6-Step Visual Escrow Purchase Timeline Protocol Definition
   const escrowTimelineSteps = [
-    { 
-      step: 1, 
-      id: 'reserved', 
-      title: 'Vehicle Reserved', 
+    {
+      step: 1,
+      id: 'reserved',
+      title: 'Vehicle Reserved',
       desc: 'Price agreed & offer locked by both parties.',
       controller: 'Seller & Buyer Agreement'
     },
-    { 
-      step: 2, 
-      id: 'deposit', 
-      title: 'Buyer Deposits Funds', 
+    {
+      step: 2,
+      id: 'deposit',
+      title: 'Buyer Deposits Funds',
       desc: 'Funds locked in neutral KAYAD Escrow Vault.',
       controller: 'Awaiting Vault Confirmation'
     },
-    { 
-      step: 3, 
-      id: 'inspection', 
-      title: 'Inspection Completed', 
+    {
+      step: 3,
+      id: 'inspection',
+      title: 'Inspection Completed',
       desc: '150-Point technical audit & VIN verification.',
       controller: 'Certified Inspector & Kayad'
     },
-    { 
-      step: 4, 
-      id: 'approval', 
-      title: 'Buyer Approves Vehicle', 
+    {
+      step: 4,
+      id: 'approval',
+      title: 'Buyer Approves Vehicle',
       desc: 'Buyer signs off on physical condition.',
       controller: 'Buyer Release Sign-off'
     },
-    { 
-      step: 5, 
-      id: 'transfer', 
-      title: 'Logbook Transfer', 
+    {
+      step: 5,
+      id: 'transfer',
+      title: 'Logbook Transfer',
       desc: 'NTSA TIMS electronic title transfer verified.',
       controller: 'NTSA TIMS Portal'
     },
-    { 
-      step: 6, 
-      id: 'released', 
-      title: 'Seller Paid', 
+    {
+      step: 6,
+      id: 'released',
+      title: 'Seller Paid',
       desc: 'Bank vault releases payout to seller.',
       controller: 'Bank Custodian Disbursed'
     }
@@ -487,7 +487,7 @@ export const EscrowView: React.FC<EscrowViewProps> = ({ user, onOpenAuth }) => {
 
             {/* EXPECTED NEXT ACTION BANNER */}
             <div className={`p-3.5 rounded-xl border flex items-start sm:items-center justify-between gap-3 text-xs ${
-              selectedDeal.dispute 
+              selectedDeal.dispute
                 ? 'bg-[#E5484D]/15 border-[#E5484D]/40 text-rose-100'
                 : 'bg-emerald-950/40 border-emerald-400/30 text-emerald-100'
             }`}>
@@ -575,10 +575,10 @@ export const EscrowView: React.FC<EscrowViewProps> = ({ user, onOpenAuth }) => {
 
           {/* 3. DUAL COLUMN DASHBOARD GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* LEFT COLUMN: VEHICLE & PAYMENT SUMMARY */}
             <div className="lg:col-span-2 space-y-6">
-              
+
               {/* VEHICLE SUMMARY CARD */}
               <Card className="p-5 bg-white border border-slate-200 shadow-xs space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -593,8 +593,8 @@ export const EscrowView: React.FC<EscrowViewProps> = ({ user, onOpenAuth }) => {
 
                 <div className="flex flex-col sm:flex-row items-start gap-4">
                   <div className="w-full sm:w-44 h-32 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 relative">
-                    <img 
-                      src={selectedDeal.vehicleImage || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=800'} 
+                    <img
+                      src={selectedDeal.vehicleImage || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=800'}
                       alt={selectedDeal.vehicleTitle}
                       className="w-full h-full object-cover"
                     />
@@ -1008,8 +1008,8 @@ export const EscrowView: React.FC<EscrowViewProps> = ({ user, onOpenAuth }) => {
               </TableHeader>
               <TableBody>
                 {filteredDeals.map((d) => (
-                  <TableRow 
-                    key={d.id} 
+                  <TableRow
+                    key={d.id}
                     className={`hover:bg-slate-50 transition-colors ${
                       selectedDeal?.id === d.id ? 'bg-amber-50/50' : ''
                     }`}
@@ -1024,8 +1024,8 @@ export const EscrowView: React.FC<EscrowViewProps> = ({ user, onOpenAuth }) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={d.status === 'Completed' ? 'success' : d.dispute ? 'warning' : 'escrow'} 
+                      <Badge
+                        variant={d.status === 'Completed' ? 'success' : d.dispute ? 'warning' : 'escrow'}
                         size="sm"
                       >
                         <CheckCircle2 className="w-3 h-3" /> {d.status} (Step {d.step}/6)

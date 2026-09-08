@@ -1,4 +1,5 @@
 -- KAYAD Advertising domain: canonical persisted ad slots + delivery metrics.
+-- Administrative access is delegated to the canonical is_admin() security helper.
 create table if not exists public.ad_slots (
   id uuid primary key default gen_random_uuid(),
   placement text not null check (placement in ('top_ticker','left_rail','right_rail','mid_grid','sidebar')),

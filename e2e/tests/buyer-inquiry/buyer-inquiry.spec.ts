@@ -1,6 +1,6 @@
 /**
  * Buyer Inquiry E2E Tests
- * 
+ *
  * Tests for buyer inquiry workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -17,7 +17,7 @@ test.describe('Buyer Inquiry Workflow', () => {
     // Create test vehicle
     const dealerCredentials = AuthHelper.getTestUser('dealer');
     const dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
-    
+
     const vehicle = await ApiHelper.createVehicle(request, dealerToken, {
       title: 'Toyota Camry 2020',
       make: 'Toyota',
@@ -131,9 +131,9 @@ test.describe('Buyer Inquiry Workflow', () => {
       // Deactivate dealer
       const dealerCredentials = AuthHelper.getTestUser('dealer');
       const dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
-      
+
       // Create vehicle with inactive dealer (would need API endpoint for this)
-      
+
       await page.goto(`/vehicles/${vehicleId}`);
       await page.click('button:has-text("Contact Dealer")');
 

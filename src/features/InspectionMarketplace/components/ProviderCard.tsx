@@ -45,23 +45,23 @@ export default function ProviderCard({ provider, onSelect }: ProviderCardProps) 
       style={{ backgroundColor: KAYAD_COLORS.white }}
     >
       {/* Header with Logo */}
-      <div 
+      <div
         className="h-32 relative"
         style={{ backgroundColor: KAYAD_COLORS.lightNavy }}
       >
         {/* Logo */}
         <div className="absolute -bottom-8 left-4">
-          <div 
+          <div
             className="w-16 h-16 rounded-full border-4 flex items-center justify-center text-xl font-bold"
-            style={{ 
+            style={{
               backgroundColor: KAYAD_COLORS.white,
               borderColor: KAYAD_COLORS.warmBeige
             }}
           >
             {logo ? (
-              <img 
-                src={logo} 
-                alt={companyName} 
+              <img
+                src={logo}
+                alt={companyName}
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (
@@ -74,7 +74,7 @@ export default function ProviderCard({ provider, onSelect }: ProviderCardProps) 
 
         {/* Verification Badge */}
         {verification.status === 'verified' && (
-          <div 
+          <div
             className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
             style={{ backgroundColor: KAYAD_COLORS.emerald, color: KAYAD_COLORS.white }}
           >
@@ -88,13 +88,13 @@ export default function ProviderCard({ provider, onSelect }: ProviderCardProps) 
       <div className="p-4 pt-12 flex-1 flex flex-col">
         {/* Name and Location */}
         <div className="mb-3">
-          <h3 
+          <h3
             className="text-lg font-bold mb-1"
             style={{ color: KAYAD_COLORS.lightNavy }}
           >
             {companyName}
           </h3>
-          <div 
+          <div
             className="flex items-center gap-1 text-sm"
             style={{ color: KAYAD_COLORS.softBlue }}
           >
@@ -106,12 +106,12 @@ export default function ProviderCard({ provider, onSelect }: ProviderCardProps) 
         {/* Stats */}
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-1">
-            <Star 
-              size={16} 
-              fill={KAYAD_COLORS.mutedTerracotta} 
-              color={KAYAD_COLORS.mutedTerracotta} 
+            <Star
+              size={16}
+              fill={KAYAD_COLORS.mutedTerracotta}
+              color={KAYAD_COLORS.mutedTerracotta}
             />
-            <span 
+            <span
               className="font-semibold"
               style={{ color: KAYAD_COLORS.lightNavy }}
             >
@@ -121,7 +121,7 @@ export default function ProviderCard({ provider, onSelect }: ProviderCardProps) 
               ({stats.totalReviews})
             </span>
           </div>
-          <div 
+          <div
             className="flex items-center gap-1 text-sm"
             style={{ color: KAYAD_COLORS.softBlue }}
           >
@@ -164,7 +164,7 @@ export default function ProviderCard({ provider, onSelect }: ProviderCardProps) 
                 From
               </p>
             )}
-            <p 
+            <p
               className="text-xl font-bold"
               style={{ color: KAYAD_COLORS.lightNavy }}
             >
@@ -175,9 +175,9 @@ export default function ProviderCard({ provider, onSelect }: ProviderCardProps) 
             type="button"
             onClick={() => onSelect?.(provider)}
             className="flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors"
-            style={{ 
-              backgroundColor: KAYAD_COLORS.emerald, 
-              color: KAYAD_COLORS.white 
+            style={{
+              backgroundColor: KAYAD_COLORS.emerald,
+              color: KAYAD_COLORS.white
             }}
           >
             View
@@ -191,7 +191,7 @@ export default function ProviderCard({ provider, onSelect }: ProviderCardProps) 
 
 function SpecializationBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <span 
+    <span
       className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
       style={{ backgroundColor: KAYAD_COLORS.warmBeige, color: KAYAD_COLORS.lightNavy }}
     >

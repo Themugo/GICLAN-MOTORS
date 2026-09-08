@@ -1,6 +1,6 @@
 /**
  * Reviews E2E Tests
- * 
+ *
  * Tests for review workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -19,7 +19,7 @@ test.describe('Reviews Workflow', () => {
     // Login as dealer
     const dealerCredentials = AuthHelper.getTestUser('dealer');
     dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
-    
+
     // Create vehicle
     const vehicle = await ApiHelper.createVehicle(request, dealerToken, {
       title: 'Toyota Camry 2020',
@@ -57,7 +57,7 @@ test.describe('Reviews Workflow', () => {
       // Fill review form
       await page.selectOption('select[name="rating"]', '5');
       await page.fill('textarea[name="comment"]', 'Excellent vehicle, exactly as described. Great dealer!');
-      
+
       // Add tags
       await page.click('button:has-text("Add Tag")');
       await page.click('label:has-text("Reliable")');
@@ -155,7 +155,7 @@ test.describe('Reviews Workflow', () => {
     test('should handle long review comment', async ({ page }) => {
       await page.goto(`/buyer/escrow/${escrowId}`);
       await page.click('button:has-text("Write Review")');
-      
+
       const longComment = 'This is a very detailed review. '.repeat(50);
       await page.selectOption('select[name="rating"]', '4');
       await page.fill('textarea[name="comment"]', longComment);
@@ -181,10 +181,10 @@ test.describe('Reviews Workflow', () => {
       await page.click('button:has-text("Write Review")');
       await page.selectOption('select[name="rating"]', '5');
       await page.fill('textarea[name="comment"]', 'Great vehicle');
-      
+
       // Upload photos
       await page.setInputFiles('input[type="file"]', 'test/fixtures/car1.jpg');
-      
+
       await page.click('button[type="submit"]');
 
       // Verify review submitted with photos
@@ -276,7 +276,7 @@ test.describe('Reviews Workflow', () => {
       await page.goto(`/buyer/reviews`);
       await page.click('[data-testid="review-item"]');
       await page.click('button:has-text("Edit")');
-      
+
       // Update review
       await page.selectOption('select[name="rating"]', '5');
       await page.fill('textarea[name="comment"]', 'Updated review - better experience');

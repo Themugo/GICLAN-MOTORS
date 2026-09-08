@@ -178,9 +178,6 @@ export const sendRawEmail = async ({ to, subject, html, text, from = FROM }) => 
   }
 };
 
-// Canonical public email sender; retained as a compatibility alias for existing services.
-export const sendEmail = sendRawEmail;
-
 export const sendWelcomeEmail = (user) =>
   sendEmail({
     to: user.email,
@@ -262,7 +259,7 @@ export const sendOutbidEmail = (user, newBid, car) =>
     ),
   });
 
-const sendAuctionWonEmail = (user, car, amount) =>
+export const sendAuctionWonEmail = (user, car, amount) =>
   sendEmail({
     to: user.email,
     subject: `You Won! — ${car.title} is yours`,
@@ -351,7 +348,7 @@ export const sendPasswordResetEmail = (user, resetToken) =>
     ),
   });
 
-const sendNewMessageEmail = (user, fromName, carTitle) =>
+export const sendNewMessageEmail = (user, fromName, carTitle) =>
   sendEmail({
     to: user.email,
     subject: `💬 New message from ${fromName} — ${APP_NAME}`,

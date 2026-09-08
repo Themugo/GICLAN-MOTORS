@@ -1,10 +1,10 @@
 import React from 'react';
-import { 
-  ShieldCheck, 
-  Award, 
-  Building2, 
-  Landmark, 
-  Users, 
+import {
+  ShieldCheck,
+  Award,
+  Building2,
+  Landmark,
+  Users,
   CheckCircle2,
   BadgeCheck,
   Banknote,
@@ -16,7 +16,7 @@ import {
 import type { AuctionOrganizerType } from '../../types';
 
 export interface TrustBadgeProps {
-  type: 
+  type:
     | 'verified_organizer'
     | 'licensed_auctioneer'
     | 'government_approved'
@@ -34,10 +34,10 @@ export interface TrustBadgeProps {
   showIcon?: boolean;
 }
 
-const BADGE_CONFIG: Record<string, { 
-  icon: React.ReactNode; 
-  bgColor: string; 
-  textColor: string; 
+const BADGE_CONFIG: Record<string, {
+  icon: React.ReactNode;
+  bgColor: string;
+  textColor: string;
   borderColor: string;
   defaultLabel: string;
 }> = {
@@ -130,11 +130,11 @@ const BADGE_CONFIG: Record<string, {
 // Get badge type based on organizer type and verification status
 export function getOrganizerBadge(type: AuctionOrganizerType, isVerified: boolean = true): string[] {
   const badges: string[] = [];
-  
+
   if (isVerified) {
     badges.push('verified_organizer');
   }
-  
+
   switch (type) {
     case 'verified_dealer':
       badges.push('verified_dealer', 'business_verified');
@@ -161,7 +161,7 @@ export function getOrganizerBadge(type: AuctionOrganizerType, isVerified: boolea
       badges.push('fleet_partner', 'business_verified');
       break;
   }
-  
+
   return badges;
 }
 
@@ -179,11 +179,11 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
   showIcon = true,
 }) => {
   const config = BADGE_CONFIG[type];
-  
+
   if (!config) return null;
-  
+
   return (
-    <span 
+    <span
       className={`
         inline-flex items-center font-bold border rounded-full
         ${config.bgColor} ${config.textColor} ${config.borderColor}
@@ -208,7 +208,7 @@ export const OrganizerTypeBadge: React.FC<{ type: AuctionOrganizerType }> = ({ t
     insurance_salvage_company: 'Insurance Salvage',
     corporate_fleet_owner: 'Corporate Fleet',
   };
-  
+
   const typeIcons: Record<AuctionOrganizerType, React.ReactNode> = {
     verified_dealer: <Building2 className="w-3 h-3" />,
     licensed_auctioneer: <Award className="w-3 h-3" />,
@@ -219,7 +219,7 @@ export const OrganizerTypeBadge: React.FC<{ type: AuctionOrganizerType }> = ({ t
     insurance_salvage_company: <CheckCircle2 className="w-3 h-3" />,
     corporate_fleet_owner: <Users className="w-3 h-3" />,
   };
-  
+
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold border border-slate-200">
       {typeIcons[type]}

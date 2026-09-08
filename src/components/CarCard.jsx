@@ -68,7 +68,7 @@ function CarCardInner({ car }) {
             <span className="live-dot" /> LIVE
           </span>
         )}
-        
+
         {/* Trust badges overlay */}
         <div style={{
           position: 'absolute',
@@ -162,7 +162,7 @@ function CarCardInner({ car }) {
             </span>
           )}
         </div>
-        
+
         {/* Price with market comparison */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 2 }}>
           <p className="kd-car-card__price">
@@ -194,7 +194,7 @@ function CarCardInner({ car }) {
             </span>
           )}
         </div>
-        
+
         <div className="kd-car-card__meta">
           {mileage && (
             <span className="kd-car-card__meta-item">

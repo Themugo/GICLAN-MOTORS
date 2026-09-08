@@ -6,7 +6,6 @@
 
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { findAll, aggregate } from "../db/index.js";
-import ListingQuality from "../models/ListingQuality.js";
 import { getSupabase } from "../utils/supabase.js";
 
 // =============================

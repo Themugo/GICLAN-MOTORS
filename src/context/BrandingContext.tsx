@@ -8,26 +8,26 @@ interface Branding {
   logoText: string;
   logoUrl: string;
   brandTagline: string;
-  
+
   // Primary color palette (green/mint theme)
   primaryColor: string;      // Main brand color (green: #16C4A4)
   primaryLight: string;     // Lighter variant (#2DD9BE)
   primaryDark: string;      // Darker variant (#0C7B68)
   primaryGlow: string;       // Glow effect (rgba)
-  
+
   // Accent colors
   accentColor: string;      // Secondary accent
-  
+
   // Background colors
   backgroundColor: string;  // Main background
   surfaceColor: string;     // Cards/surfaces
   cardColor: string;        // Card backgrounds
-  
+
   // Text colors
   textColor: string;        // Primary text
   textMutedColor: string;   // Muted text
   textDimColor: string;     // Dim text
-  
+
   // UI colors
   borderColor: string;      // Borders
   successColor: string;     // Success state
@@ -50,25 +50,25 @@ const DEFAULT_BRANDING: Branding = {
   logoText: 'KAYAD',
   logoUrl: '',
   brandTagline: 'Premium Automotive Marketplace',
-  
+
   // Primary green/mint palette
   primaryColor: '#16C4A4',      // Main brand green
   primaryLight: '#2DD9BE',      // Lighter mint
   primaryDark: '#0C7B68',       // Darker green
   primaryGlow: 'rgba(22, 196, 164, 0.25)',
-  
+
   accentColor: '#3B82F6',       // Blue accent
-  
+
   // Background colors (warm cream theme)
   backgroundColor: '#FDFAF5',   // Main background
   surfaceColor: '#F7F2E8',      // Surface color
   cardColor: '#FFFFFF',        // Card color
-  
+
   // Text colors (warm gray-brown)
   textColor: '#2E2B28',         // Primary text
   textMutedColor: '#9A9088',    // Muted text
   textDimColor: '#C8BFB0',     // Dim text
-  
+
   // Border and status colors
   borderColor: '#E0D8C8',
   successColor: '#10B981',
@@ -96,10 +96,10 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
   // Apply CSS variables to document root whenever branding changes
   useEffect(() => {
     if (!branding) return;
-    
+
     const root = document.documentElement;
     const cssVars = getCSSVariables(branding);
-    
+
     Object.entries(cssVars).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });

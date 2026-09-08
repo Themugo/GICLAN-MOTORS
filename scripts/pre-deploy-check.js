@@ -1,7 +1,7 @@
 /**
  * Pre-Deploy Check Script
  * Quick validation before deployment
- * 
+ *
  * Usage: node scripts/pre-deploy-check.js
  */
 
@@ -51,7 +51,7 @@ try {
     'index.html',
     'src/main.tsx',
   ];
-  
+
   requiredFiles.forEach(file => {
     if (fs.existsSync(file)) {
       log(`✅ ${file} exists`, 'green');
@@ -84,7 +84,7 @@ try {
     } else {
       log('⚠️  node_modules missing - run npm install', 'yellow');
     }
-    
+
     if (fs.existsSync('package-lock.json')) {
       log('✅ package-lock.json exists', 'green');
     } else {
@@ -100,7 +100,7 @@ try {
     'VITE_API_URL',
     'VITE_SOCKET_URL',
   ];
-  
+
   criticalEnvVars.forEach(varName => {
     if (process.env[varName]) {
       log(`✅ ${varName} is set`, 'green');

@@ -27,7 +27,7 @@ class ReportReviewService {
     for (const report of reports) {
       const booking = await db.findById('inspection_bookings', report.booking_id);
       const currentVersion = await this.getLatestVersion(report.id);
-      
+
       queue.push({
         reportId: report.id,
         reportNumber: report.report_number,
@@ -358,11 +358,11 @@ class ReportReviewService {
       approved: approved.length,
       rejected: rejected.length,
       pendingReview: pendingReview.length,
-      approvalRate: reports.length > 0 
-        ? Math.round((approved.length / reports.length) * 100) 
+      approvalRate: reports.length > 0
+        ? Math.round((approved.length / reports.length) * 100)
         : 0,
-      rejectionRate: approved.length > 0 
-        ? Math.round((rejected.length / approved.length) * 100) 
+      rejectionRate: approved.length > 0
+        ? Math.round((rejected.length / approved.length) * 100)
         : 0,
       avgReviewTime: this.calculateAvgReviewTime(approved),
       correctionsTotal: corrections.length,

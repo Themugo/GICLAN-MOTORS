@@ -25,7 +25,7 @@ class FailoverService {
     this.degradedServices = new Set();
     this.recoveryQueue = [];
     this.isInitialized = false;
-    
+
     // Configuration
     this.config = {
       failureThreshold: 5,        // Failures before opening circuit
@@ -76,7 +76,7 @@ class FailoverService {
       } else {
         logWarn(`Circuit breaker open: ${serviceName}`);
         incrementCounter('circuit_breaker_rejected', { service: serviceName });
-        
+
         // Execute fallback if provided
         if (fallback) {
           return this.executeFallback(serviceName, fallback);
@@ -91,7 +91,7 @@ class FailoverService {
       return result;
     } catch (error) {
       this.recordFailure(serviceName, error);
-      
+
       // Execute fallback if provided
       if (fallback) {
         return this.executeFallback(serviceName, fallback);
@@ -156,9 +156,9 @@ class FailoverService {
     const circuit = this.getCircuitBreaker(serviceName);
     circuit.state = CircuitState.OPEN;
     circuit.nextCheck = Date.now() + this.config.timeout;
-    
+
     this.degradedServices.add(serviceName);
-    
+
     logWarn(`Circuit breaker opened: ${serviceName}`);
     triggerAlert({
       level: 'warning',
@@ -176,9 +176,9 @@ class FailoverService {
     circuit.failures = 0;
     circuit.successes = 0;
     circuit.nextCheck = null;
-    
+
     this.degradedServices.delete(serviceName);
-    
+
     logInfo(`Circuit breaker closed: ${serviceName}`);
     incrementCounter('circuit_breaker_recovered', { service: serviceName });
   }
@@ -223,7 +223,7 @@ class FailoverService {
   async performHealthChecks() {
     for (const serviceName of this.degradedServices) {
       const circuit = this.getCircuitBreaker(serviceName);
-      
+
       if (circuit.state === CircuitState.OPEN && circuit.nextCheck) {
         if (Date.now() >= circuit.nextCheck) {
           circuit.state = CircuitState.HALF_OPEN;
@@ -263,7 +263,7 @@ class FailoverService {
         failures: circuit.failures,
       };
       services.push(health);
-      
+
       if (circuit.state === CircuitState.CLOSED) {
         healthyCount++;
       } else {

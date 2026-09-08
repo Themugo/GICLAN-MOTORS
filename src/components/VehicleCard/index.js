@@ -1,12 +1,12 @@
 /**
  * VehicleCard - Premium unified vehicle card component
- * 
+ *
  * @example
  * import VehicleCard, { VehicleCardSkeleton } from './VehicleCard';
- * 
+ *
  * // Basic usage
  * <VehicleCard car={carData} />
- * 
+ *
  * // With all options
  * <VehicleCard
  *   car={carData}
@@ -20,7 +20,7 @@
  *   onSave={(car, saved) => handleSave(car, saved)}
  *   onCompare={(car, selected) => handleCompare(car, selected)}
  * />
- * 
+ *
  * // Loading state
  * <VehicleCardSkeleton />
  */

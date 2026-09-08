@@ -1,4 +1,4 @@
-import { findAll, findOne, create, update } from "../db/index.js";
+import { findOne, create, update } from "../db/index.js";
 import asyncHandler from "../middleware/asyncHandler.js";
 
 const defaults = {
@@ -63,30 +63,4 @@ export const updateAccessibility = asyncHandler(async (req,res)=>{ const c=await
 
 export const updateLastSeen = asyncHandler(async (req,res)=>{ const c=await getOrCreatePreferences(req.user.id); const platform=req.body.platform === "mobile" ? "mobile" : "web"; const lastSeen={...(c.lastSeen||{}),[platform]:new Date().toISOString()}; const d=await update("user_preferences",c.id,{lastSeen}); res.json({success:true,data:{lastSeen:d.lastSeen}}); });
 
-export const getPreferenceStats = asyncHandler(async (_req, res) => {
-  const rows = await findAll("user_preferences", {
-    select: "id,theme,language,locale,timezone,currency,createdAt,updatedAt",
-  });
-
-  const countBy = (field) => rows.reduce((acc, row) => {
-    const key = row?.[field] || "unset";
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-
-  res.json({
-    success: true,
-    data: {
-      totalUsersWithPreferences: rows.length,
-      themes: countBy("theme"),
-      languages: countBy("language"),
-      locales: countBy("locale"),
-      timezones: countBy("timezone"),
-      currencies: countBy("currency"),
-      updatedAt: rows.reduce((latest, row) => {
-        const value = row?.updatedAt || null;
-        return value && (!latest || new Date(value) > new Date(latest)) ? value : latest;
-      }, null),
-    },
-  });
-});
+export const getPreferenceStats = asyncHandler(async (_req,res)=>res.status(501).json({success:false,code:"PREFERENCE_STATS_UNAVAILABLE",message:"Preference statistics are not part of the canonical user-preference contract."}));

@@ -125,7 +125,7 @@ export async function publishWorkflow(req, res) {
 
   await Workflow.update(req.params.id, { status: "active" });
   await logWorkflowExecution(req.params.id, "published", req.user?.id, null, "Workflow published");
-  
+
   res.json({ success: true, message: "Workflow published" });
 }
 
@@ -135,7 +135,7 @@ export async function pauseWorkflow(req, res) {
 
   await Workflow.update(req.params.id, { status: "paused" });
   await logWorkflowExecution(req.params.id, "paused", req.user?.id, null, "Workflow paused");
-  
+
   res.json({ success: true, message: "Workflow paused" });
 }
 
@@ -149,7 +149,7 @@ export async function simulateWorkflow(req, res) {
 
   // Simulate execution path
   const simulation = simulateExecutionPath(nodes, edges, context);
-  
+
   res.json({
     success: true,
     data: {
@@ -230,7 +230,7 @@ export async function deleteBusinessRule(req, res) {
 
 export async function evaluateRules(req, res) {
   const { event, context } = req.body;
-  
+
   // Get active rules for this event type
   const rules = await BusinessRule.findAll({
     filters: { status: "active", triggerEvent: event },
@@ -896,7 +896,7 @@ function simulateExecutionPath(nodes, edges, context) {
 
     // Find outgoing edges
     const outgoingEdges = edges.filter(e => e.source === currentId);
-    
+
     if (outgoingEdges.length === 0 && currentNode.type !== "end") {
       warnings.push(`Node ${currentId} has no outgoing edges`);
     }

@@ -44,11 +44,11 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
-            
+
             <h1 className="font-serif text-2xl text-charcoal-900 font-bold mb-3">
               Something went wrong
             </h1>
-            
+
             <p className="font-sans text-warm-500 mb-6">
               We encountered an unexpected error. Please try refreshing the page or return to the homepage.
             </p>
@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 </p>
               </div>
             )}
-            
+
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={this.handleReset}
@@ -70,7 +70,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <RefreshCw className="w-4 h-4" />
                 Try Again
               </button>
-              
+
               <Link
                 to="/"
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gold-500 text-charcoal-900 rounded-xl font-sans text-sm font-semibold hover:bg-gold-600 transition-colors"
@@ -109,10 +109,10 @@ interface SectionErrorBoundaryProps {
   sectionName?: string;
 }
 
-export function SectionErrorBoundary({ 
-  children, 
+export function SectionErrorBoundary({
+  children,
   fallback,
-  sectionName = 'This section' 
+  sectionName = 'This section'
 }: SectionErrorBoundaryProps) {
   return (
     <ErrorBoundary

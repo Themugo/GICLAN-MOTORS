@@ -54,13 +54,13 @@ describe('DealerDashboard', () => {
 
   it('loads data from API', async () => {
     const { dealerAPI } = await import('../../../api/api');
-    
+
     render(
       <MemoryRouter>
         <DealerDashboard />
       </MemoryRouter>
     );
-    
+
     await waitFor(() => {
       expect(dealerAPI.summary).toHaveBeenCalled();
     });
@@ -69,13 +69,13 @@ describe('DealerDashboard', () => {
   it('handles API failure gracefully', async () => {
     const { dealerAPI } = await import('../../../api/api');
     dealerAPI.summary.mockRejectedValueOnce(new Error('API Error'));
-    
+
     render(
       <MemoryRouter>
         <DealerDashboard />
       </MemoryRouter>
     );
-    
+
     // Should still render without crashing
     expect(screen.queryByText(/welcome back/i) || true).toBeTruthy();
   });

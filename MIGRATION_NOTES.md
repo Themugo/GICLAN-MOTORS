@@ -4,7 +4,7 @@
 
 This document describes the architectural changes made to the KAYAD frontend codebase to eliminate duplication, improve maintainability, and establish a clean, scalable folder structure.
 
-**Date:** 2026-07-23  
+**Date:** 2026-07-23
 **Status:** Completed
 
 ---
@@ -192,7 +192,7 @@ Some test files may need mock path updates:
 // OLD mock path
 vi.mock('../../components/NotificationCenter', () => ({ default: () => null }));
 
-// NEW mock path  
+// NEW mock path
 vi.mock('../../components/features/common/NotificationCenter', () => ({ default: () => null }));
 ```
 

@@ -67,20 +67,20 @@ export default function BuyerDashboard() {
             preferredBrands[car.brand] = (preferredBrands[car.brand] || 0) + 1;
           }
         });
-        
+
         // Sort brands by preference
         const sortedBrands = Object.entries(preferredBrands)
           .sort((a, b) => b[1] - a[1])
           .map(([brand]) => brand)
           .slice(0, 3);
-        
+
         if (sortedBrands.length > 0) {
           // Fetch cars matching preferred brands
           const recs = [];
           for (const brand of sortedBrands) {
             const data = await carsAPI.list({ brand, limit: 4 });
             if (data.cars) {
-              recs.push(...data.cars.filter(c => 
+              recs.push(...data.cars.filter(c =>
                 !favorites.some(f => f._id === c._id) &&
                 !recentlyViewed.some(r => r.id === c.id)
               ));
@@ -92,7 +92,7 @@ export default function BuyerDashboard() {
         setRecommendations([]);
       }
     };
-    
+
     if (favorites.length > 0 || recentlyViewed.length > 0) {
       generateRecommendations();
     }

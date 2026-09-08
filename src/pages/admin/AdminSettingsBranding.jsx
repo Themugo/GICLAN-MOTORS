@@ -85,7 +85,7 @@ const BrandingPreview = ({ branding }) => (
     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
       Live Preview
     </div>
-    
+
     {/* Navbar preview */}
     <div style={{
       background: '#0A1626',
@@ -119,7 +119,7 @@ const BrandingPreview = ({ branding }) => (
         ))}
       </div>
     </div>
-    
+
     {/* Button preview */}
     <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
       <button style={{
@@ -147,7 +147,7 @@ const BrandingPreview = ({ branding }) => (
         Outline Button
       </button>
     </div>
-    
+
     {/* Badge preview */}
     <div style={{ display: 'flex', gap: 8 }}>
       <span style={{
@@ -176,7 +176,7 @@ const BrandingPreview = ({ branding }) => (
 
 export default function AdminSettingsBranding({ branding, setBranding, config, setConfig, saveConfig, saving }) {
   const { toast } = useToast();
-  
+
   // Handle color change with validation
   const handleColorChange = (key, value) => {
     // Validate hex color format
@@ -184,7 +184,7 @@ export default function AdminSettingsBranding({ branding, setBranding, config, s
       setBranding(p => ({...p, [key]: value}));
     }
   };
-  
+
   // Auto-generate color variants from primary color
   const autoGenerateVariants = () => {
     const primary = branding.primaryColor;
@@ -192,7 +192,7 @@ export default function AdminSettingsBranding({ branding, setBranding, config, s
     const lightVariant = primary + '80'; // Add transparency
     const darkVariant = '#0C7B68'; // Default dark variant
     const glowVariant = primary + '40'; // Glow effect
-    
+
     setBranding(p => ({
       ...p,
       primaryLight: lightVariant,
@@ -230,7 +230,7 @@ export default function AdminSettingsBranding({ branding, setBranding, config, s
               />
             </div>
           </div>
-          
+
           {/* Logo Preview/Upload */}
           {branding.logoType === 'image' ? (
             <div>
@@ -257,15 +257,15 @@ export default function AdminSettingsBranding({ branding, setBranding, config, s
             <div className="input-group">
               <label className="input-label">Logo Text</label>
               <input className="input" type="text" value={branding.logoText}
-                onChange={e => setBranding(p => ({...p, logoText: e.target.value}))} 
+                onChange={e => setBranding(p => ({...p, logoText: e.target.value}))}
                 placeholder="K" style={{ height: 44 }} />
             </div>
           )}
-          
+
           <div className="input-group">
             <label className="input-label">Brand Tagline</label>
             <input className="input" type="text" value={branding.brandTagline}
-              onChange={e => setBranding(p => ({...p, brandTagline: e.target.value}))} 
+              onChange={e => setBranding(p => ({...p, brandTagline: e.target.value}))}
               placeholder="Premium Automotive Marketplace" style={{ height: 44 }} />
           </div>
         </div>
@@ -299,7 +299,7 @@ export default function AdminSettingsBranding({ branding, setBranding, config, s
             description="Glow/shadow effect"
           />
         </div>
-        <button 
+        <button
           onClick={autoGenerateVariants}
           style={{
             marginTop: 16,
@@ -411,11 +411,11 @@ export default function AdminSettingsBranding({ branding, setBranding, config, s
       <BrandingPreview branding={branding} />
 
       {/* Save Button */}
-      <button 
-        className="btn" 
-        onClick={() => saveConfig('branding')} 
+      <button
+        className="btn"
+        onClick={() => saveConfig('branding')}
         disabled={saving}
-        style={{ 
+        style={{
           width: '100%',
           padding: '14px 24px',
           background: `linear-gradient(135deg, ${branding.primaryColor}, ${branding.primaryDark})`,

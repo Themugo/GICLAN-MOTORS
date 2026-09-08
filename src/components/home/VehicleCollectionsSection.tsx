@@ -1,14 +1,14 @@
-import { 
-  Sparkles, 
-  Crown, 
-  Compass, 
-  Users, 
-  Truck, 
-  Zap, 
-  ShieldCheck, 
-  Banknote, 
-  Clock, 
-  ArrowRight 
+import {
+  Sparkles,
+  Crown,
+  Compass,
+  Users,
+  Truck,
+  Zap,
+  ShieldCheck,
+  Banknote,
+  Clock,
+  ArrowRight
 } from 'lucide-react';
 import { useMarketplace } from '../../context/MarketplaceContext';
 import { BodyStyle } from '../../types';
@@ -114,7 +114,7 @@ export const VehicleCollectionsSection: FC = () => {
   return (
     <section className="py-14 sm:py-20 bg-[#F6F1E8] dark:bg-[#080E1A] text-[#1E3063] dark:text-slate-100 border-b border-[#E8E1D5] dark:border-white/10 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 pb-6 border-b border-[#E2D8C7] dark:border-white/10">
           <div className="space-y-3">

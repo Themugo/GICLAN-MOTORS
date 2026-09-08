@@ -142,13 +142,13 @@ export default function EscrowPage() {
 
         {/* ── Real-time payment status banner ── */}
         {paymentStatus && (
-          <div 
+          <div
             data-testid="payment-status-banner"
             style={{
               padding: '16px 20px',
               marginBottom: 24,
               borderRadius: 'var(--radius)',
-              background: paymentStatus.type === 'success' 
+              background: paymentStatus.type === 'success'
                 ? 'linear-gradient(135deg, rgba(34,197,94,0.1), rgba(16,185,129,0.05))'
                 : 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.05))',
               border: `1px solid ${paymentStatus.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
@@ -169,12 +169,12 @@ export default function EscrowPage() {
                 {paymentStatus.message}
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setPaymentStatus(null)}
-              style={{ 
-                background: 'transparent', 
-                border: 'none', 
-                color: 'var(--text-muted)', 
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
                 cursor: 'pointer',
                 fontSize: 18,
               }}

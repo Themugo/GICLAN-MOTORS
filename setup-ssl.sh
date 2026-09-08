@@ -51,23 +51,23 @@ create_ssl_directory() {
 # Generate self-signed certificate for development
 generate_self_signed_cert() {
     log_step "Generating self-signed SSL certificate for development..."
-    
+
     DOMAIN=${1:-api.kayad.space}
-    
+
     if [ -f "nginx/ssl/cert.pem" ] && [ -f "nginx/ssl/key.pem" ]; then
         log_warn "SSL certificates already exist. Skipping generation."
         log_warn "To regenerate, remove nginx/ssl/cert.pem and nginx/ssl/key.pem"
         return
     fi
-    
+
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout nginx/ssl/key.pem \
         -out nginx/ssl/cert.pem \
         -subj "/C=KE/ST=Nairobi/L=Nairobi/O=KAYAD/OU=IT/CN=${DOMAIN}"
-    
+
     chmod 600 nginx/ssl/key.pem
     chmod 644 nginx/ssl/cert.pem
-    
+
     log_info "Self-signed SSL certificate generated successfully"
     log_info "Certificate: nginx/ssl/cert.pem"
     log_info "Private Key: nginx/ssl/key.pem"
@@ -78,24 +78,24 @@ generate_self_signed_cert() {
 # Generate certificate with CSR for production
 generate_csr() {
     log_step "Generating Certificate Signing Request (CSR) for production..."
-    
+
     DOMAIN=${1:-api.kayad.space}
     COUNTRY=${2:-KE}
     STATE=${3:-Nairobi}
     CITY=${4:-Nairobi}
     ORGANIZATION=${5:-KAYAD}
     ORGANIZATIONAL_UNIT=${6:-IT}
-    
+
     # Generate private key
     openssl genrsa -out nginx/ssl/private.key 2048
-    
+
     # Generate CSR
     openssl req -new -key nginx/ssl/private.key -out nginx/ssl/certificate.csr \
         -subj "/C=${COUNTRY}/ST=${STATE}/L=${CITY}/O=${ORGANIZATION}/OU=${ORGANIZATIONAL_UNIT}/CN=${DOMAIN}"
-    
+
     chmod 600 nginx/ssl/private.key
     chmod 644 nginx/ssl/certificate.csr
-    
+
     log_info "CSR generated successfully"
     log_info "Private Key: nginx/ssl/private.key"
     log_info "CSR: nginx/ssl/certificate.csr"
@@ -105,35 +105,35 @@ generate_csr() {
 # Setup Let's Encrypt with Certbot
 setup_letsencrypt() {
     log_step "Setting up Let's Encrypt SSL certificates..."
-    
+
     DOMAIN=${1:-api.kayad.space}
     EMAIL=${2:-admin@kayad.space}
-    
+
     log_info "Prerequisites for Let's Encrypt:"
     log_info "1. Domain must be pointing to your server"
     log_info "2. Port 80 must be open and accessible"
     log_info "3. Certbot must be installed"
     echo ""
-    
+
     log_info "Install Certbot:"
     log_info "Ubuntu/Debian: sudo apt-get install certbot"
     log_info "CentOS/RHEL: sudo yum install certbot"
     echo ""
-    
+
     log_info "Generate certificate:"
     log_info "sudo certbot certonly --standalone -d ${DOMAIN} --email ${EMAIL} --agree-tos"
     echo ""
-    
+
     log_info "Certificate location:"
     log_info "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"
     log_info "/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
     echo ""
-    
+
     log_info "Copy certificates to nginx/ssl:"
     log_info "sudo cp /etc/letsencrypt/live/${DOMAIN}/fullchain.pem nginx/ssl/cert.pem"
     log_info "sudo cp /etc/letsencrypt/live/${DOMAIN}/privkey.pem nginx/ssl/key.pem"
     echo ""
-    
+
     log_info "Setup auto-renewal:"
     log_info "sudo certbot renew --dry-run"
     log_info "Add to crontab: 0 0 * * 0 certbot renew --quiet"
@@ -142,26 +142,26 @@ setup_letsencrypt() {
 # Verify certificate
 verify_certificate() {
     log_step "Verifying SSL certificate..."
-    
+
     if [ ! -f "nginx/ssl/cert.pem" ]; then
         log_error "Certificate file not found: nginx/ssl/cert.pem"
         exit 1
     fi
-    
+
     if [ ! -f "nginx/ssl/key.pem" ]; then
         log_error "Private key file not found: nginx/ssl/key.pem"
         exit 1
     fi
-    
+
     openssl x509 -in nginx/ssl/cert.pem -text -noout | head -20
-    
+
     log_info "Certificate verification completed"
 }
 
 # Display certificate info
 display_certificate_info() {
     log_step "Displaying SSL certificate information..."
-    
+
     if [ -f "nginx/ssl/cert.pem" ]; then
         openssl x509 -in nginx/ssl/cert.pem -text -noout
     else
@@ -172,9 +172,9 @@ display_certificate_info() {
 # Update NGINX configuration
 update_nginx_config() {
     log_step "Updating NGINX configuration..."
-    
+
     DOMAIN=${1:-api.kayad.space}
-    
+
     log_info "Make sure nginx/nginx.conf has the correct domain: ${DOMAIN}"
     log_info "Update server_name directive in nginx/nginx.conf"
     log_info "server_name ${DOMAIN};"

@@ -78,7 +78,7 @@ const FAQ_ITEMS = [
 export default function SellerSupport() {
     const { toast } = useToast();
   const _navigate = useNavigate();
-  
+
   const [activeCategory, setActiveCategory] = useState('Getting Started');
   const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,7 +93,7 @@ export default function SellerSupport() {
       toast('Please fill in all fields', 'error');
       return;
     }
-    
+
     setSubmitting(true);
     // Simulate support ticket submission
     setTimeout(() => {
@@ -142,7 +142,7 @@ export default function SellerSupport() {
           <div className="lg:col-span-2">
             <div className="card p-6">
               <h3 className="font-display font-bold text-white text-xl mb-6">Frequently Asked Questions</h3>
-              
+
               {!searchQuery && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {FAQ_ITEMS.map(category => (

@@ -7,7 +7,6 @@
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { findAll, findById, findOne, create, update, remove, count, aggregate } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
-import Organization from "../models/Organization.js";
 
 // =============================
 // 🏢 CREATE ORGANIZATION

@@ -382,15 +382,15 @@ class ReportService {
    * Get report by share token
    */
   async getReportByShareToken(token) {
-    const report = await db.findOne('inspection_reports', { 
+    const report = await db.findOne('inspection_reports', {
       share_token: token,
       share_expires_at: { $gt: new Date() }
     });
-    
+
     if (!report) {
       throw new AppError('Report not found or link expired', 404);
     }
-    
+
     return report;
   }
 
@@ -497,7 +497,7 @@ class ReportService {
    */
   groupChecklistByCategory(items) {
     const grouped = {};
-    
+
     for (const category of Object.keys(INSPECTION_CATEGORIES)) {
       grouped[category] = {
         name: INSPECTION_CATEGORIES[category].name,

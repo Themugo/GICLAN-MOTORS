@@ -260,14 +260,14 @@ export function mergeAriaProps(
   additionalProps: Record<string, any>
 ): Record<string, any> {
   const result = { ...baseProps };
-  
+
   if (additionalProps['aria-describedby']) {
     result['aria-describedby'] = [
       baseProps['aria-describedby'],
       additionalProps['aria-describedby'],
     ].filter(Boolean).join(' ');
   }
-  
+
   return { ...result, ...additionalProps };
 }
 

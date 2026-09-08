@@ -139,7 +139,7 @@ class MockCanvasRenderingContext2D {
   font = '';
   textAlign = 'start';
   textBaseline = 'alphabetic';
-  
+
   fillRect() {}
   clearRect() {}
   getImageData() { return { data: [] }; }

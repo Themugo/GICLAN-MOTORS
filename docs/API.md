@@ -458,7 +458,7 @@ This section provides UI-to-API mapping for the KAYAD high-fidelity frontend scr
 *   **Endpoint:** `/api/auctions/{auction_id}/bid`
 *   **Payload:** `{ "amount": number, "bidder_id": string }`
 *   **Trigger:** `PLACE BID` button.
-*   **Logic:** 
+*   **Logic:**
     *   Frontend validates that `amount` >= `Next Min Bid`.
     *   On 200 OK: Trigger UI pulse on bid amount and append to history list.
 

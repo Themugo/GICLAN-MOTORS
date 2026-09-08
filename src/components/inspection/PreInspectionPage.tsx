@@ -1,23 +1,23 @@
 import { useState } from 'react';
-import { 
-  ShieldCheck, 
-  Wrench, 
-  CheckCircle2, 
-  Search, 
-  Calendar, 
-  Phone, 
-  User, 
-  Car, 
-  FileText, 
-  Sparkles, 
-  ArrowRight, 
-  Clock, 
-  MapPin, 
-  Gauge, 
-  Fuel, 
-  AlertCircle, 
-  X, 
-  Check, 
+import {
+  ShieldCheck,
+  Wrench,
+  CheckCircle2,
+  Search,
+  Calendar,
+  Phone,
+  User,
+  Car,
+  FileText,
+  Sparkles,
+  ArrowRight,
+  Clock,
+  MapPin,
+  Gauge,
+  Fuel,
+  AlertCircle,
+  X,
+  Check,
   ChevronRight,
   Cpu,
   Shield,
@@ -248,7 +248,7 @@ export const PreInspectionPage: React.FC = () => {
 
   return (
     <div className="pt-3 sm:pt-5 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-6 bg-[#FCF9F4] text-[#1E3063] font-sans">
-      
+
       {/* 1. Header / Hero Section */}
       <div className="inspection-marketplace-card p-4 sm:p-5 lg:p-6 rounded-2xl bg-[#1E3063] text-white border border-white/20 shadow-lg relative overflow-hidden space-y-4">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#00C9CE]/15 rounded-full blur-3xl pointer-events-none" />
@@ -339,7 +339,7 @@ export const PreInspectionPage: React.FC = () => {
 
         {/* Category Tabs & Interactive Detail Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
+
           {/* Left Column: Category Pills */}
           <div className="lg:col-span-5 space-y-2.5">
             {BREAKDOWN_CATEGORIES.map(cat => {

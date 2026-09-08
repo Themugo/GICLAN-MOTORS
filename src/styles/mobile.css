@@ -19,18 +19,18 @@
   --mobile-space-10: 40px;
   --mobile-space-12: 48px;
   --mobile-space-16: 64px;
-  
+
   /* Mobile touch target minimum (44px per Apple HIG & WCAG) */
   --touch-target-min: 44px;
   --touch-target-comfortable: 48px;
   --touch-target-spacious: 56px;
-  
+
   /* Mobile-safe area insets */
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-left: env(safe-area-inset-left, 0px);
   --safe-area-right: env(safe-area-inset-right, 0px);
-  
+
   /* Mobile typography scale */
   --mobile-text-xs: 0.6875rem;    /* 11px */
   --mobile-text-sm: 0.8125rem;    /* 13px */
@@ -39,31 +39,31 @@
   --mobile-text-xl: 1.25rem;      /* 20px */
   --mobile-text-2xl: 1.5rem;     /* 24px */
   --mobile-text-3xl: 1.875rem;    /* 30px */
-  
+
   /* Mobile-specific border radius */
   --mobile-radius-sm: 8px;
   --mobile-radius-md: 12px;
   --mobile-radius-lg: 16px;
   --mobile-radius-xl: 20px;
   --mobile-radius-2xl: 28px;
-  
+
   /* Mobile animation durations */
   --mobile-duration-instant: 100ms;
   --mobile-duration-fast: 200ms;
   --mobile-duration-normal: 300ms;
   --mobile-duration-slow: 400ms;
   --mobile-duration-slower: 500ms;
-  
+
   /* Mobile easing curves */
   --mobile-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --mobile-ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
   --mobile-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   --mobile-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  
+
   /* Bottom nav height */
   --bottom-nav-height: 72px;
   --header-height: 56px;
-  
+
   /* Mobile z-index scale */
   --mobile-z-base: 1;
   --mobile-z-sticky: 100;
@@ -89,15 +89,15 @@ body {
   /* Smooth scrolling with momentum */
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  
+
   /* Prevent pull-to-refresh on main content */
   overscroll-behavior-y: contain;
-  
+
   /* Better text rendering */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  
+
   /* Prevent accidental zoom on double-tap */
   touch-action: manipulation;
 }
@@ -192,7 +192,7 @@ body {
   display: flex;
   align-items: stretch;
   justify-content: space-around;
-  
+
   /* Premium blur effect */
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -216,7 +216,7 @@ body {
   -webkit-tap-highlight-color: transparent;
   min-width: var(--touch-target-min);
   min-height: var(--touch-target-min);
-  
+
   /* Haptic feedback simulation */
   transform-origin: center;
 }
@@ -289,7 +289,7 @@ body {
   justify-content: center;
   color: #000;
   font-size: 24px;
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(200, 150, 42, 0.4),
     0 0 40px rgba(200, 150, 42, 0.2);
   transition: all var(--mobile-duration-fast) var(--mobile-ease-spring);
@@ -298,7 +298,7 @@ body {
 
 .mobile-bottom-nav__fab:active {
   transform: scale(0.95);
-  box-shadow: 
+  box-shadow:
     0 2px 10px rgba(200, 150, 42, 0.3),
     0 0 20px rgba(200, 150, 42, 0.15);
 }
@@ -1781,7 +1781,7 @@ body {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-  
+
   *::-webkit-scrollbar {
     display: none;
   }
@@ -1926,7 +1926,7 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   .mobile-car-card:active,
   .mobile-btn:active,
   .mobile-filter-chip:active,

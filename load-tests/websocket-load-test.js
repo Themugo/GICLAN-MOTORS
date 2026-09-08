@@ -54,12 +54,12 @@ export function setup() {
 
 export default function (data) {
   const url = `${WS_URL}/socket.io/?EIO=4&transport=websocket`;
-  
+
   // Test WebSocket connection
   const res = websocket.connect(url, {}, function (socket) {
     socket.on('open', () => {
       console.log('WebSocket connected');
-      
+
       // Send authentication
       socket.send(JSON.stringify({
         type: 'auth',
@@ -70,13 +70,13 @@ export default function (data) {
     socket.on('message', (message) => {
       const startTime = Date.now();
       const msg = JSON.parse(message);
-      
+
       // Measure latency
       if (msg.type === 'pong') {
         const latency = Date.now() - startTime;
         wsLatency.add(latency);
       }
-      
+
       // Measure throughput
       wsThroughput.add(1);
     });

@@ -207,10 +207,10 @@ This document outlines the disaster recovery framework for the KAYAD platform, i
    ```bash
    # Identify previous stable commit
    git log --oneline -10
-   
+
    # Rollback to previous version
    git checkout <previous-stable-commit>
-   
+
    # Redeploy
    npm run build
    # Deploy to production

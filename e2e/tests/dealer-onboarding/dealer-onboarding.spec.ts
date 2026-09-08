@@ -1,6 +1,6 @@
 /**
  * Dealer Onboarding E2E Tests
- * 
+ *
  * Tests for dealer registration and onboarding workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -164,7 +164,7 @@ test.describe('Dealer Onboarding Workflow', () => {
   test.describe('Failure Scenarios', () => {
     test('should handle duplicate email registration', async ({ page, request }) => {
       const email = `duplicate-${Date.now()}@kayad.test`;
-      
+
       // Register first user via API
       await ApiHelper.registerApi(request, {
         firstName: 'John',

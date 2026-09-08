@@ -1,6 +1,6 @@
 /**
  * Auction Bidding E2E Tests
- * 
+ *
  * Tests for auction bidding workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -18,7 +18,7 @@ test.describe('Auction Bidding Workflow', () => {
     // Login as dealer
     const dealerCredentials = AuthHelper.getTestUser('dealer');
     dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
-    
+
     // Create auction
     const auction = await ApiHelper.createAuction(request, dealerToken, {
       title: 'BMW X5 2021 Auction',
@@ -68,7 +68,7 @@ test.describe('Auction Bidding Workflow', () => {
 
       const buyer2Credentials = AuthHelper.getTestUser('buyer');
       const buyer2Token = await ApiHelper.loginApi(context.request, buyer2Credentials.email, buyer2Credentials.password);
-      
+
       const buyer2Page = await context.newPage();
       await buyer2Page.addInitScript((authToken) => {
         window.localStorage.setItem('token', authToken);
@@ -95,7 +95,7 @@ test.describe('Auction Bidding Workflow', () => {
 
       const buyer2Credentials = AuthHelper.getTestUser('buyer');
       const buyer2Token = await ApiHelper.loginApi(context.request, buyer2Credentials.email, buyer2Credentials.password);
-      
+
       const buyer2Page = await context.newPage();
       await buyer2Page.addInitScript((authToken) => {
         window.localStorage.setItem('token', authToken);
@@ -164,7 +164,7 @@ test.describe('Auction Bidding Workflow', () => {
 
       const buyer2Credentials = AuthHelper.getTestUser('buyer');
       const buyer2Token = await ApiHelper.loginApi(context.request, buyer2Credentials.email, buyer2Credentials.password);
-      
+
       const buyer2Page = await context.newPage();
       await buyer2Page.addInitScript((authToken) => {
         window.localStorage.setItem('token', authToken);
@@ -371,7 +371,7 @@ test.describe('Auction Bidding Workflow', () => {
 
       const buyer2Credentials = AuthHelper.getTestUser('buyer');
       const buyer2Token = await ApiHelper.loginApi(context.request, buyer2Credentials.email, buyer2Credentials.password);
-      
+
       const buyer2Page = await context.newPage();
       await buyer2Page.addInitScript((authToken) => {
         window.localStorage.setItem('token', authToken);
@@ -394,7 +394,7 @@ test.describe('Auction Bidding Workflow', () => {
     test('should allow SMS bidding (if enabled)', async ({ page, request }) => {
       // This would require SMS service integration
       // For now, test the UI flow
-      
+
       await page.goto(`/auctions/${auctionId}`);
       await page.click('button:has-text("SMS Bidding")');
 

@@ -1,6 +1,6 @@
 /**
  * M-Pesa Payment E2E Tests
- * 
+ *
  * Tests for M-Pesa payment workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -18,7 +18,7 @@ test.describe('M-Pesa Payment Workflow', () => {
     // Login as dealer
     const dealerCredentials = AuthHelper.getTestUser('dealer');
     dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
-    
+
     // Create escrow
     const escrow = await ApiHelper.createEscrow(request, dealerToken, {
       vehicleId: 'test-vehicle-id',

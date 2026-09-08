@@ -23,7 +23,7 @@ export function useInfiniteScroll(
   options: UseInfiniteScrollOptions = {}
 ): UseInfiniteScrollReturn {
   const { threshold = 0, rootMargin = '300px' } = options;
-  
+
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const sentinelRef = useCallback(

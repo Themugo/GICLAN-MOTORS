@@ -1,36 +1,36 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { 
-  UnifiedChatThread, 
-  UnifiedMessageItem, 
-  UnifiedCommCategory, 
-  MessageAttachment, 
+import {
+  UnifiedChatThread,
+  UnifiedMessageItem,
+  UnifiedCommCategory,
+  MessageAttachment,
   Vehicle,
   SharedTransactionFile,
   UserProfile
 } from '../types';
 import { getMyChats, getChatMessages, sendChatMessage, markChatSeen, mapBackendChatToThread, mapBackendMessagesToUnified, ChatApiError } from '../services/chatApi';
-import { 
-  MessageSquare, 
-  Bell, 
-  Lock, 
-  Gavel, 
-  ClipboardCheck, 
-  Landmark, 
-  Search, 
-  Send, 
-  Paperclip, 
-  Image as ImageIcon, 
-  FileText, 
-  MapPin, 
-  Calendar, 
-  Check, 
-  CheckCheck, 
-  ShieldCheck, 
-  Eye, 
-  Download, 
-  X, 
-  Sparkles, 
-  Car, 
+import {
+  MessageSquare,
+  Bell,
+  Lock,
+  Gavel,
+  ClipboardCheck,
+  Landmark,
+  Search,
+  Send,
+  Paperclip,
+  Image as ImageIcon,
+  FileText,
+  MapPin,
+  Calendar,
+  Check,
+  CheckCheck,
+  ShieldCheck,
+  Eye,
+  Download,
+  X,
+  Sparkles,
+  Car,
   ArrowUpRight,
   Clock,
   Sliders,
@@ -521,8 +521,8 @@ export const UnifiedCommunicationHub: React.FC<UnifiedCommunicationHubProps> = (
                     key={thread.id}
                     onClick={() => handleSelectThread(thread.id)}
                     className={`w-full text-left p-3.5 transition-all flex items-start gap-3 cursor-pointer ${
-                      isSelected 
-                        ? 'bg-amber-50/80 border-l-4 border-[#1E3063]' 
+                      isSelected
+                        ? 'bg-amber-50/80 border-l-4 border-[#1E3063]'
                         : 'hover:bg-slate-50 border-l-4 border-transparent'
                     }`}
                   >
@@ -717,8 +717,8 @@ export const UnifiedCommunicationHub: React.FC<UnifiedCommunicationHubProps> = (
                   return (
                     <div key={m.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[85%] sm:max-w-[78%] space-y-2 p-4 rounded-2xl shadow-xs ${
-                        isUser 
-                          ? 'bg-[#1E3063] text-white rounded-br-none' 
+                        isUser
+                          ? 'bg-[#1E3063] text-white rounded-br-none'
                           : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none'
                       }`}>
                         {/* Sender Label */}
@@ -1101,10 +1101,10 @@ export const UnifiedCommunicationHub: React.FC<UnifiedCommunicationHubProps> = (
                     <div key={t.id} className="relative">
                       {/* Node Bullet */}
                       <span className={`absolute -left-[21px] top-0 w-3.5 h-3.5 rounded-full border-2 border-white ${
-                        t.status === 'completed' 
-                          ? 'bg-emerald-500' 
-                          : t.status === 'current' 
-                          ? 'bg-[#D96B43] animate-pulse' 
+                        t.status === 'completed'
+                          ? 'bg-emerald-500'
+                          : t.status === 'current'
+                          ? 'bg-[#D96B43] animate-pulse'
                           : 'bg-slate-300'
                       }`} />
 

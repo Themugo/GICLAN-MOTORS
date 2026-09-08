@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { adminAPI } from '../../api/api';
 import { useSocket } from '../../context/SocketContext';
 import { useToast } from '../../context/ToastContext';
-import { 
+import {
   Users, Car, DollarSign, AlertTriangle, TrendingUp, TrendingDown,
   Activity, Clock, CheckCircle, XCircle, RefreshCw, Eye, Shield,
   ArrowUpRight, ArrowDownRight, Zap, BarChart3, AlertCircle
@@ -130,7 +130,7 @@ export default function OperationsControlRoom() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button 
+          <button
             className="btn btn-outline"
             onClick={loadMetrics}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
@@ -152,7 +152,7 @@ export default function OperationsControlRoom() {
           const value = metrics?.[card.key] ?? 0;
           const trend = metrics?.[`${card.key}Trend`] ?? 0;
           const TrendIcon = trend >= 0 ? TrendingUp : TrendingDown;
-          
+
           return (
             <div key={card.key} className="admin-card admin-card--metric">
               <div className="metric-header">
@@ -194,8 +194,8 @@ export default function OperationsControlRoom() {
                   const config = getAlertColor(alert.severity);
                   const Icon = config.icon;
                   return (
-                    <div 
-                      key={alert.id} 
+                    <div
+                      key={alert.id}
                       className="alert-item"
                       style={{ background: config.bg, borderColor: config.border }}
                     >
@@ -275,7 +275,7 @@ export default function OperationsControlRoom() {
                   <div key={i} className="health-item">
                     <div className="health-header">
                       <span className="health-label">{item.label}</span>
-                      <span 
+                      <span
                         className="health-status"
                         style={{ color: item.status === 'healthy' ? 'var(--green)' : item.status === 'warning' ? 'var(--orange)' : 'var(--red)' }}
                       >
@@ -283,9 +283,9 @@ export default function OperationsControlRoom() {
                       </span>
                     </div>
                     <div className="health-bar">
-                      <div 
+                      <div
                         className="health-bar-fill"
-                        style={{ 
+                        style={{
                           width: `${item.value}%`,
                           background: item.status === 'healthy' ? 'var(--green)' : item.status === 'warning' ? 'var(--orange)' : 'var(--red)',
                         }}

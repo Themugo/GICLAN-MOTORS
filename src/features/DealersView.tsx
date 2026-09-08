@@ -1,18 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import { Dealer, Vehicle } from '../types';
-import { 
-  Building2, 
-  ShieldCheck, 
-  MapPin, 
-  Star, 
-  ExternalLink, 
-  Search, 
-  Phone, 
-  Mail, 
-  CheckCircle2, 
-  UserCheck, 
-  Lock, 
-  Sparkles, 
+import {
+  Building2,
+  ShieldCheck,
+  MapPin,
+  Star,
+  ExternalLink,
+  Search,
+  Phone,
+  Mail,
+  CheckCircle2,
+  UserCheck,
+  Lock,
+  Sparkles,
   Filter,
   Crown,
   Layers
@@ -30,9 +30,9 @@ interface DealersViewProps {
   onAddVehicle?: (v: Vehicle) => void;
 }
 
-export const DealersView: React.FC<DealersViewProps> = ({ 
-  dealers, 
-  vehicles, 
+export const DealersView: React.FC<DealersViewProps> = ({
+  dealers,
+  vehicles,
   onSelectDealerVehicles,
   onQuickViewVehicle = () => {},
   onStartEscrow = () => {},
@@ -57,7 +57,7 @@ export const DealersView: React.FC<DealersViewProps> = ({
       if (dealerSearch) {
         const q = dealerSearch.toLowerCase().trim();
         return (
-          d.name.toLowerCase().includes(q) || 
+          d.name.toLowerCase().includes(q) ||
           d.location.toLowerCase().includes(q) ||
           d.county.toLowerCase().includes(q)
         );
@@ -176,9 +176,9 @@ export const DealersView: React.FC<DealersViewProps> = ({
           <Building2 className="w-10 h-10 text-slate-300 mx-auto" />
           <p className="font-bold text-slate-700">No verified sellers match your selected criteria</p>
           <p className="text-xs text-slate-500">Try broadening your search or resetting county filters.</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => { setDealerSearch(''); setSelectedCounty('All'); setSellerTypeFilter('All'); }}
           >
             Reset All Filters
@@ -189,20 +189,20 @@ export const DealersView: React.FC<DealersViewProps> = ({
           {filteredDealers.map((d) => {
             const isPrivate = d.type === 'Private Seller';
             return (
-              <Card 
-                key={d.id} 
+              <Card
+                key={d.id}
                 className="p-6 flex flex-col justify-between space-y-4 hover:border-amber-400 transition-all border border-slate-200"
               >
                 <div className="space-y-3">
                   {/* Logo / Avatar & Rating Badge */}
                   <div className="flex items-start justify-between gap-3">
-                    <LazyImage 
-                      src={d.logo} 
-                      alt={d.name} 
+                    <LazyImage
+                      src={d.logo}
+                      alt={d.name}
                       wrapperClassName={`w-14 h-14 rounded-2xl border-2 shadow-sm ${
                         isPrivate ? 'border-emerald-300' : 'border-amber-300'
                       }`}
-                      className="w-full h-full object-cover" 
+                      className="w-full h-full object-cover"
                     />
                     <Badge variant="warning" size="md">
                       <Star className="w-3.5 h-3.5 fill-current text-amber-600" /> {d.rating} ({d.reviewsCount} reviews)

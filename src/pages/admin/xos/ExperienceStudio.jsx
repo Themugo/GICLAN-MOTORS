@@ -93,25 +93,25 @@ export default function ExperienceStudio() {
       setLoading(true);
       const { data: dashData } = await xosApi.getXOSDashboard();
       setDashboard(dashData.data);
-      
+
       const { data: campaignsData } = await xosApi.getCampaigns();
       setCampaigns(campaignsData.data);
-      
+
       const { data: expData } = await xosApi.getExperiences();
       setExperiences(expData.data);
-      
+
       const { data: audData } = await xosApi.getAudiences();
       setAudiences(audData.data);
-      
+
       const { data: journeyData } = await xosApi.getJourneys();
       setJourneys(journeyData.data);
-      
+
       const { data: themeData } = await xosApi.getSeasonalThemes();
       setThemes(themeData.data);
-      
+
       const { data: variantData } = await xosApi.getHomepageVariants();
       setVariants(variantData.data);
-      
+
       const { data: aiData } = await xosApi.getAIRecommendations();
       setAiRecommendations(aiData.data);
     } catch (error) {

@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { 
-  HelpCircle, 
-  Phone, 
-  MessageSquare, 
-  Mail, 
-  ChevronDown, 
-  ChevronUp, 
-  Send, 
-  MapPin, 
-  Clock, 
-  CheckCircle2, 
+import {
+  HelpCircle,
+  Phone,
+  MessageSquare,
+  Mail,
+  ChevronDown,
+  ChevronUp,
+  Send,
+  MapPin,
+  Clock,
+  CheckCircle2,
   ArrowRight,
   ShieldCheck,
   Building2,
@@ -89,7 +89,7 @@ export const SupportPage: React.FC = () => {
 
   return (
     <div className="pt-3 sm:pt-5 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-6 bg-[#FCF9F4] text-[#1E3063] font-sans">
-      
+
       {/* 1. Header / Hero Section */}
       <div className="p-5 sm:p-6 lg:p-7 rounded-2xl bg-[#1E3063] text-white border border-[#1E3063] shadow-lg relative overflow-hidden space-y-5">
         {/* Glowing Background Accents */}
@@ -126,11 +126,11 @@ export const SupportPage: React.FC = () => {
 
       {/* 2. Specialized Contact Channels (3 Distinct Visual Groupings) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+
         {/* Urgent Phone Channel */}
         <div className="p-6 sm:p-7 rounded-3xl bg-white border border-amber-200/80 shadow-xs hover:shadow-md hover:border-amber-400 transition-all space-y-5 flex flex-col justify-between relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
-          
+
           <div className="space-y-4 relative z-10">
             <div className="flex items-center justify-between gap-2">
               <div className="w-12 h-12 rounded-2xl bg-[#1E3063] text-[#00C9CE] flex items-center justify-center shadow-xs shrink-0 group-hover:scale-105 transition-transform">
@@ -317,7 +317,7 @@ export const SupportPage: React.FC = () => {
 
       {/* 4. Form & Regional Office Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* Direct Case Inquiry Form */}
         <div className="lg:col-span-7 p-6 sm:p-8 rounded-2xl bg-white border border-[#E2D8C7] shadow-sm space-y-6">
           <div className="space-y-1 pb-4 border-b border-[#E8E1D5]">

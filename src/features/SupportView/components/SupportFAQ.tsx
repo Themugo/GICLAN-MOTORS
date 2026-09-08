@@ -238,7 +238,7 @@ export const SupportFAQ: React.FC<SupportFAQProps> = ({ onContactSupport }) => {
 
   // Toggle single item
   const toggleItem = (id: string) => {
-    setExpandedIds(prev => 
+    setExpandedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
@@ -376,11 +376,11 @@ export const SupportFAQ: React.FC<SupportFAQProps> = ({ onContactSupport }) => {
           {filteredFaqs.map((faq) => {
             const isExpanded = expandedIds.includes(faq.id);
             return (
-              <Card 
-                key={faq.id} 
+              <Card
+                key={faq.id}
                 className={`transition-all duration-200 border ${
-                  isExpanded 
-                    ? 'border-[#1E3063]/30 shadow-md bg-white' 
+                  isExpanded
+                    ? 'border-[#1E3063]/30 shadow-md bg-white'
                     : 'border-slate-200 hover:border-slate-300 bg-white'
                 }`}
               >
@@ -448,7 +448,7 @@ export const SupportFAQ: React.FC<SupportFAQProps> = ({ onContactSupport }) => {
                     <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
                       <span>Was this answer helpful?</span>
                       <div className="flex items-center gap-3 font-bold text-[#1E3063]">
-                        <button 
+                        <button
                           onClick={() => alert('Thank you for your feedback!')}
                           className="hover:underline text-emerald-700 cursor-pointer"
                         >
@@ -456,7 +456,7 @@ export const SupportFAQ: React.FC<SupportFAQProps> = ({ onContactSupport }) => {
                         </button>
                         <span>•</span>
                         {onContactSupport && (
-                          <button 
+                          <button
                             onClick={onContactSupport}
                             className="hover:underline text-amber-700 cursor-pointer flex items-center gap-1"
                           >

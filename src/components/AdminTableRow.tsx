@@ -23,15 +23,15 @@ interface AdminTableRowProps {
   className?: string;
 }
 
-export function AdminCarRow({ 
-  car, 
-  onView, 
-  onEdit, 
-  onDelete 
-}: { 
-  car: any; 
-  onView?: () => void; 
-  onEdit?: () => void; 
+export function AdminCarRow({
+  car,
+  onView,
+  onEdit,
+  onDelete
+}: {
+  car: any;
+  onView?: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
 }) {
   return (
@@ -39,8 +39,8 @@ export function AdminCarRow({
       <td className="py-3 px-4">
         <div className="flex items-center gap-3">
           {car.image && (
-            <img 
-              src={car.image} 
+            <img
+              src={car.image}
               alt={car.title}
               loading="lazy"
               decoding="async"
@@ -88,15 +88,15 @@ export function AdminCarRow({
   );
 }
 
-export function AdminUserRow({ 
-  user, 
-  onView, 
-  onSuspend, 
-  onDelete 
-}: { 
-  user: any; 
-  onView?: () => void; 
-  onSuspend?: () => void; 
+export function AdminUserRow({
+  user,
+  onView,
+  onSuspend,
+  onDelete
+}: {
+  user: any;
+  onView?: () => void;
+  onSuspend?: () => void;
   onDelete?: () => void;
 }) {
   return (

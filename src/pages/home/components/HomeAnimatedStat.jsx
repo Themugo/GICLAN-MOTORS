@@ -21,7 +21,7 @@ export default function HomeAnimatedStat({ value, label }) {
   useEffect(() => {
     const el = ref.current;
     if (!el || hasAnimated.current) return;
-    
+
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !hasAnimated.current) {
         hasAnimated.current = true;
@@ -29,7 +29,7 @@ export default function HomeAnimatedStat({ value, label }) {
         obs.disconnect();
       }
     }, { threshold: 0.5 });
-    
+
     obs.observe(el);
     return () => obs.disconnect();
   }, [animateValue]);

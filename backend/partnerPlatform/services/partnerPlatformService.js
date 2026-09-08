@@ -246,9 +246,9 @@ class PartnerPlatformService {
    * Validate API request
    */
   async validateApiRequest(apiKey, requestedEndpoint) {
-    const credential = await db.findOne('api_credentials', { 
-      api_key: apiKey, 
-      status: 'active' 
+    const credential = await db.findOne('api_credentials', {
+      api_key: apiKey,
+      status: 'active'
     });
 
     if (!credential) {
@@ -258,7 +258,7 @@ class PartnerPlatformService {
     // Check endpoint permissions
     const endpoint = await db.findOne('api_endpoints', { endpoint_code: requestedEndpoint });
     if (endpoint && !endpoint.is_public) {
-      const hasPermission = credential.permissions.some(p => 
+      const hasPermission = credential.permissions.some(p =>
         endpoint.required_permissions.includes(p)
       );
       if (!hasPermission) {
@@ -332,7 +332,7 @@ class PartnerPlatformService {
   async triggerWebhook(eventType, eventData) {
     // Find all webhooks subscribed to this event
     const webhooks = await db.find('webhook_configs', { status: 'active' });
-    const subscribedWebhooks = webhooks.filter(w => 
+    const subscribedWebhooks = webhooks.filter(w =>
       w.subscribed_events.includes(eventType) || w.subscribed_events.includes('*')
     );
 
@@ -382,7 +382,7 @@ class PartnerPlatformService {
       return delivery;
     } catch (error) {
       logError('Webhook delivery failed', { webhookId: webhook.id, error: error.message });
-      
+
       await db.update('webhook_configs', webhook.id, {
         failure_count: webhook.failure_count + 1,
         last_delivery_status: 'failed',

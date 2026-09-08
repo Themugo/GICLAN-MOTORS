@@ -77,7 +77,7 @@ export default function AutomationStudio() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-800">Automation Overview</h2>
-        <button 
+        <button
           onClick={() => setActiveModule('workflows')}
           className="flex items-center gap-2 px-4 py-2 bg-[#17244B] text-white rounded-lg hover:bg-[#1e3054] transition-colors"
         >
@@ -113,7 +113,7 @@ export default function AutomationStudio() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-800">Recent Executions</h3>
-            <button 
+            <button
               onClick={() => setActiveModule('logs')}
               className="text-sm text-[#17244B] hover:underline"
             >
@@ -148,7 +148,7 @@ export default function AutomationStudio() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-800">Task Queue</h3>
-            <button 
+            <button
               onClick={() => setActiveModule('tasks')}
               className="text-sm text-[#17244B] hover:underline"
             >

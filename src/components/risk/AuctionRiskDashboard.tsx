@@ -93,7 +93,7 @@ const SeveritySummaryCard: React.FC<{
   label: string;
 }> = ({ severity, count, label }) => {
   const style = SEVERITY_STYLES[severity];
-  
+
   return (
     <div className={`flex items-center gap-3 p-4 rounded-xl border ${style.bgColor} ${style.borderColor}`}>
       <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: style.color + '20' }}>
@@ -121,7 +121,7 @@ const RiskAlert: React.FC<{
 
   return (
     <div className={`border rounded-xl overflow-hidden ${style.bgColor} ${style.borderColor}`}>
-      <div 
+      <div
         className="flex items-center gap-3 p-4 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
@@ -131,11 +131,11 @@ const RiskAlert: React.FC<{
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-bold text-sm text-slate-900">{risk.title}</span>
-            <Badge 
-              size="sm" 
-              className="text-[10px]" 
-              style={{ 
-                backgroundColor: style.color + '20', 
+            <Badge
+              size="sm"
+              className="text-[10px]"
+              style={{
+                backgroundColor: style.color + '20',
                 color: style.color,
                 borderColor: style.color + '40'
               }}
@@ -146,7 +146,7 @@ const RiskAlert: React.FC<{
           <p className="text-xs text-slate-600 mt-0.5 truncate">{risk.description}</p>
         </div>
         <div className="flex items-center gap-2">
-          <div 
+          <div
             className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium"
             style={{ backgroundColor: category.color + '15', color: category.color }}
           >
@@ -166,7 +166,7 @@ const RiskAlert: React.FC<{
           {/* Recommendation */}
           <div className="bg-white rounded-lg p-4 space-y-3">
             <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Recommendation</h5>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <p className="text-[10px] text-slate-500 font-medium uppercase">Problem</p>
@@ -207,8 +207,8 @@ const RiskAlert: React.FC<{
           {/* Actions */}
           {isAdmin && (
             <div className="flex items-center gap-2 mt-4">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="success"
                 onClick={() => onResolve?.(risk.id)}
                 className="bg-emerald-600 hover:bg-emerald-700"
@@ -216,16 +216,16 @@ const RiskAlert: React.FC<{
                 <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                 Resolve
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={() => onDismiss?.(risk.id)}
               >
                 <EyeOff className="w-3.5 h-3.5 mr-1" />
                 Dismiss
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={() => onViewDetails?.(risk)}
               >
@@ -291,7 +291,7 @@ export const AuctionRiskDashboard: React.FC<AuctionRiskDashboardProps> = ({
   // Generate risks for each session if not provided
   const risks = useMemo(() => {
     if (initialRisks.length > 0) return initialRisks;
-    
+
     const allRisks: RiskItem[] = [];
     sessions.forEach((session, idx) => {
       const vehicle = vehicles[idx] || {};
@@ -299,7 +299,7 @@ export const AuctionRiskDashboard: React.FC<AuctionRiskDashboardProps> = ({
       const detectedRisks = detectAllRisks(ctx);
       allRisks.push(...detectedRisks);
     });
-    
+
     return allRisks;
   }, [sessions, vehicles, initialRisks]);
 
@@ -403,7 +403,7 @@ export const AuctionRiskDashboard: React.FC<AuctionRiskDashboardProps> = ({
                 {canPublish ? 'Auction Publication Enabled' : 'Publication Blocked'}
               </h3>
               <p className="text-sm text-slate-600">
-                {canPublish 
+                {canPublish
                   ? 'No critical or high-severity risks blocking publication.'
                   : `${blockingRisks.length} risk(s) must be resolved before publishing.`
                 }
@@ -510,7 +510,7 @@ export const AuctionRiskDashboard: React.FC<AuctionRiskDashboardProps> = ({
               />
               <span className="text-sm text-slate-600">Show resolved</span>
             </label>
-            
+
             <div className="flex-1" />
 
             {isAdminView && onExportReport && (
@@ -542,7 +542,7 @@ export const AuctionRiskDashboard: React.FC<AuctionRiskDashboardProps> = ({
             return (
               <div key={category}>
                 <div className="flex items-center gap-2 mb-3">
-                  <div 
+                  <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{ backgroundColor: catInfo.color + '20', color: catInfo.color }}
                   >

@@ -20,8 +20,8 @@ export default function HomeLiveTicker({ count }) {
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => { 
-      if (rafRef.current) cancelAnimationFrame(rafRef.current); 
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 

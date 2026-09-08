@@ -50,7 +50,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     <div className={`bg-white border border-[#E2D8C7] rounded-3xl p-4 sm:p-5 shadow-sm hover:border-[#2E4080]/30 transition-all space-y-4 ${className}`}>
       {/* Primary Search Controls Bar */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-        
+
         {/* Main Search Input */}
         <div className="relative flex-1 min-w-0 group">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#23EBFF] group-focus-within:text-[#2E4080] transition-colors" />
@@ -75,7 +75,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
         {/* Action Controls Group */}
         <div className="flex flex-wrap items-center gap-2.5 shrink-0 justify-between lg:justify-end">
-          
+
           {/* Quick Format Filter Pills */}
           {filterOptions && filterOptions.length > 0 && onFilterChange && (
             <div className="flex items-center gap-1 bg-[#F6F1E8] border border-[#E2D8C7] p-1 rounded-2xl h-12 shrink-0 overflow-x-auto no-scrollbar">

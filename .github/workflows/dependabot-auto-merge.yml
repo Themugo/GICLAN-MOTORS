@@ -36,7 +36,7 @@ jobs:
               // For workflow_run, get PR number from the workflow's head branch
               const workflowRun = context.payload.workflow_run;
               const headBranch = workflowRun.head_branch;
-              
+
               // Query for PRs with this head branch
               const { data: prs } = await github.rest.pulls.list({
                 owner,
@@ -44,7 +44,7 @@ jobs:
                 head: `${owner}:${headBranch}`,
                 state: 'open'
               });
-              
+
               if (prs.length === 0) {
                 console.log('No PR found for workflow run, skipping');
                 process.exit(1);
@@ -122,14 +122,14 @@ jobs:
             if (context.eventName === 'workflow_run') {
               const workflowRun = context.payload.workflow_run;
               const headBranch = workflowRun.head_branch;
-              
+
               const { data: prs } = await github.rest.pulls.list({
                 owner,
                 repo,
                 head: `${owner}:${headBranch}`,
                 state: 'open'
               });
-              
+
               if (prs.length === 0) {
                 console.log('No PR found for workflow run');
                 process.exit(1);

@@ -495,7 +495,7 @@ function MetricCard({ icon, label, value, subValue, alert }: {
       style={{ backgroundColor: KAYAD_COLORS.white }}
     >
       <div className="flex items-center gap-3 mb-2">
-        <div 
+        <div
           className="p-2 rounded-lg"
           style={{ backgroundColor: alert ? `${KAYAD_COLORS.amber}20` : `${KAYAD_COLORS.softBlue}15` }}
         >

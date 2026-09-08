@@ -94,7 +94,7 @@ export default function TcoCalculator({ vehicle }: TcoCalculatorProps) {
           {/* Financing */}
           <div className="space-y-3">
             <p className="text-white font-sans text-xs font-bold">Financing</p>
-            
+
             <label className="block space-y-2">
               <span className="text-white/60 font-sans text-xs">Illustrative annual rate (optional)</span>
               <input

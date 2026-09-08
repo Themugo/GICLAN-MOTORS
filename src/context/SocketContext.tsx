@@ -85,7 +85,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
       eventHandlersRef.current.set(event, new Set());
     }
     eventHandlersRef.current.get(event)!.add(handler);
-    
+
     // Return unsubscribe function
     return () => {
       eventHandlersRef.current.get(event)?.delete(handler);
@@ -135,7 +135,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
 
   const joinNotifications = useCallback((handlers: NotificationHandlers = {}): RealtimeChannel | null => {
     if (!user || !supabase) return null;
-    
+
     const channel = supabase
       .channel('notifications')
       .on('postgres_changes',

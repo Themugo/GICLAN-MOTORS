@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
  * Supabase Setup Script for KAYAD
- * 
+ *
  * This script helps set up Supabase for the KAYAD project:
  * 1. Verifies Supabase connectivity
  * 2. Applies the versioned migration chain
  * 3. Optionally sets up storage (only when explicitly requested)
- * 
+ *
  * Usage:
  *   node scripts/setup-supabase.js --apply-schema
  *   node scripts/setup-supabase.js --setup-storage
@@ -24,8 +24,8 @@ require('dotenv').config({ path: path.join(__dirname, '../backend/.env') });
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || 
-    SUPABASE_URL.includes('your-project') || 
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY ||
+    SUPABASE_URL.includes('your-project') ||
     SUPABASE_SERVICE_KEY.includes('your-service')) {
   console.error('❌ Please configure SUPABASE_URL and SUPABASE_SERVICE_KEY in backend/.env');
   console.error('   Get these from: https://supabase.com/dashboard → Settings → API');
@@ -79,7 +79,7 @@ async function supabaseRequest(method, path, body = null) {
 async function executeSQL(sql) {
   console.log('   Executing SQL...');
   const { status, data } = await supabaseRequest('POST', '/rest/v1/rpc/exec', { query: sql });
-  
+
   if (status !== 200 && status !== 201) {
     // Try alternative approach
     console.log('   ⚠️  Direct RPC not available, trying direct execution...');
@@ -122,10 +122,10 @@ async function applyMigrations() {
     const filePath = path.join(MIGRATIONS_DIR, file);
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
-    
+
     // Get first non-empty line as description
     const description = lines.find(l => l.trim() && !l.trim().startsWith('--')) || file;
-    
+
     console.log(`   📄 ${file}`);
     console.log(`      ${content.substring(0, 100)}...`);
     console.log('');
@@ -174,7 +174,7 @@ async function createStorageBucketAPI() {
 
   // Check if bucket already exists
   const { status, data } = await supabaseRequest('GET', '/storage/v1/bucket');
-  
+
   if (status === 200 && Array.isArray(data)) {
     const existing = data.find(b => b.id === 'kayad-images');
     if (existing) {
@@ -192,11 +192,11 @@ async function createStorageBucketAPI() {
 
   if (createResult.status === 200 || createResult.status === 201) {
     console.log('   ✅ Bucket "kayad-images" created successfully');
-    
+
     // Add public read policy
     console.log('   📋 Adding public read policy...');
     // Note: Storage policies are managed separately in the dashboard
-    
+
     return { success: true };
   } else {
     console.log(`   ⚠️  Could not create bucket: ${createResult.status}`);
@@ -213,7 +213,7 @@ async function verifyConnection() {
   try {
     // Try to fetch database version
     const { status, data } = await supabaseRequest('GET', '/rest/v1/');
-    
+
     if (status === 200 || status === 401) {
       console.log('   ✅ Connected to Supabase');
       console.log(`   📍 Project: ${SUPABASE_URL}`);
@@ -266,7 +266,7 @@ async function main() {
 
   // Verify connection first
   const connection = await verifyConnection();
-  
+
   if (!connection.success) {
     console.log('\n⚠️  Could not verify connection, but continuing with instructions...\n');
   }

@@ -1,7 +1,7 @@
 import { useState, useMemo, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Car, Users, MessageSquare, BarChart3, 
+import {
+  LayoutDashboard, Car, Users, MessageSquare, BarChart3,
   Settings, Bell, Plus, TrendingUp, ChevronDown, Menu, X,
   Package, ShoppingCart, DollarSign, Eye, Heart, Star, TrendingDown
 } from 'lucide-react';
@@ -16,14 +16,14 @@ const NAV_ITEMS = [
 ];
 
 // Metric card component
-export const DealerMetric = memo(function DealerMetric({ 
-  icon, 
-  label, 
-  value, 
-  trend, 
+export const DealerMetric = memo(function DealerMetric({
+  icon,
+  label,
+  value,
+  trend,
   trendLabel,
   accent = 'gold',
-  className = '' 
+  className = ''
 }) {
   const iconColors = {
     gold: { bg: 'rgba(22, 196, 164, 0.12)', color: '#16C4A4' },
@@ -62,14 +62,14 @@ export const DealerMetric = memo(function DealerMetric({
 });
 
 // Quick action button
-export const DealerAction = memo(function DealerAction({ 
-  icon, 
-  label, 
-  description, 
-  to, 
+export const DealerAction = memo(function DealerAction({
+  icon,
+  label,
+  description,
+  to,
   onClick,
   variant = 'default',
-  className = '' 
+  className = ''
 }) {
   const content = (
     <>
@@ -111,12 +111,12 @@ export const DealerFunnel = memo(function DealerFunnel({ stages }) {
 });
 
 // Leads table
-export const DealerLeadsTable = memo(function DealerLeadsTable({ 
-  leads, 
-  onView, 
+export const DealerLeadsTable = memo(function DealerLeadsTable({
+  leads,
+  onView,
   onContact,
   onConvert,
-  className = '' 
+  className = ''
 }) {
   const statusColors = {
     new: 'dealer-leads__status--new',
@@ -194,12 +194,12 @@ export const DealerLeadsTable = memo(function DealerLeadsTable({
 });
 
 // Inventory card
-export const DealerInventoryCard = memo(function DealerInventoryCard({ 
-  car, 
-  onEdit, 
-  onPromote, 
+export const DealerInventoryCard = memo(function DealerInventoryCard({
+  car,
+  onEdit,
+  onPromote,
   onDelete,
-  className = '' 
+  className = ''
 }) {
   const statusMap = {
     active: 'active',
@@ -251,11 +251,11 @@ export const DealerInventoryCard = memo(function DealerInventoryCard({
 });
 
 // Analytics chart placeholder
-export const DealerChart = memo(function DealerChart({ 
-  title, 
+export const DealerChart = memo(function DealerChart({
+  title,
   period,
   children,
-  className = '' 
+  className = ''
 }) {
   return (
     <div className={`dealer-chart ${className}`}>

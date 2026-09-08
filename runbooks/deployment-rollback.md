@@ -69,7 +69,7 @@ tail -100 backend/logs/app.log | grep -i deploy
    ```bash
    # Check current deployment
    git log --oneline -1
-   
+
    # Verify previous version is deployed
    # Check application logs
    # Test critical endpoints
@@ -87,7 +87,7 @@ tail -100 backend/logs/app.log | grep -i deploy
    ```bash
    # View recent commits
    git log --oneline -10
-   
+
    # Identify last stable commit
    # Look for commit with "stable" or "release" tag
    ```
@@ -96,7 +96,7 @@ tail -100 backend/logs/app.log | grep -i deploy
    ```bash
    # Checkout previous stable commit
    git checkout <previous-stable-commit>
-   
+
    # Or revert last commit
    git revert HEAD
    ```
@@ -106,7 +106,7 @@ tail -100 backend/logs/app.log | grep -i deploy
    # Build frontend
    cd ..
    npm run build
-   
+
    # Backend should be ready (no build needed)
    ```
 
@@ -114,10 +114,10 @@ tail -100 backend/logs/app.log | grep -i deploy
    ```bash
    # Deploy to production
    # Use your deployment method (CI/CD, manual, etc.)
-   
+
    # Example: Using Render
    git push origin main
-   
+
    # Example: Using Docker
    docker-compose down
    docker-compose up -d --build
@@ -127,7 +127,7 @@ tail -100 backend/logs/app.log | grep -i deploy
    ```bash
    # Check application logs
    tail -f backend/logs/app.log
-   
+
    # Test critical endpoints
    curl https://api.kayad.co.ke/health
    curl https://api.kayad.co.ke/api/v1/cars
@@ -140,7 +140,7 @@ tail -100 backend/logs/app.log | grep -i deploy
    ```bash
    cd backend
    npm run backup:status
-   
+
    # Note the backup before deployment
    ```
 

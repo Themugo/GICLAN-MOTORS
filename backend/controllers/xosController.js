@@ -700,14 +700,14 @@ export async function resolveExperience(req, res) {
   applicableExperiences = applicableExperiences.filter(exp => {
     if (!exp.rules) return true;
     const rules = typeof exp.rules === 'string' ? JSON.parse(exp.rules) : exp.rules;
-    
+
     // Check country rule
     if (rules.country && rules.country !== country) return false;
     // Check device rule
     if (rules.device && rules.device !== device) return false;
     // Check user type rule
     if (rules.userType && rules.userType !== userType) return false;
-    
+
     return true;
   });
 
@@ -725,7 +725,7 @@ export async function resolveExperience(req, res) {
   // Get applicable homepage variant
   let homepageVariant = null;
   const variants = await HomepageVariant.findAll({ filters: { status: 'active' } });
-  
+
   if (variants.length > 0) {
     homepageVariant = variants.find(v => {
       if (!v.targetAudience) return v.variantType === 'visitor';

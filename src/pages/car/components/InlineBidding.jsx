@@ -68,32 +68,32 @@ export default function InlineBidding({
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--gold)', fontWeight: 700, pointerEvents: 'none' }}>KES</span>
-            <input 
-              type="number" 
-              value={bidAmount || ''} 
+            <input
+              type="number"
+              value={bidAmount || ''}
               onChange={e => onBidAmountChange(Number(e.target.value))}
               min={minBid}
               step={bidIncrement}
               placeholder={`Min: ${minBid.toLocaleString()}`}
-              style={{ 
-                width: '100%', padding: '12px 12px 12px 42px', borderRadius: 8, 
-                border: '1px solid var(--border)', background: 'var(--surface)', 
+              style={{
+                width: '100%', padding: '12px 12px 12px 42px', borderRadius: 8,
+                border: '1px solid var(--border)', background: 'var(--surface)',
                 color: '#fff', fontSize: 14, fontWeight: 700, outline: 'none',
                 transition: 'border-color 0.2s'
               }}
               onFocus={e => e.currentTarget.style.borderColor = 'var(--gold)'}
-              onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'} 
+              onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
             />
           </div>
-          <button 
-            onClick={onShowConfirm || onPlaceBid} 
+          <button
+            onClick={onShowConfirm || onPlaceBid}
             disabled={bidPlacing || !isAuth}
-            style={{ 
-              padding: '12px 24px', borderRadius: 8, 
+            style={{
+              padding: '12px 24px', borderRadius: 8,
               background: isAuth ? 'linear-gradient(135deg, var(--gold), var(--gold-muted))' : 'rgba(255,255,255,0.1)',
-              color: isAuth ? '#000' : 'rgba(255,255,255,0.5)', 
-              fontWeight: 900, fontSize: 13, border: 'none', cursor: isAuth && !bidPlacing ? 'pointer' : 'not-allowed', 
-              transition: 'all 0.2s', opacity: bidPlacing || !isAuth ? 0.6 : 1, whiteSpace: 'nowrap' 
+              color: isAuth ? '#000' : 'rgba(255,255,255,0.5)',
+              fontWeight: 900, fontSize: 13, border: 'none', cursor: isAuth && !bidPlacing ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s', opacity: bidPlacing || !isAuth ? 0.6 : 1, whiteSpace: 'nowrap'
             }}
           >
             {bidPlacing ? 'Processing…' : !isAuth ? 'Login to Bid' : 'Place Bid'}
@@ -124,8 +124,8 @@ export default function InlineBidding({
 
       {/* Error Message */}
       {bidError && (
-        <div style={{ 
-          fontSize: 11, color: 'var(--red)', marginTop: 8, 
+        <div style={{
+          fontSize: 11, color: 'var(--red)', marginTop: 8,
           display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
           background: 'rgba(239,68,68,0.08)', borderRadius: 6, border: '1px solid rgba(239,68,68,0.2)'
         }}>
@@ -145,10 +145,10 @@ export default function InlineBidding({
             {bidHistory.slice(-5).reverse().map((b, i) => {
               const isTop = i === bidHistory.length - 1;
               return (
-                <div 
-                  key={b._id || i} 
-                  style={{ 
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+                <div
+                  key={b._id || i}
+                  style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '6px 0', fontSize: 11, borderBottom: '1px solid rgba(255,255,255,0.05)',
                     animation: 'fadeInDown 0.3s ease',
                     background: isTop ? 'rgba(37, 99, 235,0.04)' : 'transparent'
@@ -171,11 +171,11 @@ export default function InlineBidding({
       )}
 
       {/* Link to Full Auction */}
-      <Link 
-        to={`/auction/${car?._id}`} 
-        style={{ 
+      <Link
+        to={`/auction/${car?._id}`}
+        style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-          fontSize: 11, color: 'var(--gold)', marginTop: 12, textDecoration: 'none', 
+          fontSize: 11, color: 'var(--gold)', marginTop: 12, textDecoration: 'none',
           fontWeight: 600, padding: '8px', borderRadius: 6,
           background: 'rgba(37, 99, 235,0.05)', border: '1px solid rgba(37, 99, 235,0.1)',
           transition: 'all 0.2s'

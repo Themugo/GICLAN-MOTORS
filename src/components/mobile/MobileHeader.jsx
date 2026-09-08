@@ -49,10 +49,10 @@ function HeaderButton({ icon, onClick, badge, ariaLabel }) {
 }
 
 // Search header variant
-function MobileSearchHeader({ 
-  value, 
-  onChange, 
-  onSubmit, 
+function MobileSearchHeader({
+  value,
+  onChange,
+  onSubmit,
   onVoiceSearch,
   placeholder = 'Search vehicles...',
   className = '',
@@ -119,8 +119,8 @@ function MobileSearchInput({ value, onChange, onSubmit, placeholder }) {
 }
 
 // Large hero header
-function MobileHeroHeader({ 
-  title, 
+function MobileHeroHeader({
+  title,
   subtitle,
   backgroundGradient,
   children,
@@ -157,8 +157,8 @@ function MobileHeroHeader({
 }
 
 // Tab header with sticky tabs
-function MobileTabHeader({ 
-  title, 
+function MobileTabHeader({
+  title,
   tabs,
   activeTab,
   onTabChange,

@@ -8,7 +8,7 @@ export const FinalCtaSection: FC = () => {
   return (
     <section className="py-16 sm:py-20 bg-[#FCF9F4] text-[#1E3063] relative overflow-hidden border-t border-[#E8E1D5] transition-colors">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
-        
+
         <h2 className="text-3xl sm:text-5xl font-black font-serif tracking-tight text-[#1E3063] leading-tight">
           Ready to Find or Sell Your Car?
         </h2>

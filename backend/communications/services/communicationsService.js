@@ -85,7 +85,7 @@ class CommunicationsService {
       throw new AppError('Conversation not found', 404);
     }
 
-    const messages = await db.find('messages', 
+    const messages = await db.find('messages',
       { conversation_id: conversationId },
       { sort: { sent_at: -1 }, limit: options.limit || 50 }
     );
@@ -134,7 +134,7 @@ class CommunicationsService {
    */
   async getUnreadCount(conversationId, userId) {
     const messages = await db.find('messages', { conversation_id: conversationId });
-    
+
     return messages.filter(m => {
       const notFromUser = m.sender_id !== userId;
       const notRead = !m.read_by?.some(r => r.user_id === userId);
@@ -218,7 +218,7 @@ class CommunicationsService {
 
     for (const message of messages) {
       if (message.sender_id === userId) continue;
-      
+
       const alreadyRead = message.read_by?.some(r => r.user_id === userId);
       if (!alreadyRead) {
         const readBy = [
@@ -305,7 +305,7 @@ class CommunicationsService {
    */
   async getUserNotifications(userId, filters = {}) {
     const query = { recipient_id: userId };
-    
+
     if (filters.status) query.status = filters.status;
     if (filters.type) query.notification_type = filters.type;
 
@@ -563,7 +563,7 @@ class CommunicationsService {
    */
   async getUserTeamChannels(userId) {
     const channels = await db.find('team_channels', { status: 'active' });
-    return channels.filter(c => 
+    return channels.filter(c =>
       c.members?.some(m => m.user_id === userId)
     );
   }

@@ -1,12 +1,12 @@
-import { 
-  Car, 
-  Crown, 
-  Compass, 
-  Truck, 
-  Zap, 
-  Sparkles, 
-  ArrowRight, 
-  Briefcase 
+import {
+  Car,
+  Crown,
+  Compass,
+  Truck,
+  Zap,
+  Sparkles,
+  ArrowRight,
+  Briefcase
 } from 'lucide-react';
 import { useMarketplace } from '../../context/MarketplaceContext';
 import { BodyStyle } from '../../types';
@@ -109,7 +109,7 @@ export const BrowseByCategory: FC = () => {
   return (
     <section className="py-14 sm:py-20 bg-[#FCF9F4] text-[#1E3063] border-b border-[#E8E1D5] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 pb-6 border-b border-[#E2D8C7]">
           <div className="space-y-2">

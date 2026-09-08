@@ -159,7 +159,7 @@ export default function Profile({ setPage, authUser }: ProfileProps) {
             {activeTab === 'info' && (
               <div className="bg-white rounded-2xl border border-cream-200 p-6">
                 <h2 className="font-serif text-xl text-charcoal-900 font-bold mb-6">Personal Information</h2>
-                
+
                 <div className="space-y-6">
                   <div className="flex items-center gap-4 p-4 bg-cream-50 rounded-xl">
                     <div className="w-10 h-10 bg-gold-500/10 rounded-lg flex items-center justify-center">
@@ -266,7 +266,7 @@ export default function Profile({ setPage, authUser }: ProfileProps) {
             {activeTab === 'notifications' && (
               <div className="bg-white rounded-2xl border border-cream-200 p-6">
                 <h2 className="font-serif text-xl text-charcoal-900 font-bold mb-6">Notification Preferences</h2>
-                
+
                 <div className="space-y-4">
                   {[
                     { label: 'New bids on my listings', desc: 'Get notified when someone places a bid', key: 'new_bids', enabled: user.notifications?.newBids ?? true },
@@ -293,7 +293,7 @@ export default function Profile({ setPage, authUser }: ProfileProps) {
             {activeTab === 'security' && (
               <div className="bg-white rounded-2xl border border-cream-200 p-6">
                 <h2 className="font-serif text-xl text-charcoal-900 font-bold mb-6">Security</h2>
-                
+
                 <div className="space-y-4">
                   <button className="w-full flex items-center justify-between p-4 bg-cream-50 rounded-xl hover:bg-cream-100 transition-colors">
                     <div className="flex items-center gap-3">

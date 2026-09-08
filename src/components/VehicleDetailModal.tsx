@@ -1,32 +1,32 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Vehicle } from '../types';
 import { isEscrowApplicable, getEscrowBadgeLabel } from '../utils/escrow';
-import { 
-  CheckCircle2, 
-  MapPin, 
-  Lock, 
-  MessageSquare, 
-  Heart, 
-  FileCheck, 
-  ShieldCheck, 
-  Landmark, 
-  Calculator, 
-  Gauge, 
-  Fuel, 
-  Sliders, 
-  Sparkles, 
-  Phone, 
-  Zap, 
-  Info, 
-  ChevronRight, 
-  ChevronLeft, 
-  Shield, 
-  Star, 
-  Award, 
-  Clock, 
-  ArrowRight, 
-  SearchX, 
-  AlertCircle, 
+import {
+  CheckCircle2,
+  MapPin,
+  Lock,
+  MessageSquare,
+  Heart,
+  FileCheck,
+  ShieldCheck,
+  Landmark,
+  Calculator,
+  Gauge,
+  Fuel,
+  Sliders,
+  Sparkles,
+  Phone,
+  Zap,
+  Info,
+  ChevronRight,
+  ChevronLeft,
+  Shield,
+  Star,
+  Award,
+  Clock,
+  ArrowRight,
+  SearchX,
+  AlertCircle,
   Gavel,
   Maximize2,
   ChevronDown,
@@ -223,7 +223,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
   const loanPrincipal = Math.max(0, price - depositAmount);
   const annualInterestRate = 0.13; // 13% p.a. asset financing estimate
   const monthlyInterestRate = annualInterestRate / 12;
-  const monthlyPayment = loanPrincipal > 0 
+  const monthlyPayment = loanPrincipal > 0
     ? (loanPrincipal * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, loanTermMonths)) / (Math.pow(1 + monthlyInterestRate, loanTermMonths) - 1)
     : 0;
 
@@ -321,17 +321,17 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
               1. HERO AREA (Near-Full First Screen Showroom)
               ========================================== */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
+
             {/* Gallery Column (7 Cols) */}
             <div className="lg:col-span-7 space-y-4">
               {/* Primary Large Image Viewer */}
-              <div 
+              <div
                 onClick={() => setIsLightboxOpen(true)}
                 className="h-80 sm:h-[420px] rounded-3xl overflow-hidden bg-slate-950 border border-slate-200 relative group shadow-lg cursor-zoom-in"
               >
-                <LazyImage 
-                  src={activeImage} 
-                  alt={vehicle.title} 
+                <LazyImage
+                  src={activeImage}
+                  alt={vehicle.title}
                   wrapperClassName="w-full h-full"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
@@ -428,9 +428,9 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
 
             {/* Right Side: Title, Price Block, Dealer Preview & Primary Actions (5 Cols) */}
             <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
-              
+
               <div className="space-y-4">
-                
+
                 {/* Vehicle Title & Condition */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -460,8 +460,8 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
 
                     {marketDiff && (
                       <span className={`text-xs font-extrabold px-3 py-1 rounded-xl border ${
-                        marketDiff.isBelow 
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                        marketDiff.isBelow
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                           : 'bg-slate-100 text-slate-700 border-slate-200'
                       }`}>
                         {marketDiff.isBelow ? `Ksh ${marketDiff.amount.toLocaleString()} Below Market` : 'Fair Market Price'}
@@ -634,7 +634,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-              
+
               <Card className="p-5 space-y-2 bg-white border-slate-200">
                 <div className="flex items-center gap-2 text-[#1E3063] font-black text-sm font-display">
                   <Car className="w-4 h-4 text-amber-500" />
@@ -700,7 +700,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              
+
               {/* Safety Category */}
               <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
                 <button

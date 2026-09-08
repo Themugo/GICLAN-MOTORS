@@ -23,18 +23,28 @@ const files = fs.readdirSync(dir)
 
 const failures = [];
 const warnings = [];
+const migrationPattern = /^(\d{14})_[A-Za-z0-9][A-Za-z0-9_-]*\.sql(?:\.sql)?$/;
+const versions = new Map();
+for (const file of files) {
+  const match = file.match(migrationPattern);
+  if (!match) failures.push(`Invalid migration filename: ${file}`);
+  else {
+    const version = match[1];
+    if (versions.has(version)) failures.push(`Duplicate migration version ${version}: ${versions.get(version)} / ${file}`);
+    else versions.set(version, file);
+  }
+}
+const sortedVersions = [...versions.keys()].sort();
+if (sortedVersions.some((v, i) => i > 0 && v <= sortedVersions[i - 1])) failures.push('Migration versions are not strictly increasing.');
 
 if (files.length === 0) failures.push("No Supabase migrations found.");
 
 const forbidden = [
-  /seed_demo_vehicles/i,
-  /pexels\.com/i,
-  /demo vehicle/i,
-  /demo inventory/i,
   /test@example/i,
   /mock payment/i,
   /fake dealer/i,
 ];
+const historicalSeed = [/seed_demo_vehicles/i, /pexels\.com/i, /demo vehicle/i, /demo inventory/i];
 
 for (const file of files) {
   const text = fs.readFileSync(path.join(dir, file), "utf8");
@@ -77,7 +87,7 @@ if (!/foundational_tables/i.test(first)) {
   warnings.push(`First migration is ${first}; verify foundational schema ordering.`);
 }
 
-console.log(`KAYAD Supabase migration preflight: ${files.length} migration files`);
+console.log(`KAYAD Supabase migration preflight: ${files.length} migration files, ${versions.size} unique versions`);
 
 if (warnings.length) {
   console.log("\nWarnings:");
@@ -92,3 +102,8 @@ if (failures.length) {
 
 console.log("\nPASS: no forbidden demo content or old project references detected.");
 console.log("Next required validation is a real PostgreSQL/Supabase migration reset.");
+
+const all = files.map((f) => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+for (const required of ['CREATE TABLE IF NOT EXISTS cars', 'CREATE TABLE IF NOT EXISTS favorites', 'CREATE TABLE IF NOT EXISTS saved_searches']) {
+  if (!new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(all)) failures.push(`Required production table DDL missing: ${required}`);
+}

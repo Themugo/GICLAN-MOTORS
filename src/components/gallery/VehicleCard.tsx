@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import type { FC } from 'react';
-import { 
-  Heart, 
-  ShieldCheck, 
-  Tag, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  Heart,
+  ShieldCheck,
+  Tag,
+  ChevronLeft,
+  ChevronRight,
   Calendar,
   Gauge,
   Fuel,

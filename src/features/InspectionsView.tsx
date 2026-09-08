@@ -1,30 +1,30 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Vehicle, InspectionBooking, InspectionReport, InspectionPayment, InspectionRating, UserProfile } from '../types';
 import { createInspectionOrder, getMyInspections, InspectionApiError, BackendInspectionOrder } from '../services/inspectionApi';
-import { 
-  ShieldCheck, 
-  Search, 
-  MapPin, 
-  Star, 
-  CheckCircle2, 
-  Clock, 
-  DollarSign, 
-  FileCheck, 
-  UserCheck, 
-  Award, 
-  Wrench, 
-  Calendar, 
-  PlusCircle, 
-  ChevronRight, 
-  X, 
-  Download, 
-  Eye, 
-  Lock, 
-  AlertTriangle, 
-  TrendingUp, 
-  Landmark, 
-  Building2, 
-  Phone, 
+import {
+  ShieldCheck,
+  Search,
+  MapPin,
+  Star,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  FileCheck,
+  UserCheck,
+  Award,
+  Wrench,
+  Calendar,
+  PlusCircle,
+  ChevronRight,
+  X,
+  Download,
+  Eye,
+  Lock,
+  AlertTriangle,
+  TrendingUp,
+  Landmark,
+  Building2,
+  Phone,
   Mail,
   Sparkles,
   Percent,
@@ -119,7 +119,7 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
   user,
   onOpenAuth,
   initialSelectedVehicle,
-  onOpenInspectionMarketplace,
+  onViewVehicleDetails
 }) => {
   // State
   // Fixed: reports/bookings previously started from, and only ever
@@ -289,7 +289,7 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
     setVotedItems(prev => {
       const wasVoted = prev[ratingId];
       const newVoted = !wasVoted;
-      
+
       setHelpfulVotes(votes => ({
         ...votes,
         [ratingId]: (votes[ratingId] || 0) + (newVoted ? 1 : -1)
@@ -348,16 +348,16 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
 
             {/* Quick CTAs */}
             <div className="flex flex-wrap items-center gap-3 shrink-0">
-              <Button 
-                variant="accent" 
+              <Button
+                variant="accent"
                 size="md"
                 onClick={() => handleOpenBooking()}
                 className="font-bold shadow-lg"
               >
                 <PlusCircle className="w-4 h-4 mr-1.5" /> Book Inspection Now
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="md"
                 onClick={() => setActiveTab('reports')}
                 className="text-white border-white/30 hover:bg-white/10"
@@ -610,8 +610,8 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
                   </div>
 
                   <div className="p-5 pt-0">
-                    <Button 
-                      variant="primary" 
+                    <Button
+                      variant="primary"
                       fullWidth
                       onClick={() => setSelectedReport(rep)}
                     >
@@ -701,8 +701,8 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
 
                         <TableCell className="text-right">
                           {b.reportId ? (
-                            <Button 
-                              variant="secondary" 
+                            <Button
+                              variant="secondary"
                               size="sm"
                               onClick={() => {
                                 const rep = reports.find(r => r.id === b.reportId);
@@ -796,16 +796,16 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
               </span>
 
               <div className="flex items-center gap-3">
-                <Button 
-                  variant="secondary" 
+                <Button
+                  variant="secondary"
                   size="sm"
                   onClick={() => showToast('PDF Report download started')}
                 >
                   <Download className="w-4 h-4 mr-1.5" /> Download PDF Certificate
                 </Button>
 
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   size="sm"
                   onClick={() => {
                     setSelectedReport(null);
@@ -846,21 +846,21 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
                 { step: 6, label: 'Escrow' },
                 { step: 7, label: 'Confirmed' }
               ].map((s) => (
-                <div 
-                  key={s.step} 
+                <div
+                  key={s.step}
                   className={`flex items-center gap-1.5 ${
-                    bookingStep === s.step 
-                      ? 'text-[#1E3063] font-extrabold' 
-                      : bookingStep > s.step 
-                        ? 'text-emerald-700' 
+                    bookingStep === s.step
+                      ? 'text-[#1E3063] font-extrabold'
+                      : bookingStep > s.step
+                        ? 'text-emerald-700'
                         : 'text-slate-400'
                   }`}
                 >
                   <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                    bookingStep === s.step 
-                      ? 'bg-[#1E3063] text-white' 
-                      : bookingStep > s.step 
-                        ? 'bg-emerald-600 text-white' 
+                    bookingStep === s.step
+                      ? 'bg-[#1E3063] text-white'
+                      : bookingStep > s.step
+                        ? 'bg-emerald-600 text-white'
                         : 'bg-slate-200 text-slate-600'
                   }`}>
                     {bookingStep > s.step ? '✓' : s.step}
@@ -1089,7 +1089,7 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
                   </div>
                 </div>
 
-                <Button 
+                <Button
                   variant="primary"
                   onClick={() => {
                     setShowBookingModal(false);

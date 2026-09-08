@@ -2,21 +2,21 @@
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
   <!--
     OWASP Dependency Check Suppressions File
-    
+
     This file contains suppressions for false positives or acceptable vulnerabilities
     that should not block the CI/CD pipeline.
-    
+
     Each suppression should include:
     - A clear justification
     - The CVE or vulnerability identifier
     - The affected file or package
-    
+
     Review and update this file regularly as vulnerabilities are fixed.
   -->
-  
+
   <!-- Example suppression (uncomment and customize as needed) -->
   <!--
-  
+
   <suppress>
     <notes>
       Development dependencies are not used in production builds.
@@ -24,7 +24,7 @@
     </notes>
     <packageUrl regex="true">^pkg:npm/nodemon/.*</packageUrl>
   </suppress>
-  
+
   <suppress>
     <notes>
       Development dependencies are not used in production builds.
@@ -32,7 +32,7 @@
     </notes>
     <packageUrl regex="true">^pkg:npm/prettier/.*</packageUrl>
   </suppress>
-  
+
   <suppress>
     <notes>
       Development dependencies are not used in production builds.
@@ -40,8 +40,8 @@
     </notes>
     <packageUrl regex="true">^pkg:npm/eslint/.*</packageUrl>
   </suppress>
-  
+
   <!-- Known acceptable vulnerabilities with mitigation -->
   <!-- Add specific suppressions here with clear justifications -->
-  
+
 </suppressions>

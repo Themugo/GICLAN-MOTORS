@@ -74,30 +74,6 @@ export async function atomicSettlePurchasePayment(paymentId, receipt = null) {
   return data;
 }
 
-export async function atomicResolveDispute({
-  escrowId,
-  actorId,
-  decision,
-  amount = null,
-  sellerAmount = null,
-  buyerAmount = null,
-  reason = null,
-  idempotencyKey = null,
-}) {
-  const { data, error } = await getSupabase().rpc("kayad_resolve_dispute_atomic", {
-    p_escrow_id: escrowId,
-    p_actor_id: actorId,
-    p_decision: decision,
-    p_amount: amount,
-    p_seller_amount: sellerAmount,
-    p_buyer_amount: buyerAmount,
-    p_reason: reason,
-    p_idempotency_key: idempotencyKey,
-  });
-  if (error) throw error;
-  return data;
-}
-
 export async function atomicTransitionEscrow({
   escrowId,
   nextStatus,
@@ -113,28 +89,6 @@ export async function atomicTransitionEscrow({
     p_role: role,
     p_idempotency_key: idempotencyKey,
     p_reason: reason,
-  });
-  if (error) throw error;
-  return data;
-}
-
-
-export async function atomicStartAuction({ carId, durationMs, startingBid, reservePrice = null, reserveMode = "none" }) {
-  const { data, error } = await getSupabase().rpc("kayad_start_auction_atomic", {
-    p_car_id: carId,
-    p_duration_ms: durationMs,
-    p_starting_bid: startingBid,
-    p_reserve_price: reservePrice,
-    p_reserve_mode: reserveMode,
-  });
-  if (error) throw error;
-  return data;
-}
-
-export async function atomicExtendAuction({ carId, extraMs }) {
-  const { data, error } = await getSupabase().rpc("kayad_extend_auction_atomic", {
-    p_car_id: carId,
-    p_extra_ms: extraMs,
   });
   if (error) throw error;
   return data;

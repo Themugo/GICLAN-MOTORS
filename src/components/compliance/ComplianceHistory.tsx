@@ -159,7 +159,7 @@ export const ComplianceHistory: FC<ComplianceHistoryProps> = ({
     }
 
     // Sort by date descending
-    return filtered.sort((a, b) => 
+    return filtered.sort((a, b) =>
       new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime()
     );
   }, [audits, dateRange, actionFilter, searchQuery]);
@@ -167,7 +167,7 @@ export const ComplianceHistory: FC<ComplianceHistoryProps> = ({
   // Group by date
   const groupedAudits = useMemo(() => {
     const groups: Record<string, ComplianceAuditEntry[]> = {};
-    
+
     filteredAudits.forEach(audit => {
       const date = new Date(audit.performedAt).toLocaleDateString('en-US', {
         weekday: 'long',
@@ -190,7 +190,7 @@ export const ComplianceHistory: FC<ComplianceHistoryProps> = ({
     const rejected = audits.filter(a => a.action === 'rejected').length;
     const suspended = audits.filter(a => a.action === 'suspended').length;
     const pending = audits.filter(a => a.action === 'submitted' || a.action === 'under_review').length;
-    
+
     return { approved, rejected, suspended, pending, total: audits.length };
   }, [audits]);
 
@@ -292,15 +292,15 @@ export const ComplianceHistory: FC<ComplianceHistoryProps> = ({
               <h3 className="font-bold text-slate-800">{date}</h3>
               <Badge variant="neutral" size="sm">{dayAudits.length}</Badge>
             </div>
-            
+
             <div className="relative pl-6 border-l-2 border-slate-200 space-y-4">
               {dayAudits.map((audit, idx) => {
                 const actionStyle = ACTION_STYLES[audit.action] || ACTION_STYLES.created;
-                
+
                 return (
                   <div key={audit.id} className="relative">
                     {/* Timeline dot */}
-                    <div 
+                    <div
                       className="absolute -left-[29px] w-5 h-5 rounded-full flex items-center justify-center"
                       style={{ backgroundColor: actionStyle.bgColor, color: actionStyle.color }}
                     >
@@ -312,10 +312,10 @@ export const ComplianceHistory: FC<ComplianceHistoryProps> = ({
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <Badge 
+                            <Badge
                               size="sm"
-                              style={{ 
-                                backgroundColor: actionStyle.bgColor, 
+                              style={{
+                                backgroundColor: actionStyle.bgColor,
                                 color: actionStyle.color,
                               }}
                             >
@@ -324,10 +324,10 @@ export const ComplianceHistory: FC<ComplianceHistoryProps> = ({
                             {audit.previousStatus && audit.newStatus && (
                               <>
                                 <span className="text-xs text-slate-400">→</span>
-                                <Badge 
+                                <Badge
                                   size="sm"
-                                  style={{ 
-                                    backgroundColor: COMPLIANCE_STATUS_STYLES[audit.newStatus].bgColor, 
+                                  style={{
+                                    backgroundColor: COMPLIANCE_STATUS_STYLES[audit.newStatus].bgColor,
                                     color: COMPLIANCE_STATUS_STYLES[audit.newStatus].color,
                                   }}
                                 >
@@ -336,7 +336,7 @@ export const ComplianceHistory: FC<ComplianceHistoryProps> = ({
                               </>
                             )}
                           </div>
-                          
+
                           <div className="space-y-1">
                             <div className="flex items-center gap-4 text-sm">
                               <span className="font-medium text-slate-800">
@@ -346,7 +346,7 @@ export const ComplianceHistory: FC<ComplianceHistoryProps> = ({
                                 Organizer: {audit.organizerId}
                               </span>
                             </div>
-                            
+
                             {audit.comments && (
                               <p className="text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
                                 {audit.comments}

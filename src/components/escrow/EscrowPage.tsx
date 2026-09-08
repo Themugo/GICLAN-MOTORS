@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { 
-  ShieldCheck, 
-  Lock, 
-  CheckCircle2, 
-  Clock, 
+import {
+  ShieldCheck,
+  Lock,
+  CheckCircle2,
+  Clock,
   ChevronDown,
   ChevronUp,
   Zap,

@@ -93,7 +93,7 @@ export default function AuctionAnnouncement({ car, onClose }: AuctionAnnouncemen
             )}
           </div>
           <p className="font-sans text-xs text-warm-500 mt-0.5">{info.sub}</p>
-          
+
           {isLive && car.currentBid && (
             <p className="font-sans text-sm font-bold text-charcoal-900 mt-2">
               Current: {formatKES(car.currentBid)}

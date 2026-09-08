@@ -22,7 +22,7 @@ export function GalleryImage({ car, idx, onPrev, onNext, total, onOpenGallery }:
   const [err, setErr] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const touchX = useRef<number | null>(null);
-  
+
   const src = (!err && firstImage(car, idx)) ||
     'https://images.unsplash.com/photo-1503376780353-7e8f0e4b39f4?q=80&w=1600&fit=crop';
 
@@ -174,9 +174,9 @@ interface CompareToggleProps {
 
 export function CompareToggle({ car }: CompareToggleProps) {
   const { compareCount, maxCompare, addCar, removeCar, isComparing } = useCompare();
-  
+
   if (!car?._id && !car?.id) return null;
-  
+
   const carId = car._id || String(car.id);
   const isComp = isComparing(carId);
   const full = compareCount >= maxCompare && !isComp;

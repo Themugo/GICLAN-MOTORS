@@ -13,7 +13,7 @@ export function useFocusManagement(isOpen: boolean) {
     if (isOpen) {
       // Save the currently focused element
       previousActiveElementRef.current = document.activeElement as HTMLElement;
-      
+
       // Focus the first focusable element in the container
       if (containerRef.current) {
         const focusableElements = getFocusableElements(containerRef.current);
@@ -49,7 +49,7 @@ export function useFocusManagement(isOpen: boolean) {
 
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
-        
+
         // Restore focus to previous element when closed
         if (previousActiveElementRef.current) {
           previousActiveElementRef.current.focus();

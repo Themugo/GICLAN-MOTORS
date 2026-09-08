@@ -335,7 +335,7 @@ function AppInner() {
             </div>
           </div>
         }>
-        
+
         {/* Module Switcher Rendering */}
         {activeNav === 'marketplace' && (
             <VehicleMarketplace
@@ -393,7 +393,7 @@ function AppInner() {
           )}
 
           {activeNav === 'financing' && (
-            <FinancingView 
+            <FinancingView
               vehicles={vehicles}
               onQuickViewVehicle={handleOpenVehicleDetails}
             />

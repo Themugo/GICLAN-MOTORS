@@ -4,7 +4,7 @@
 const apiVersionMiddleware = (req, res, next) => {
   // Extract version from URL path
   const versionMatch = req.path.match(/^\/api\/v(\d+)/);
-  
+
   if (versionMatch) {
     req.apiVersion = parseInt(versionMatch[1], 10);
   } else if (req.path.startsWith('/api/')) {

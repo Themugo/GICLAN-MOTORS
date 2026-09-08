@@ -28,7 +28,7 @@ class AuditLogger {
     this.maxLogs = 50000;
     this.isInitialized = false;
     this.persistenceInterval = null;
-    
+
     this.metrics = {
       logsCreated: 0,
       logsPersisted: 0,
@@ -42,7 +42,7 @@ class AuditLogger {
   initialize() {
     this.isInitialized = true;
     logInfo('Audit Logger initialized');
-    
+
     // Start persistence interval
     this.startPersistenceInterval();
   }
@@ -82,7 +82,7 @@ class AuditLogger {
 
     // Add to memory
     this.logs.push(auditEntry);
-    
+
     // Trim if necessary
     if (this.logs.length > this.maxLogs) {
       this.logs.shift();
@@ -179,39 +179,39 @@ class AuditLogger {
    */
   query(filters = {}) {
     let results = [...this.logs];
-    
+
     if (filters.eventId) {
       results = results.filter(log => log.eventId === filters.eventId);
     }
-    
+
     if (filters.auctionId) {
       results = results.filter(log => log.auctionId === filters.auctionId);
     }
-    
+
     if (filters.eventType) {
       results = results.filter(log => log.eventType === filters.eventType);
     }
-    
+
     if (filters.type) {
       results = results.filter(log => log.type === filters.type);
     }
-    
+
     if (filters.startTime) {
       results = results.filter(log => log.timestamp >= filters.startTime);
     }
-    
+
     if (filters.endTime) {
       results = results.filter(log => log.timestamp <= filters.endTime);
     }
-    
+
     // Sort by timestamp descending
     results.sort((a, b) => b.timestamp - a.timestamp);
-    
+
     // Limit results
     if (filters.limit) {
       results = results.slice(0, filters.limit);
     }
-    
+
     return results;
   }
 
@@ -245,7 +245,7 @@ class AuditLogger {
    */
   async exportLogs(startTime, endTime) {
     const logs = this.query({ startTime, endTime });
-    
+
     return {
       exportedAt: Date.now(),
       period: { startTime, endTime },

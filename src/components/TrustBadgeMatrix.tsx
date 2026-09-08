@@ -1,14 +1,14 @@
 import React from 'react';
 import { Vehicle } from '../types';
 import { isEscrowApplicable, getEscrowBadgeLabel } from '../utils/escrow';
-import { 
-  ShieldCheck, 
-  CheckCircle2, 
-  Lock, 
-  Landmark, 
-  Gavel, 
-  Zap, 
-  UserCheck 
+import {
+  ShieldCheck,
+  CheckCircle2,
+  Lock,
+  Landmark,
+  Gavel,
+  Zap,
+  UserCheck
 } from 'lucide-react';
 
 interface TrustBadgeMatrixProps {
@@ -23,19 +23,19 @@ export const TrustBadgeMatrix: React.FC<TrustBadgeMatrixProps> = ({
   className = ''
 }) => {
   const isPrivateSeller = vehicle.sellerType === 'Private Seller';
-  
+
   // Rule: Private sellers ALWAYS require escrow; Dealers ONLY display escrow if explicitly enabled (escrowEligible = true)
   const isEscrowActive = isEscrowApplicable(vehicle);
-  
+
   // Rule: Inspection badges ONLY appear when inspection exists (inspectionPassed = true)
   const isInspectionActive = Boolean(vehicle.inspectionPassed);
-  
+
   // Rule: Auction badges ONLY appear for auction-enabled listings (isAuction = true)
   const isAuctionActive = Boolean(vehicle.isAuction);
-  
+
   // Finance badge only if financeAvailable = true
   const isFinanceActive = Boolean(vehicle.financeAvailable);
-  
+
   // Verified status
   const isVerifiedSeller = Boolean(vehicle.verified);
 

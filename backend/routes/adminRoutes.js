@@ -1,6 +1,5 @@
 import express from "express";
 import { protect, adminOnly } from "../middleware/auth.js";
-import protectAccount from "../middleware/protectAccount.js";
 import { authorize } from "../middleware/role.js";
 import { ASSIGNABLE_PERMISSIONS, PERM_LABELS, ROLE_PERMISSIONS, getEffectivePermissions } from "../config/roles.js";
 import asyncHandler from "../middleware/asyncHandler.js";
@@ -21,7 +20,7 @@ import Escrow from "../models/Escrow.js";
 import Ad from "../models/Ad.js";
 import AdminAlert from "../models/AdminAlert.js";
 import GlobalSettings from "../models/GlobalSettings.js";
-import { disputeStats } from "../services/dispute.service.js";
+import Dispute from "../models/Dispute.js";
 import Referral from "../models/Referral.js";
 import { listAdminReviews, moderateReview, deleteReview as deleteDealerReview } from "../services/review.service.js";
 import Transaction from "../models/Transaction.js";
@@ -166,7 +165,7 @@ router.get(
       AdminAlert.countDocuments({ read: false }),                                      // activeAlerts
       User.countDocuments({ role: "individual_seller" }),                              // individualSellers
       Car.countDocuments({ status: "sold" }),                                          // carsSold
-      disputeStats().then((s) => s.open + (s.statusBreakdown?.under_review || 0) + (s.statusBreakdown?.mediation || 0) + (s.statusBreakdown?.appealed || 0)),          // pendingReports
+      Dispute.countDocuments({ status: { $in: ["open", "investigating"] } }),          // pendingReports
       DealerVerification.countDocuments({ verificationStatus: { $in: ["pending", "under_review"] } }), // verificationQueue
       SupportTicket.countDocuments({ status: { $in: ["open", "in_progress", "waiting_on_user", "waiting_on_internal", "escalated"] } }), // supportQueue
       FraudDetection.countDocuments({ severity: { $in: ["critical", "high"] }, status: { $nin: ["dismissed", "action_taken"] } }), // fraudAlerts
@@ -1645,7 +1644,6 @@ router.get(
       .limit(Math.min(Number(limit), 50))
       .lean();
 
-    let userIds = [];
     if (search) {
       const safeSearch = escapeRegex(search);
       const users = await User.find({
@@ -1653,7 +1651,7 @@ router.get(
       })
         .select("_id")
         .lean();
-      userIds = users.map((u) => u._id);
+      const userIds = users.map((u) => u._id);
       query = Chat.find({ participants: { $in: userIds }, ...filter })
         .populate("participants", "name email")
         .populate("car", "title brand model")

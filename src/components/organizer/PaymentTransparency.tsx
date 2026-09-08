@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  Building2, 
-  Banknote, 
-  CreditCard, 
-  Clock, 
+import {
+  Building2,
+  Banknote,
+  CreditCard,
+  Clock,
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,

@@ -255,7 +255,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             },
             {
               title: 'Continue Purchase',
-              desc: `${activePurchases.length} active escrow record${activePurchases.length === 1 ? '' : 's'}`, 
+              desc: `${activePurchases.length} active escrow record${activePurchases.length === 1 ? '' : 's'}`,
               icon: <Lock className="w-5 h-5 text-emerald-600" />,
               action: () => onNavigate('escrow'),
               color: 'hover:border-emerald-500'
@@ -338,7 +338,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {/* Image & Badges */}
                   <div className="h-44 rounded-2xl overflow-hidden bg-slate-900 relative">
                     <LazyImage src={vehicle.image} alt={vehicle.title} wrapperClassName="w-full h-full" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    
+
                     <div className="absolute top-2 left-2 flex items-center gap-1.5 flex-wrap">
                       <span className="bg-emerald-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-md shadow-xs flex items-center gap-1">
                         <TrendingDown className="w-3 h-3" /> Ksh 50,000 Price Drop

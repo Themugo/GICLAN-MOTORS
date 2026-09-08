@@ -15,7 +15,7 @@ const getAuctionKey = (roomId) => `auction:${roomId}`;
 // =============================
 // 🤖 SET AUTO BID
 // =============================
-const setAutoBid = async ({ roomId, userId, maxBid }) => {
+export const setAutoBid = async ({ roomId, userId, maxBid }) => {
   const key = getAutoBidKey(roomId);
 
   await redis.hset(key, userId, maxBid);
@@ -29,7 +29,7 @@ const setAutoBid = async ({ roomId, userId, maxBid }) => {
 // =============================
 // ❌ REMOVE AUTO BID
 // =============================
-const removeAutoBid = async ({ roomId, userId }) => {
+export const removeAutoBid = async ({ roomId, userId }) => {
   const key = getAutoBidKey(roomId);
 
   await redis.hdel(key, userId);

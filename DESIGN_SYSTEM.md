@@ -44,13 +44,13 @@ All tokens are defined in `src/index.css` as CSS custom properties:
   --text-secondary: #4A4540;
   --bg-elevated: #FFFFFF;
   --border: #E0D8C8;
-  
+
   /* Spacing */
   --space-1: 4px;
   --space-2: 8px;
   --space-4: 16px;
   --space-6: 24px;
-  
+
   /* Radius */
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -293,16 +293,16 @@ Container component with optional header and footer.
 import { Card, CardHeader, CardFooter } from '@/components/ui';
 
 <Card hoverEffect>
-  <CardHeader 
-    title="Car Details" 
+  <CardHeader
+    title="Car Details"
     subtitle="2023 Toyota Land Cruiser"
     action={<Button size="sm">Edit</Button>}
   />
-  
+
   <div>
     {/* Card content */}
   </div>
-  
+
   <CardFooter align="right">
     <Button variant="ghost">Cancel</Button>
     <Button>Save</Button>
@@ -327,8 +327,8 @@ interface Car {
 const columns: TableColumn<Car>[] = [
   { key: 'make', header: 'Make' },
   { key: 'model', header: 'Model' },
-  { 
-    key: 'price', 
+  {
+    key: 'price',
     header: 'Price',
     align: 'right',
     render: (row) => formatKES(row.price)
@@ -364,7 +364,7 @@ import { Modal } from '@/components/ui';
   title="Confirm Action"
 >
   <p>Are you sure you want to proceed?</p>
-  
+
   <Modal.Footer>
     <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
     <Button onClick={handleConfirm}>Confirm</Button>
@@ -384,11 +384,11 @@ import { Tabs, TabList, Tab, TabPanel } from '@/components/ui';
     <Tab value="tab1">Overview</Tab>
     <Tab value="tab2">Details</Tab>
   </TabList>
-  
+
   <TabPanel value="tab1">
     Tab content here
   </TabPanel>
-  
+
   <TabPanel value="tab2">
     Another tab content
   </TabPanel>
@@ -572,7 +572,7 @@ src/
 
 **Before:**
 ```tsx
-<div style={{ 
+<div style={{
   padding: '16px',
   backgroundColor: '#ffffff',
   borderRadius: '8px',
@@ -596,7 +596,7 @@ src/
 
 **Before:**
 ```tsx
-<button 
+<button
   style={{
     padding: '12px 24px',
     backgroundColor: '#3B82F6',

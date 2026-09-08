@@ -13,7 +13,7 @@ import crypto from 'crypto';
  * The backbone that unifies every KAYAD business module
  */
 class WorkflowOrchestrationService {
-  
+
   // ============================================================
   // WORKFLOW DEFINITIONS
   // ============================================================
@@ -445,11 +445,11 @@ class WorkflowOrchestrationService {
 
     for (const rule of rules) {
       const conditionsMet = await this.evaluateConditions(rule.conditions, eventData);
-      
+
       if (conditionsMet) {
         await this.executeRuleActions(rule, eventData);
         executedRules.push(rule.id);
-        
+
         // Update execution count
         await db.update('automation_rules', rule.id, {
           last_executed_at: new Date(),
@@ -639,7 +639,7 @@ class WorkflowOrchestrationService {
 
     const recipients = [...flow.recipients];
     const existingIndex = recipients.findIndex(r => r.user_id === recipientId);
-    
+
     if (existingIndex >= 0) {
       recipients[existingIndex].received_at = new Date();
     } else {
@@ -667,7 +667,7 @@ class WorkflowOrchestrationService {
    */
   async indexForSearch(entityType, entityId, data) {
     const searchableText = this.generateSearchableText(data);
-    
+
     await db.upsert('unified_search_index', {
       entity_type: entityType,
       entity_id: entityId,
@@ -853,7 +853,7 @@ class WorkflowOrchestrationService {
 
     // Calculate module-specific metrics
     const metrics = await this.getModuleMetrics(module, periodStart, now);
-    
+
     // Store analytics
     const analytics = await db.create('enterprise_analytics', {
       period_type: periodType,
@@ -980,7 +980,7 @@ class WorkflowOrchestrationService {
   async getWorkflowDashboard() {
     const [activeInstances, completedToday, byType, recentEvents] = await Promise.all([
       db.find('workflow_instances', { status: 'active' }, { limit: 100 }),
-      db.find('workflow_instances', { 
+      db.find('workflow_instances', {
         status: 'completed',
         completed_at: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
       }),
@@ -1014,7 +1014,7 @@ class WorkflowOrchestrationService {
    */
   calculateHealthScore(activeInstances) {
     if (activeInstances.length === 0) return 100;
-    
+
     const stuckCount = activeInstances.filter(i => {
       const hoursSinceActivity = (Date.now() - new Date(i.last_activity_at).getTime()) / (1000 * 60 * 60);
       return hoursSinceActivity > 24;

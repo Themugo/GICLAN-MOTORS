@@ -7,7 +7,6 @@
 
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { findAll, findById, create, update } from "../db/index.js";
-import DuplicateVehicleLog from "../models/DuplicateVehicleLog.js";
 
 // =============================
 // 🔍 DETECT DUPLICATES
@@ -208,7 +207,7 @@ export const checkByPhone = async (phone, excludeDealerId = null) => {
 export const checkByDealer = async (dealerId, carData, similarityThreshold = 0.7) => {
   try {
     // Find recent listings from same dealer
-    const recentListings = await findAll("cars", { 
+    const recentListings = await findAll("cars", {
       filters: {
         dealer: dealerId,
         status: "available",
@@ -348,7 +347,7 @@ export const flagDuplicate = async (carId, detectionData, dealerId) => {
 // =============================
 // 📝 LOG DETECTION
 // =============================
-const logDetection = async (carId, detectionData, dealerId) => {
+export const logDetection = async (carId, detectionData, dealerId) => {
   try {
     const duplicateLog = await create("duplicate_vehicle_logs", {car: carId, dealer: dealerId, detectionCriteria: detectionData.detectionCriteria, matchType: detectionData.matchType, matchScore: detectionData.matchScore, matchedCars: detectionData.matches.map((m) => m.id), matchDetails: { matches: detectionData.matches, detectionMethod: detectionData.detectionMethod, }, status: "flagged", detectionMethod: detectionData.detectionMethod, similarityThreshold: 0.7,});
 
@@ -368,7 +367,7 @@ const logDetection = async (carId, detectionData, dealerId) => {
 // =============================
 // 💰 UPDATE FRAUD SCORE
 // =============================
-const updateFraudScore = async (carId, impact) => {
+export const updateFraudScore = async (carId, impact) => {
   try {
     const car = await findById("cars", carId);
     if (!car) {

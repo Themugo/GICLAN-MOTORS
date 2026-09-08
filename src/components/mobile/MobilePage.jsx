@@ -13,7 +13,7 @@ function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }) {
   const handleTouchStart = useCallback((e) => {
     if (disabled) return;
     if (containerRef.current && containerRef.current.scrollTop > 0) return;
-    
+
     startYRef.current = e.touches[0].clientY;
     isPullingRef.current = true;
   }, [disabled]);
@@ -27,12 +27,12 @@ function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }) {
 
     const currentY = e.touches[0].clientY;
     const diff = currentY - startYRef.current;
-    
+
     if (diff > 0) {
       e.preventDefault();
       const pull = Math.min(diff * 0.5, threshold * 1.5);
       setPullY(pull);
-      
+
       if (pull >= threshold && status !== 'ready') {
         setStatus('ready');
       } else if (pull < threshold && status !== 'pulling') {
@@ -43,13 +43,13 @@ function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }) {
 
   const handleTouchEnd = useCallback(async () => {
     if (disabled) return;
-    
+
     isPullingRef.current = false;
-    
+
     if (status === 'ready') {
       setStatus('refreshing');
       setPullY(threshold);
-      
+
       try {
         await onRefresh?.();
       } finally {
@@ -81,16 +81,16 @@ function PullToRefreshIndicator({ status, pullY }) {
   if (status === 'idle') return null;
 
   return (
-    <div 
+    <div
       className={`mobile-pull-refresh ${status === 'refreshing' ? 'mobile-pull-refresh--refreshing' : ''}`}
-      style={{ 
+      style={{
         transform: status === 'refreshing' ? 'translateY(0)' : `translateY(${pullY}px)`,
         height: pullY,
       }}
     >
-      <div 
+      <div
         className="mobile-pull-refresh__spinner"
-        style={{ 
+        style={{
           opacity: status === 'refreshing' ? 1 : pullY / 80,
           transform: `rotate(${pullY * 3}deg)`,
         }}
@@ -118,7 +118,7 @@ function MobilePageLayout({
   className = '',
 }) {
   const navigate = useNavigate();
-  
+
   const { containerRef, status, pullY, handlers } = usePullToRefresh({
     onRefresh,
     disabled: refreshDisabled || !onRefresh,
@@ -135,7 +135,7 @@ function MobilePageLayout({
   return (
     <div className={`mobile-page ${className}`}>
       {/* Header */}
-      <header 
+      <header
         className="mobile-page__header"
         style={{
           position: stickyHeader ? 'sticky' : 'fixed',
@@ -144,7 +144,7 @@ function MobilePageLayout({
       >
         <div className="mobile-header mobile-safe-area">
           {backButton && (
-            <button 
+            <button
               className="mobile-header__back"
               onClick={handleBack}
               aria-label="Go back"
@@ -152,13 +152,13 @@ function MobilePageLayout({
               <ChevronLeft size={24} />
             </button>
           )}
-          
+
           <h1 className="mobile-header__title">
             {title}
             {subtitle && (
-              <span style={{ 
-                display: 'block', 
-                fontSize: 'var(--mobile-text-sm)', 
+              <span style={{
+                display: 'block',
+                fontSize: 'var(--mobile-text-sm)',
                 fontWeight: 400,
                 color: 'var(--text-muted)',
               }}>
@@ -166,7 +166,7 @@ function MobilePageLayout({
               </span>
             )}
           </h1>
-          
+
           <div className="mobile-header__actions">
             {actions}
           </div>
@@ -174,7 +174,7 @@ function MobilePageLayout({
       </header>
 
       {/* Content */}
-      <main 
+      <main
         ref={containerRef}
         className={`mobile-scroll-container mobile-page__content ${!noPaddingTop ? '' : 'mobile-page__content--no-padding-top'} ${!noPaddingBottom ? '' : 'mobile-page__content--no-padding-bottom'}`}
         {...handlers}
@@ -187,10 +187,10 @@ function MobilePageLayout({
 }
 
 // Mobile section
-function MobileSection({ 
-  children, 
-  title, 
-  link, 
+function MobileSection({
+  children,
+  title,
+  link,
   linkLabel = 'See all',
   onLinkClick,
   noPadding = false,
@@ -202,7 +202,7 @@ function MobileSection({
         <div className="mobile-section-header">
           <h2 className="mobile-section-title">{title}</h2>
           {link && (
-            <button 
+            <button
               className="mobile-section-link"
               onClick={onLinkClick}
             >
@@ -219,7 +219,7 @@ function MobileSection({
 // Mobile tabs
 function MobileTabs({ tabs, activeTab, onTabChange, className = '' }) {
   return (
-    <div 
+    <div
       className={`mobile-tabs ${className}`}
       role="tablist"
       style={{
@@ -269,7 +269,7 @@ function MobileCarousel({ children, className = '' }) {
   const scrollRef = useRef(null);
 
   return (
-    <div 
+    <div
       ref={scrollRef}
       className={`mobile-carousel ${className}`}
       role="list"

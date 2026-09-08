@@ -48,11 +48,11 @@ export function useMemoized<T>(factory: () => T, deps: React.DependencyList): T 
 // Create a stable reference that only updates when value changes
 export function useStableRef<T>(value: T): React.MutableRefObject<T> {
   const ref = useRef(value);
-  
+
   if (ref.current !== value) {
     ref.current = value;
   }
-  
+
   return ref;
 }
 
@@ -60,10 +60,10 @@ export function useStableRef<T>(value: T): React.MutableRefObject<T> {
 export function useBatchedUpdates() {
   const pendingUpdates = useRef<(() => void)[]>([]);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const scheduleUpdate = useCallback((update: () => void) => {
     pendingUpdates.current.push(update);
-    
+
     if (!timeoutRef.current) {
       timeoutRef.current = setTimeout(() => {
         // Execute all pending updates
@@ -73,7 +73,7 @@ export function useBatchedUpdates() {
       }, 0);
     }
   }, []);
-  
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -81,7 +81,7 @@ export function useBatchedUpdates() {
       }
     };
   }, []);
-  
+
   return scheduleUpdate;
 }
 
@@ -91,7 +91,7 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
   delay: number
 ): T {
   const lastCall = useRef(0);
-  
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useCallback((...args: any[]) => {
     const now = Date.now();
@@ -108,7 +108,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   delay: number
 ): T {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useCallback((...args: any[]) => {
     if (timeoutRef.current) {
@@ -133,7 +133,7 @@ export function useVirtualList<T>({
   overscan?: number;
 }) {
   const scrollTop = useRef(0);
-  
+
   const getVisibleRange = useCallback(() => {
     const startIndex = Math.max(0, Math.floor(scrollTop.current / itemHeight) - overscan);
     const endIndex = Math.min(
@@ -142,13 +142,13 @@ export function useVirtualList<T>({
     );
     return { startIndex, endIndex };
   }, [items.length, itemHeight, containerHeight, overscan]);
-  
+
   const totalHeight = items.length * itemHeight;
   const { startIndex, endIndex } = getVisibleRange();
-  
+
   const visibleItems = items.slice(startIndex, endIndex);
   const offsetY = startIndex * itemHeight;
-  
+
   return {
     virtualItems: visibleItems,
     totalHeight,
@@ -170,17 +170,17 @@ export function useWindowedList<T>({
   overscan?: number;
 }) {
   const [range, setRange] = useState({ start: 0, end: 20 });
-  
+
   useEffect(() => {
     // Reset when items change
     setRange({ start: 0, end: 20 });
   }, [items.length]);
-  
+
   const visibleItems = items.slice(
     Math.max(0, range.start - overscan),
     Math.min(items.length, range.end + overscan)
   );
-  
+
   return {
     visibleItems,
     totalItems: items.length,
@@ -196,7 +196,7 @@ export function useStableComparator<T>(
 ): T[] {
   const prevItemsRef = useRef(items);
   const prevCompareFnRef = useRef(compareFn);
-  
+
   return useMemo(() => {
     if (
       prevItemsRef.current === items &&
@@ -204,10 +204,10 @@ export function useStableComparator<T>(
     ) {
       return prevItemsRef.current;
     }
-    
+
     prevItemsRef.current = items;
     prevCompareFnRef.current = compareFn;
-    
+
     return [...items].sort(compareFn);
   }, [items, compareFn]);
 }
@@ -216,11 +216,11 @@ export function useStableComparator<T>(
 export function useRenderCount(name: string = 'Component') {
   const countRef = useRef(0);
   countRef.current++;
-  
+
   useEffect(() => {
     console.log(`${name} rendered ${countRef.current} times`);
   });
-  
+
   return countRef.current;
 }
 

@@ -12,7 +12,6 @@ import { sendNotification } from "./notification.service.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { findAll, findById, findOne, create, aggregate } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
-import ReconciliationReport from "../models/ReconciliationReport.js";
 
 // =============================
 // 🔄 RUN RECONCILIATION
@@ -82,7 +81,6 @@ export const runReconciliation = async (reportType, timeRange) => {
     }
 
     if (runType("escrow_vault")) {
-      const r = await reconcilePaymentEscrow(startTime, endTime, report);
       total += r.total; reconciled += r.reconciled; unreconciled += r.unreconciled;
       matched += r.matched || 0; unmatched += r.unmatched || 0;
       missing += r.missing || 0;

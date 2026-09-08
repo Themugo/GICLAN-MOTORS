@@ -67,7 +67,7 @@ export function Alert({
       <div className={`flex-shrink-0 ${style.icon}`}>
         {icons[variant]}
       </div>
-      
+
       <div className="flex-1 min-w-0">
         {title && (
           <h4 className={`font-semibold mb-1 ${style.text}`}>

@@ -143,7 +143,7 @@ All routing issues have been resolved. This document reflects the final state.
 All authentication guards are properly implemented:
 - `RequireAuth`: Basic authentication check
 - `RequireDealer`: Dealer role check
-- `RequireAdmin`: Admin role check  
+- `RequireAdmin`: Admin role check
 - `RequireAdminPage`: Role-based permission check with specific roles
 
 The legacy `renderPage()` function is kept for backward compatibility with internal navigation that uses `setPage()`.

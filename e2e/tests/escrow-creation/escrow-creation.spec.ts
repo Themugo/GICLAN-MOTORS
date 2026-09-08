@@ -1,6 +1,6 @@
 /**
  * Escrow Creation E2E Tests
- * 
+ *
  * Tests for escrow creation workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -18,7 +18,7 @@ test.describe('Escrow Creation Workflow', () => {
     // Login as dealer
     const dealerCredentials = AuthHelper.getTestUser('dealer');
     dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
-    
+
     // Create and end auction to trigger escrow
     const auction = await ApiHelper.createAuction(request, dealerToken, {
       title: 'BMW X5 2021 Auction',
@@ -403,7 +403,7 @@ test.describe('Escrow Creation Workflow', () => {
       await page.addInitScript((authToken) => {
         window.localStorage.setItem('token', authToken);
       }, buyerToken);
-      
+
       // Try to access dealer escrow endpoint
       await page.goto('/dealer/escrow');
 

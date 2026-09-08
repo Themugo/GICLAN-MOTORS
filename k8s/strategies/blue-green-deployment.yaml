@@ -152,19 +152,19 @@ spec:
 # #!/bin/bash
 # # Deploy green environment
 # helm upgrade kayad-backend-green ./helm/kayad-backend --set image.tag=v2 --set environment=green
-# 
+#
 # # Wait for green to be ready
 # kubectl rollout status deployment/kayad-backend-green
-# 
+#
 # # Run smoke tests
 # ./scripts/smoke-tests.sh green
-# 
+#
 # # Switch traffic to green
 # kubectl patch service kayad-backend -p '{"spec":{"selector":{"environment":"green"}}}'
-# 
+#
 # # Monitor green environment
 # ./scripts/monitor-deployment.sh green
-# 
+#
 # # If successful, decommission blue
 # kubectl delete deployment kayad-backend-blue
 # kubectl delete service kayad-backend-blue

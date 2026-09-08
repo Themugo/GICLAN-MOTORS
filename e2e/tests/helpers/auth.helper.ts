@@ -17,14 +17,14 @@ export class AuthHelper {
    */
   static async login(page: Page, credentials: UserCredentials) {
     await page.goto('/login');
-    
+
     await page.fill('input[name="email"]', credentials.email);
     await page.fill('input[name="password"]', credentials.password);
     await page.click('button[type="submit"]');
-    
+
     // Wait for navigation to complete
     await page.waitForURL(/\/dashboard|\/home/, { timeout: 10000 });
-    
+
     // Verify login success
     const isLoggedIn = await page.locator('[data-testid="user-menu"]').isVisible();
     if (!isLoggedIn) {
@@ -53,18 +53,18 @@ export class AuthHelper {
     role: 'buyer' | 'dealer';
   }) {
     await page.goto('/register');
-    
+
     await page.fill('input[name="firstName"]', userData.firstName);
     await page.fill('input[name="lastName"]', userData.lastName);
     await page.fill('input[name="email"]', userData.email);
     await page.fill('input[name="phone"]', userData.phone);
     await page.fill('input[name="password"]', userData.password);
-    
+
     // Select role
     await page.click(`input[name="role"][value="${userData.role}"]`);
-    
+
     await page.click('button[type="submit"]');
-    
+
     // Wait for registration to complete
     await page.waitForURL(/\/verify-email|\/dashboard/, { timeout: 10000 });
   }
@@ -100,7 +100,7 @@ export class AuthHelper {
         role: 'admin' as const,
       },
     };
-    
+
     return users[role];
   }
 }

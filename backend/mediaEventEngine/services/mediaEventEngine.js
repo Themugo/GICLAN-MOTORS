@@ -22,7 +22,7 @@ class MediaEventEngine {
     this.eventQueue = [];
     this.isProcessing = false;
     this.isInitialized = false;
-    
+
     // Configuration
     this.config = {
       enableAudit: true,
@@ -33,7 +33,7 @@ class MediaEventEngine {
       processingBatchSize: 100,
       processingIntervalMs: 10,
     };
-    
+
     // Metrics
     this.metrics = {
       eventsReceived: 0,
@@ -52,17 +52,17 @@ class MediaEventEngine {
       logWarn('Media Event Engine already initialized');
       return;
     }
-    
+
     logInfo('Initializing Media Event Engine...');
-    
+
     // Initialize components
     channelManager.initialize();
     auditLogger.initialize();
     replayEngine.initialize();
-    
+
     // Start queue processor
     this.startQueueProcessor();
-    
+
     this.isInitialized = true;
     logInfo('Media Event Engine initialized successfully');
   }
@@ -72,18 +72,18 @@ class MediaEventEngine {
    */
   async publish(eventInput) {
     const startTime = Date.now();
-    
+
     try {
       // Create standardized event
-      const event = typeof eventInput === 'string' 
+      const event = typeof eventInput === 'string'
         ? { type: eventInput, auctionId: 'unknown' }
         : eventInput;
-      
+
       // Generate event if not provided
-      const fullEvent = event.eventId 
-        ? event 
+      const fullEvent = event.eventId
+        ? event
         : createEvent(event);
-      
+
       // Validate event
       const validation = validateEvent(fullEvent);
       if (!validation.valid) {
@@ -91,22 +91,22 @@ class MediaEventEngine {
         incrementCounter('media_event_invalid');
         return { success: false, errors: validation.errors };
       }
-      
+
       // Track metrics
       this.metrics.eventsReceived++;
       this.trackEventType(fullEvent.type);
-      
+
       // Run middlewares
       const processedEvent = await this.runMiddlewares(fullEvent);
-      
+
       // Queue for processing
       this.queueEvent(processedEvent);
-      
+
       const duration = Date.now() - startTime;
       recordMetric('media_event_publish_duration', duration, { eventType: fullEvent.type });
-      
-      return { 
-        success: true, 
+
+      return {
+        success: true,
         eventId: fullEvent.eventId,
         type: fullEvent.type,
         duration,
@@ -126,12 +126,12 @@ class MediaEventEngine {
       this.eventQueue.shift(); // Remove oldest
       incrementCounter('media_event_queue_overflow');
     }
-    
+
     this.eventQueue.push({
       event,
       queuedAt: Date.now(),
     });
-    
+
     this.metrics.eventsQueued++;
   }
 
@@ -140,27 +140,27 @@ class MediaEventEngine {
    */
   startQueueProcessor() {
     if (this.isProcessing) return;
-    
+
     this.isProcessing = true;
-    
+
     const processQueue = async () => {
       while (this.eventQueue.length > 0 && this.isProcessing) {
         const batch = this.eventQueue.splice(0, this.config.processingBatchSize);
-        
+
         await Promise.all(
           batch.map(item => this.processEvent(item.event))
         );
-        
+
         // Small delay to prevent CPU spinning
         await new Promise(resolve => setTimeout(resolve, this.config.processingIntervalMs));
       }
-      
+
       // Schedule next check
       if (this.isProcessing) {
         setTimeout(processQueue, 100);
       }
     };
-    
+
     processQueue();
   }
 
@@ -169,39 +169,39 @@ class MediaEventEngine {
    */
   async processEvent(event) {
     const startTime = Date.now();
-    
+
     try {
       // Get event metadata
       const metadata = getEventMetadata(event.type);
-      
+
       // Route to channels
       const routeResult = await channelManager.routeEvent(event);
-      
+
       // Audit log if required
       if (metadata.requiresAudit && this.config.enableAudit) {
         await this.auditEvent(event, routeResult);
       }
-      
+
       // Record to replay engine
       if (this.config.enableReplay) {
         replayEngine.record(event);
       }
-      
+
       // Call registered handlers
       await this.callHandlers(event);
-      
+
       this.metrics.eventsProcessed++;
-      
+
       const duration = Date.now() - startTime;
       recordMetric('media_event_process_duration', duration, { eventType: event.type });
       incrementCounter('media_event_processed', { eventType: event.type });
-      
+
       return { success: true, duration, routeResult };
     } catch (error) {
       this.metrics.eventsFailed++;
       logError('Event processing failed', error, { eventId: event.eventId });
       incrementCounter('media_event_process_failed', { eventType: event.type });
-      
+
       return { success: false, error: error.message };
     }
   }
@@ -230,7 +230,7 @@ class MediaEventEngine {
    */
   async runMiddlewares(event) {
     let processedEvent = event;
-    
+
     for (const middleware of this.middlewares) {
       try {
         processedEvent = await middleware(processedEvent);
@@ -238,7 +238,7 @@ class MediaEventEngine {
         logError('Middleware error', error, { middleware: middleware.name });
       }
     }
-    
+
     return processedEvent;
   }
 
@@ -249,7 +249,7 @@ class MediaEventEngine {
     if (!this.handlers.has(eventType)) {
       this.handlers.set(eventType, []);
     }
-    
+
     this.handlers.get(eventType).push(handler);
   }
 
@@ -266,9 +266,9 @@ class MediaEventEngine {
   async callHandlers(event) {
     const handlers = this.handlers.get(event.type) || [];
     const wildcardHandlers = this.handlers.get('*') || [];
-    
+
     const allHandlers = [...handlers, ...wildcardHandlers];
-    
+
     await Promise.allSettled(
       allHandlers.map(handler => handler(event))
     );
@@ -466,15 +466,15 @@ class MediaEventEngine {
    */
   async shutdown() {
     logInfo('Shutting down Media Event Engine...');
-    
+
     this.isProcessing = false;
-    
+
     // Process remaining events
     while (this.eventQueue.length > 0) {
       const item = this.eventQueue.shift();
       await this.processEvent(item.event);
     }
-    
+
     logInfo('Media Event Engine shutdown complete');
   }
 }

@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Globe, 
-  Clock, 
-  Star, 
-  ShieldCheck, 
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  Clock,
+  Star,
+  ShieldCheck,
   Award,
   ExternalLink,
   Building2,
@@ -84,8 +84,8 @@ export const OrganizerProfile: React.FC<OrganizerProfileProps> = ({
   paymentDetails,
 }) => {
   const typeDisplay = ORGANIZER_TYPE_DISPLAY[organizer.type] || organizer.type;
-  const badgeColors = organizer.verificationBadge 
-    ? VERIFICATION_BADGE_COLORS[organizer.verificationBadge] 
+  const badgeColors = organizer.verificationBadge
+    ? VERIFICATION_BADGE_COLORS[organizer.verificationBadge]
     : VERIFICATION_BADGE_COLORS.verified;
 
   // Compact variant - single line with icon
@@ -145,9 +145,9 @@ export const OrganizerProfile: React.FC<OrganizerProfileProps> = ({
           </div>
         </div>
         {organizer.profileUrl && (
-          <a 
-            href={organizer.profileUrl} 
-            target="_blank" 
+          <a
+            href={organizer.profileUrl}
+            target="_blank"
             rel="noopener noreferrer"
             className="p-2 text-slate-400 hover:text-[#1E3063] transition-colors"
           >
@@ -190,9 +190,9 @@ export const OrganizerProfile: React.FC<OrganizerProfileProps> = ({
             {organizer.rating && (
               <div className="flex items-center gap-1 mt-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    className={`w-4 h-4 ${i < Math.round(organizer.rating!) ? 'text-amber-500 fill-amber-500' : 'text-slate-300'}`} 
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${i < Math.round(organizer.rating!) ? 'text-amber-500 fill-amber-500' : 'text-slate-300'}`}
                   />
                 ))}
                 <span className="text-sm text-slate-600 ml-1">{organizer.rating.toFixed(1)}</span>
@@ -226,7 +226,7 @@ export const OrganizerProfile: React.FC<OrganizerProfileProps> = ({
         {/* Contact Info */}
         <div className="space-y-2">
           {organizer.phone && (
-            <a 
+            <a
               href={`tel:${organizer.phone}`}
               className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
             >
@@ -235,7 +235,7 @@ export const OrganizerProfile: React.FC<OrganizerProfileProps> = ({
             </a>
           )}
           {organizer.email && (
-            <a 
+            <a
               href={`mailto:${organizer.email}`}
               className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
             >
@@ -250,7 +250,7 @@ export const OrganizerProfile: React.FC<OrganizerProfileProps> = ({
             </div>
           )}
           {organizer.website && (
-            <a 
+            <a
               href={organizer.website}
               target="_blank"
               rel="noopener noreferrer"

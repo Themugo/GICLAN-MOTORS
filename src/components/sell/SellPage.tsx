@@ -2,19 +2,19 @@ import type { FC } from 'react';
 import type React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShieldCheck, 
-  Store, 
-  User, 
-  Check, 
-  ArrowRight, 
-  ArrowLeft, 
-  Building2, 
-  CheckCircle2, 
-  Sparkles, 
-  Phone, 
-  Mail, 
-  MapPin, 
+import {
+  ShieldCheck,
+  Store,
+  User,
+  Check,
+  ArrowRight,
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  Sparkles,
+  Phone,
+  Mail,
+  MapPin,
   Car,
   Lock,
   Search,
@@ -74,7 +74,7 @@ export const SellPage: FC = () => {
 
   return (
     <div className="pt-3 sm:pt-5 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-5 sm:space-y-6 bg-[#FCF9F4] text-[#2E4080] font-sans">
-      
+
       {/* 1. Top Hero Section */}
       <div className="p-5 sm:p-7 rounded-2xl bg-[#2E4080] text-white border border-white/20 shadow-lg relative overflow-hidden text-center space-y-4">
         <div className="absolute top-0 right-1/2 translate-x-1/2 w-96 h-96 bg-[#23EBFF]/10 rounded-full blur-3xl pointer-events-none" />
@@ -135,7 +135,7 @@ export const SellPage: FC = () => {
         <div className="flex items-center justify-between relative">
           {/* Connector Line */}
           <div className="absolute top-1/2 left-0 right-0 h-1 bg-[#E2D8C7] -translate-y-1/2 z-0" />
-          <div 
+          <div
             className="absolute top-1/2 left-0 h-1 bg-[#23EBFF] -translate-y-1/2 z-0 transition-all duration-300"
             style={{ width: currentStep === 1 ? '0%' : '100%' }}
           />
@@ -146,8 +146,8 @@ export const SellPage: FC = () => {
             className="relative z-10 flex items-center gap-3 bg-[#FCF9F4] pr-4 group cursor-pointer"
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-mono font-black text-sm transition-all ${
-              currentStep === 1 
-                ? 'bg-[#2E4080] text-[#23EBFF] ring-4 ring-[#23EBFF]/30 shadow-md' 
+              currentStep === 1
+                ? 'bg-[#2E4080] text-[#23EBFF] ring-4 ring-[#23EBFF]/30 shadow-md'
                 : 'bg-[#23EBFF] text-[#2E4080]'
             }`}>
               1
@@ -166,8 +166,8 @@ export const SellPage: FC = () => {
             className="relative z-10 flex items-center gap-3 bg-[#FCF9F4] pl-4 group cursor-pointer"
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-mono font-black text-sm transition-all ${
-              currentStep === 2 
-                ? 'bg-[#2E4080] text-[#23EBFF] ring-4 ring-[#23EBFF]/30 shadow-md' 
+              currentStep === 2
+                ? 'bg-[#2E4080] text-[#23EBFF] ring-4 ring-[#23EBFF]/30 shadow-md'
                 : 'bg-[#E2D8C7] text-[#6B7A99]'
             }`}>
               2
@@ -197,9 +197,9 @@ export const SellPage: FC = () => {
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Private Seller Card */}
-            <div 
+            <div
               onClick={() => setSelectedType('private')}
               className={`p-6 sm:p-8 rounded-3xl border-2 transition-all cursor-pointer relative flex flex-col justify-between space-y-6 ${
                 selectedType === 'private'
@@ -261,7 +261,7 @@ export const SellPage: FC = () => {
             </div>
 
             {/* Verified Dealer Card */}
-            <div 
+            <div
               onClick={() => setSelectedType('dealer')}
               className={`p-6 sm:p-8 rounded-3xl border-2 transition-all cursor-pointer relative flex flex-col justify-between space-y-6 ${
                 selectedType === 'dealer'

@@ -333,7 +333,7 @@ describe('Replay Engine', () => {
 
     replayEngine.record(event);
     const recording = replayEngine.getRecording('auction-replay-test');
-    
+
     expect(recording).toBeDefined();
     expect(recording.events.length).toBeGreaterThan(0);
   });
@@ -351,14 +351,14 @@ describe('Replay Engine', () => {
 
     replayEngine.record(bidEvent);
     const recording = replayEngine.getRecording('auction-state-test');
-    
+
     expect(recording.state.currentBid).toBe(50000);
     expect(recording.state.highestBidder).toBe('bidder-001');
   });
 
   test('should generate replay summary', () => {
     const summary = replayEngine.generateReplaySummary('auction-state-test');
-    
+
     expect(summary).toBeDefined();
     expect(summary.totalBids).toBeGreaterThanOrEqual(1);
     expect(summary.finalBid).toBe(50000);
@@ -366,7 +366,7 @@ describe('Replay Engine', () => {
 
   test('should export recording', () => {
     const exportData = replayEngine.exportRecording('auction-state-test');
-    
+
     expect(exportData).toBeDefined();
     expect(exportData.version).toBe('1.0');
     expect(exportData.recording).toBeDefined();
@@ -393,7 +393,7 @@ describe('Channel Manager', () => {
     });
 
     const result = await channelManager.routeEvent(event);
-    
+
     expect(result.eventId).toBe(event.eventId);
     expect(result.channels).toBeDefined();
     expect(result.channels.length).toBeGreaterThan(0);
@@ -402,14 +402,14 @@ describe('Channel Manager', () => {
 
   test('should get health status', () => {
     const health = channelManager.getHealth();
-    
+
     expect(health.status).toBeDefined();
     expect(health.failureRate).toBeDefined();
   });
 
   test('should get metrics', () => {
     const metrics = channelManager.getMetrics();
-    
+
     expect(metrics.eventsProcessed).toBeDefined();
     expect(metrics.eventsDelivered).toBeDefined();
     expect(metrics.byChannel).toBeDefined();
@@ -517,7 +517,7 @@ describe('Media Event Engine Integration', () => {
 
   test('should get system health', () => {
     const health = engine.getHealth();
-    
+
     expect(health.status).toBeDefined();
     expect(health.initialized).toBe(true);
     expect(health.processing).toBe(true);
@@ -525,7 +525,7 @@ describe('Media Event Engine Integration', () => {
 
   test('should get system metrics', () => {
     const metrics = engine.getMetrics();
-    
+
     expect(metrics.eventsReceived).toBeGreaterThan(0);
     expect(metrics.eventsProcessed).toBeGreaterThan(0);
     expect(metrics.handlers).toBeGreaterThan(0);
@@ -541,10 +541,10 @@ describe('Media Event Engine Performance', () => {
   test('should handle rapid event publishing', async () => {
     const { mediaEventEngine } = await import('../mediaEventEngine/services/mediaEventEngine.js');
     const engine = mediaEventEngine;
-    
+
     const startTime = Date.now();
     const promises = [];
-    
+
     for (let i = 0; i < 100; i++) {
       promises.push(
         engine.publish({
@@ -554,10 +554,10 @@ describe('Media Event Engine Performance', () => {
         })
       );
     }
-    
+
     await Promise.all(promises);
     const duration = Date.now() - startTime;
-    
+
     expect(duration).toBeLessThan(5000); // Should complete in under 5 seconds
     expect(engine.metrics.eventsReceived).toBeGreaterThanOrEqual(100);
   }, 10000);

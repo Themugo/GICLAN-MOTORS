@@ -48,7 +48,7 @@ const OperatorRiskItem: React.FC<{
             )}
           </div>
           <p className="text-xs text-slate-600 mt-1">{risk.description}</p>
-          
+
           {/* Solution hint */}
           <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200">
             <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">How to Fix</p>
@@ -83,22 +83,22 @@ export const OperatorRiskChecklist: React.FC<OperatorRiskChecklistProps> = ({
   // Filter to only organizer-related risks
   const organizerRisks = useMemo(() => {
     return sortRisksByPriority(
-      risks.filter(r => 
-        r.status === 'active' && 
+      risks.filter(r =>
+        r.status === 'active' &&
         r.recommendation.responsibleParty === 'organizer'
       )
     );
   }, [risks]);
 
   const blockingRisks = useMemo(() => {
-    return organizerRisks.filter(r => 
-      r.severity === 'critical' || 
+    return organizerRisks.filter(r =>
+      r.severity === 'critical' ||
       (r.severity === 'high' && SEVERITY_STYLES[r.severity].blocksPublication)
     );
   }, [organizerRisks]);
 
   const improvementRisks = useMemo(() => {
-    return organizerRisks.filter(r => 
+    return organizerRisks.filter(r =>
       r.severity === 'medium' || r.severity === 'low' || r.severity === 'info'
     );
   }, [organizerRisks]);
@@ -145,8 +145,8 @@ export const OperatorRiskChecklist: React.FC<OperatorRiskChecklistProps> = ({
               <p className="text-sm text-slate-600 mb-3">
                 {blockingRisks.length} issue{blockingRisks.length > 1 ? 's' : ''} must be resolved before your auction can go live.
               </p>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="bg-red-600 hover:bg-red-700"
                 onClick={() => onViewRisk?.(blockingRisks[0])}
               >
@@ -168,8 +168,8 @@ export const OperatorRiskChecklist: React.FC<OperatorRiskChecklistProps> = ({
           </div>
           <div className="space-y-3">
             {blockingRisks.map((risk) => (
-              <OperatorRiskItem 
-                key={risk.id} 
+              <OperatorRiskItem
+                key={risk.id}
                 risk={risk}
                 onView={onViewRisk}
               />
@@ -188,8 +188,8 @@ export const OperatorRiskChecklist: React.FC<OperatorRiskChecklistProps> = ({
           </div>
           <div className="space-y-3">
             {improvementRisks.map((risk) => (
-              <OperatorRiskItem 
-                key={risk.id} 
+              <OperatorRiskItem
+                key={risk.id}
                 risk={risk}
                 onView={onViewRisk}
               />

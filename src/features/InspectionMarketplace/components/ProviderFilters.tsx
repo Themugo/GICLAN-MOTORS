@@ -21,7 +21,7 @@ interface ProviderFiltersProps {
 
 export default function ProviderFilters({ filters, onChange }: ProviderFiltersProps) {
   return (
-    <div 
+    <div
       className="rounded-xl p-6 shadow-md"
       style={{ backgroundColor: KAYAD_COLORS.white }}
     >
@@ -164,9 +164,9 @@ export default function ProviderFilters({ filters, onChange }: ProviderFiltersPr
             minRating: undefined,
           })}
           className="px-4 py-2 rounded-lg font-medium transition-colors"
-          style={{ 
+          style={{
             backgroundColor: KAYAD_COLORS.warmBeige,
-            color: KAYAD_COLORS.lightNavy 
+            color: KAYAD_COLORS.lightNavy
           }}
         >
           Reset Filters
@@ -179,7 +179,7 @@ export default function ProviderFilters({ filters, onChange }: ProviderFiltersPr
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label 
+      <label
         className="block text-sm font-medium mb-2"
         style={{ color: KAYAD_COLORS.lightNavy }}
       >

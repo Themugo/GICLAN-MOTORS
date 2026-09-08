@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Vehicle } from '../types';
 import { isEscrowApplicable } from '../utils/escrow';
-import { 
-  CheckCircle2, 
-  MapPin, 
-  Heart, 
-  ArrowRightLeft, 
+import {
+  CheckCircle2,
+  MapPin,
+  Heart,
+  ArrowRightLeft,
   Gavel,
   Building2,
   UserCheck
@@ -89,12 +89,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = React.memo(({
   const sellerDisplayName = vehicle.dealerName || vehicle.sellerName || (vehicle.sellerType === 'Private Seller' ? 'Private Seller' : 'Seller information unavailable');
 
   // Formatted mileage
-  const formattedMileage = vehicle.mileage >= 1000 
-    ? `${Math.round(vehicle.mileage / 1000)}k km` 
+  const formattedMileage = vehicle.mileage >= 1000
+    ? `${Math.round(vehicle.mileage / 1000)}k km`
     : `${vehicle.mileage} km`;
 
   return (
-    <div 
+    <div
       onClick={() => onQuickView(vehicle)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

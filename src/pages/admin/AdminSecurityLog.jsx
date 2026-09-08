@@ -74,9 +74,9 @@ export default function AdminSecurityLog() {
       if (filter) params.action = filter;
       if (severityFilter) params.severity = severityFilter;
       if (targetModelFilter) params.targetModel = targetModelFilter;
-      
+
       const response = await adminAPI.exportAuditLogs(params);
-      
+
       if (format === 'csv') {
         const blob = new Blob([response], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
@@ -115,20 +115,20 @@ export default function AdminSecurityLog() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button 
+            <button
               className="btn btn-sm btn-outline"
               onClick={() => setShowStatistics(!showStatistics)}
             >
               {showStatistics ? 'Hide Statistics' : 'Show Statistics'}
             </button>
-            <button 
+            <button
               className="btn btn-sm btn-gold"
               onClick={() => handleExport('json')}
               disabled={exporting}
             >
               {exporting ? 'Exporting...' : 'Export JSON'}
             </button>
-            <button 
+            <button
               className="btn btn-sm btn-outline"
               onClick={() => handleExport('csv')}
               disabled={exporting}

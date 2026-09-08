@@ -64,14 +64,14 @@ export default function EvidenceTimeline({ events, className = '' }: EvidenceTim
           <div className="absolute -left-3 top-0 bg-white p-1">
             {getEventIcon(event.type)}
           </div>
-          
+
           <div className="ml-4">
             <p className="text-sm font-medium text-gray-900">{event.description}</p>
-            
+
             {event.details && (
               <p className="mt-1 text-sm text-gray-600">{event.details}</p>
             )}
-            
+
             <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
               {event.user && <span>by {event.user}</span>}
               <span>{timeAgo(event.timestamp)}</span>

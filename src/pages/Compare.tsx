@@ -84,7 +84,7 @@ export default function Compare({ setPage, viewCar }: CompareProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-2xl border border-cream-200 overflow-hidden">
           {/* Car Headers */}
-          <div className="grid gap-4 p-4 border-b border-cream-200" 
+          <div className="grid gap-4 p-4 border-b border-cream-200"
             style={{ gridTemplateColumns: `200px repeat(${compareCount}, 1fr)` }}>
             {/* Empty corner cell */}
             <div />
@@ -92,7 +92,7 @@ export default function Compare({ setPage, viewCar }: CompareProps) {
             {/* Car columns */}
             {compareCars.map(car => car && (
               <div key={car.id} className="relative">
-                <div 
+                <div
                   className="aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
                   onClick={() => viewCar(car)}
                 >
@@ -132,7 +132,7 @@ export default function Compare({ setPage, viewCar }: CompareProps) {
           </div>
 
           {/* Price Row */}
-          <div className="grid gap-4 p-4 border-b border-cream-200 bg-cream-50" 
+          <div className="grid gap-4 p-4 border-b border-cream-200 bg-cream-50"
             style={{ gridTemplateColumns: `200px repeat(${compareCount}, 1fr)` }}>
             <div className="font-sans text-sm font-semibold text-warm-500 uppercase tracking-wider">
               Price
@@ -149,7 +149,7 @@ export default function Compare({ setPage, viewCar }: CompareProps) {
 
           {/* Spec Rows */}
           {specs.map(spec => (
-            <div key={spec.key} className="grid gap-4 p-4 border-b border-cream-200 hover:bg-cream-50 transition-colors" 
+            <div key={spec.key} className="grid gap-4 p-4 border-b border-cream-200 hover:bg-cream-50 transition-colors"
               style={{ gridTemplateColumns: `200px repeat(${compareCount}, 1fr)` }}>
               <div className="flex items-center gap-2 font-sans text-sm font-semibold text-warm-500 uppercase tracking-wider">
                 <spec.icon size={14} />
@@ -167,7 +167,7 @@ export default function Compare({ setPage, viewCar }: CompareProps) {
           ))}
 
           {/* Type Row */}
-          <div className="grid gap-4 p-4 border-b border-cream-200 bg-cream-50" 
+          <div className="grid gap-4 p-4 border-b border-cream-200 bg-cream-50"
             style={{ gridTemplateColumns: `200px repeat(${compareCount}, 1fr)` }}>
             <div className="flex items-center gap-2 font-sans text-sm font-semibold text-warm-500 uppercase tracking-wider">
               Body Type
@@ -185,7 +185,7 @@ export default function Compare({ setPage, viewCar }: CompareProps) {
           </div>
 
           {/* Badges Row */}
-          <div className="grid gap-4 p-4 bg-cream-50" 
+          <div className="grid gap-4 p-4 bg-cream-50"
             style={{ gridTemplateColumns: `200px repeat(${compareCount}, 1fr)` }}>
             <div className="flex items-center gap-2 font-sans text-sm font-semibold text-warm-500 uppercase tracking-wider">
               Features

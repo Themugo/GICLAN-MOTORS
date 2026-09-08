@@ -64,9 +64,9 @@ export default function AddCarPage() {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}>Listing Quality Score</span>
-        <span style={{ 
-          fontSize: 24, 
-          fontWeight: 800, 
+        <span style={{
+          fontSize: 24,
+          fontWeight: 800,
           color: getQualityScoreColor(qualityScore.score),
         }}>
           {qualityScore.score}/100
@@ -88,8 +88,8 @@ export default function AddCarPage() {
         }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ 
-          fontSize: 12, 
+        <span style={{
+          fontSize: 12,
           fontWeight: 600,
           color: getQualityScoreColor(qualityScore.score),
           textTransform: 'uppercase',

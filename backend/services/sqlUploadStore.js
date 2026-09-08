@@ -255,7 +255,7 @@ export const getUploadRecord = (id) => {
   return record || null;
 };
 
-const getUploadRecordByPublicId = (publicId) => {
+export const getUploadRecordByPublicId = (publicId) => {
   if (usingJsonFallback) {
     const all = readJsonDb();
     return all.find((r) => r.publicId === publicId) || null;

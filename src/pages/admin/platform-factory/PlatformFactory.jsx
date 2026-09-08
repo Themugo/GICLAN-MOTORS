@@ -54,22 +54,22 @@ export default function PlatformFactory() {
       setLoading(true);
       const { data: dashData } = await pfApi.getPlatformDashboard();
       setDashboard(dashData.data);
-      
+
       const { data: tempData } = await pfApi.getTemplates();
       setTemplates(tempData.data);
-      
+
       const { data: prodData } = await pfApi.getProducts();
       setProducts(prodData.data);
-      
+
       const { data: compData } = await pfApi.getComponents();
       setComponents(compData.data);
-      
+
       const { data: servData } = await pfApi.getSharedServices();
       setServices(servData.data);
-      
+
       const { data: brandData } = await pfApi.getBrands();
       setBrands(brandData.data);
-      
+
       const { data: healthData } = await pfApi.getPlatformHealth();
       setHealth(healthData.data);
     } catch (error) {
@@ -229,7 +229,7 @@ export default function PlatformFactory() {
   const renderTemplates = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">Platform Templates</h2>
-      
+
       <div className="grid grid-cols-3 gap-4">
         {templates.map((template) => (
           <div key={template.id} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer">
@@ -336,7 +336,7 @@ export default function PlatformFactory() {
   const renderComponents = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">Component Library</h2>
-      
+
       <div className="grid grid-cols-4 gap-3">
         {components.map((comp) => (
           <div key={comp.id} className="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
@@ -361,7 +361,7 @@ export default function PlatformFactory() {
   const renderServices = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">Shared Services</h2>
-      
+
       <div className="grid grid-cols-3 gap-4">
         {services.map((service) => (
           <div key={service.id} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
@@ -393,7 +393,7 @@ export default function PlatformFactory() {
   const renderBranding = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">White Label Manager</h2>
-      
+
       <div className="grid grid-cols-2 gap-4">
         {brands.map((brand) => (
           <div key={brand.id} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
@@ -439,7 +439,7 @@ export default function PlatformFactory() {
   const renderDeploy = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">Deployment Manager</h2>
-      
+
       <div className="grid grid-cols-4 gap-4">
         {['Development', 'Staging', 'Production', 'Canary'].map((env) => (
           <div key={env} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
@@ -477,7 +477,7 @@ export default function PlatformFactory() {
   const renderStore = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-800">App Store</h2>
-      
+
       <div className="grid grid-cols-3 gap-4">
         {[
           { name: 'Premium Theme', type: 'theme', price: 'Free', installs: 2345, rating: 4.8 },

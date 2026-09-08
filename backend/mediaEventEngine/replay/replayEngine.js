@@ -14,7 +14,7 @@ class ReplayEngine {
   constructor() {
     this.recordings = new Map();
     this.isInitialized = false;
-    
+
     this.metrics = {
       eventsRecorded: 0,
       replaysGenerated: 0,
@@ -37,7 +37,7 @@ class ReplayEngine {
     if (!this.isInitialized) return;
 
     const auctionId = event.auctionId;
-    
+
     // Get or create recording for this auction
     if (!this.recordings.has(auctionId)) {
       this.recordings.set(auctionId, {
@@ -55,7 +55,7 @@ class ReplayEngine {
     }
 
     const recording = this.recordings.get(auctionId);
-    
+
     // Create replay entry
     const entry = {
       id: uuidv4(),
@@ -115,12 +115,12 @@ class ReplayEngine {
    */
   sanitizePayload(payload) {
     const sanitized = { ...payload };
-    
+
     // Remove any sensitive fields
     delete sanitized.sessionId;
     delete sanitized.userId;
     delete sanitized.bidderId;
-    
+
     return sanitized;
   }
 
@@ -254,7 +254,7 @@ class ReplayEngine {
    */
   async archiveCompletedRecordings() {
     const completed = [];
-    
+
     for (const [auctionId, recording] of this.recordings.entries()) {
       if (recording.state.status === 'completed') {
         // Log to audit
@@ -263,7 +263,7 @@ class ReplayEngine {
           recording.events.length,
           (recording.endTime || Date.now()) - recording.startTime
         );
-        
+
         completed.push(auctionId);
       }
     }

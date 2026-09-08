@@ -241,10 +241,10 @@ describe('KAYAD Regression Tests', () => {
   describe('Startup Performance', () => {
     it('should measure startup time', () => {
       const startTime = performance.now();
-      
+
       // Simulate startup work
       const workDuration = 100;
-      
+
       const endTime = startTime + workDuration;
       const totalDuration = endTime - startTime;
 
@@ -363,7 +363,7 @@ describe('Critical Path Tests', () => {
   it('should handle navigation', () => {
     // Basic navigation test
     const navigate = vi.fn();
-    
+
     // Simulate navigation
     navigate('/');
     expect(navigate).toHaveBeenCalledWith('/');

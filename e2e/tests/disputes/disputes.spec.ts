@@ -1,6 +1,6 @@
 /**
  * Disputes E2E Tests
- * 
+ *
  * Tests for dispute workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -19,7 +19,7 @@ test.describe('Disputes Workflow', () => {
     // Login as dealer
     const dealerCredentials = AuthHelper.getTestUser('dealer');
     dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
-    
+
     // Create funded escrow
     const escrow = await ApiHelper.createEscrow(request, dealerToken, {
       vehicleId: 'test-vehicle-id',

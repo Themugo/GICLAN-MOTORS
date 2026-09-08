@@ -58,7 +58,7 @@ export default function AddCarStepIndicator({ step, setStep, completed = {} }) {
               </div>
               <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{s.label}</div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>{s.desc}</div>
-              
+
               {/* Current step indicator */}
               {isCurrent && (
                 <div style={{

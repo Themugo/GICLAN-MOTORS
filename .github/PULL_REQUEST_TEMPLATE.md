@@ -33,9 +33,9 @@ Please delete options that are not relevant.
 
 List the specific changes made in this pull request:
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 

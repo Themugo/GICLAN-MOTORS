@@ -17,9 +17,9 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: { _id: 'u1', name: 'TestUser', role: 'buyer' }, isAuth: true }),
 }));
 vi.mock('../../context/SocketContext', () => ({
-  useSocket: () => ({ 
-    emit: vi.fn(), 
-    connected: true, 
+  useSocket: () => ({
+    emit: vi.fn(),
+    connected: true,
     socket: { connected: true },
     joinMessages: vi.fn().mockReturnValue('channel-1'),
     leaveChannel: vi.fn(),
@@ -50,9 +50,9 @@ describe('ChatPage', () => {
   describe('Chat API integration', () => {
     it('loads inbox on mount', async () => {
       const { chatAPI } = await import('../../api/api');
-      
+
       render(<MemoryRouter><ChatPage /></MemoryRouter>);
-      
+
       await waitFor(() => {
         expect(chatAPI.inbox).toHaveBeenCalled();
       });

@@ -19,11 +19,11 @@ let docsWithDiagrams = 0;
 
 function checkDirectory(dir) {
   const files = fs.readdirSync(dir);
-  
+
   for (const file of files) {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
-    
+
     if (stat.isDirectory()) {
       if (file === 'node_modules' || file === '.git') continue;
       checkDirectory(filePath);
@@ -39,51 +39,51 @@ function checkDocument(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
     let data = {};
     let markdown = content;
-    
+
     // Use regex to extract frontmatter fields directly
     const ownerMatch = content.match(/^owner:\s*(.+)$/m);
     const lastReviewedMatch = content.match(/^last-reviewed:\s*(.+)$/m);
     const reviewFrequencyMatch = content.match(/^review-frequency:\s*(.+)$/m);
-    
+
     if (ownerMatch) data.owner = ownerMatch[1].trim();
     if (lastReviewedMatch) data['last-reviewed'] = lastReviewedMatch[1].trim();
     if (reviewFrequencyMatch) data['review-frequency'] = reviewFrequencyMatch[1].trim();
-    
+
     // Remove frontmatter from markdown for content analysis
     const frontmatterEnd = content.indexOf('---', 3);
     if (frontmatterEnd !== -1) {
       markdown = content.substring(frontmatterEnd + 3);
     }
-    
+
     // Check for ownership metadata
     if (data.owner) {
       docsWithOwnership++;
     }
-    
+
     // Check staleness
     if (data['last-reviewed'] && data['review-frequency']) {
       const lastReviewed = parseISO(data['last-reviewed']);
       const frequency = data['review-frequency'];
       const threshold = STALE_THRESHOLD_DAYS[frequency] || 90;
       const daysOverdue = differenceInDays(new Date(), lastReviewed);
-      
+
       if (daysOverdue > threshold) {
         staleDocs++;
       }
     }
-    
+
     // Check for sections (headings)
     const sections = markdown.match(/^#{1,6}\s+/gm);
     if (sections && sections.length >= 3) {
       docsWithSections++;
     }
-    
+
     // Check for code examples
     const codeBlocks = markdown.match(/```[\s\S]*?```/g);
     if (codeBlocks && codeBlocks.length > 0) {
       docsWithCodeExamples++;
     }
-    
+
     // Check for diagrams (mermaid)
     if (markdown.includes('```mermaid')) {
       docsWithDiagrams++;

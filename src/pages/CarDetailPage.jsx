@@ -480,10 +480,10 @@ export default function CarDetailPage() {
                     {fav ? 'Saved' : 'Save'}
                   </Button>
                   <div style={{ position: 'relative', flex: 1 }}>
-                    <Button 
-                      variant="secondary" 
-                      icon={linkCopied ? '✓' : '🔗'} 
-                      onClick={handleShare} 
+                    <Button
+                      variant="secondary"
+                      icon={linkCopied ? '✓' : '🔗'}
+                      onClick={handleShare}
                       style={{ flex: 1, width: '100%' }}
                     >
                       {linkCopied ? 'Copied!' : 'Share'}

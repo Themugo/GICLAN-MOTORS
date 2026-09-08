@@ -29,15 +29,15 @@ const shimmerStyle = {
 // Base skeleton block
 function SkeletonBlock({ width = '100%', height = 16, radius = 6, style = {} }) {
   return (
-    <div 
+    <div
       className="mobile-skeleton"
-      style={{ 
-        width, 
-        height, 
+      style={{
+        width,
+        height,
         borderRadius: radius,
         ...shimmerStyle,
-        ...style 
-      }} 
+        ...style
+      }}
     />
   );
 }
@@ -53,9 +53,9 @@ export function MobileCardSkeleton({ style }) {
         <SkeletonBlock height={16} width="80%" />
         <SkeletonBlock height={12} width="50%" style={{ marginTop: 8 }} />
         <SkeletonBlock height={24} width="40%" style={{ marginTop: 12 }} />
-        <div style={{ 
-          display: 'flex', 
-          gap: 12, 
+        <div style={{
+          display: 'flex',
+          gap: 12,
           marginTop: 12,
           flexWrap: 'wrap'
         }}>
@@ -73,9 +73,9 @@ export function MobileListSkeleton({ count = 3, style }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, ...style }}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ 
-          display: 'flex', 
-          gap: 16, 
+        <div key={i} style={{
+          display: 'flex',
+          gap: 16,
           padding: 16,
           background: 'var(--bg-card)',
           borderRadius: 'var(--mobile-radius-lg)',
@@ -97,24 +97,24 @@ export function MobileDetailSkeleton() {
   return (
     <div>
       {/* Hero image */}
-      <div style={{ 
-        aspectRatio: '16/10', 
+      <div style={{
+        aspectRatio: '16/10',
         background: 'var(--surface)',
         animation: 'mobile-pulse 1.5s ease-in-out infinite',
       }} />
-      
+
       <div style={{ padding: 20 }}>
         {/* Title */}
         <SkeletonBlock height={24} width="85%" />
         <SkeletonBlock height={14} width="40%" style={{ marginTop: 8 }} />
-        
+
         {/* Price */}
         <SkeletonBlock height={32} width="50%" style={{ marginTop: 20 }} />
-        
+
         {/* Meta */}
-        <div style={{ 
-          display: 'flex', 
-          gap: 16, 
+        <div style={{
+          display: 'flex',
+          gap: 16,
           marginTop: 24,
           flexWrap: 'wrap',
         }}>
@@ -122,7 +122,7 @@ export function MobileDetailSkeleton() {
             <SkeletonBlock key={i} height={40} width={70} radius={8} />
           ))}
         </div>
-        
+
         {/* Description */}
         <div style={{ marginTop: 32 }}>
           <SkeletonBlock height={16} width="30%" style={{ marginBottom: 16 }} />
@@ -130,11 +130,11 @@ export function MobileDetailSkeleton() {
           <SkeletonBlock height={12} width="95%" style={{ marginTop: 8 }} />
           <SkeletonBlock height={12} width="88%" style={{ marginTop: 8 }} />
         </div>
-        
+
         {/* CTA */}
-        <div style={{ 
-          display: 'flex', 
-          gap: 12, 
+        <div style={{
+          display: 'flex',
+          gap: 12,
           marginTop: 32,
           position: 'sticky',
           bottom: 'calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 16px)',
@@ -152,16 +152,16 @@ export function MobilePageSkeleton() {
   return (
     <div className="mobile-page">
       {/* Header */}
-      <div style={{ 
-        padding: 16, 
+      <div style={{
+        padding: 16,
         borderBottom: '1px solid var(--border)',
-        display: 'flex', 
-        gap: 12 
+        display: 'flex',
+        gap: 12
       }}>
         <SkeletonBlock height={48} radius={12} style={{ flex: 1 }} />
         <SkeletonBlock height={48} width={48} radius={24} />
       </div>
-      
+
       {/* Content */}
       <div style={{ padding: 16 }}>
         {/* Section */}
@@ -173,7 +173,7 @@ export function MobilePageSkeleton() {
             ))}
           </div>
         </div>
-        
+
         {/* Grid */}
         <div className="mobile-card-grid">
           {[1, 2, 3, 4].map(i => (
@@ -191,10 +191,10 @@ export function MobileTextSkeleton({ lines = 3, style }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, ...style }}>
       {Array.from({ length: lines }).map((_, i) => (
-        <SkeletonBlock 
-          key={i} 
-          height={14} 
-          width={widths[i % widths.length]} 
+        <SkeletonBlock
+          key={i}
+          height={14}
+          width={widths[i % widths.length]}
         />
       ))}
     </div>
@@ -204,9 +204,9 @@ export function MobileTextSkeleton({ lines = 3, style }) {
 // Stat skeleton
 export function MobileStatSkeleton() {
   return (
-    <div style={{ 
-      padding: 20, 
-      background: 'var(--bg-card)', 
+    <div style={{
+      padding: 20,
+      background: 'var(--bg-card)',
       borderRadius: 'var(--mobile-radius-lg)',
       textAlign: 'center',
     }}>
@@ -219,14 +219,14 @@ export function MobileStatSkeleton() {
 // Staggered list skeleton
 export function MobileStaggeredList({ count = 5, style }) {
   return (
-    <div style={{ 
-      display: 'grid', 
-      gap: 16, 
+    <div style={{
+      display: 'grid',
+      gap: 16,
       padding: 16,
-      ...style 
+      ...style
     }}>
       {Array.from({ length: count }).map((_, i) => (
-        <div 
+        <div
           key={i}
           style={{
             animation: `mobile-fade-in 0.3s ease-out ${i * 0.05}s both`,

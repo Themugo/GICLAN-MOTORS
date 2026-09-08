@@ -5,7 +5,6 @@
 // ─────────────────────────────────────────────────────────────
 
 import { addTimelineEvent, getLeadTimeline } from "./leadTimelineService.js";
-import Lead from "../models/Lead.js";
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { findAll, findById, findOne, create, count, aggregate } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
@@ -224,7 +223,7 @@ export const calculateConversionRate = async (dealerId, startDate, endDate) => {
 
 export const calculateResponseTime = async (dealerId, startDate, endDate) => {
   try {
-    const leads = await findAll("leads", { 
+    const leads = await findAll("leads", {
       filters: {
         dealer: dealerId,
         createdAt: {

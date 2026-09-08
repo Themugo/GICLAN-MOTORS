@@ -1,4 +1,4 @@
-import { request, HttpRequestError, type HttpRequestOptions } from '../api/httpRequest';
+import { request, HttpRequestError } from '../api/httpRequest';
 
 export type PaymentStatus = 'pending' | 'success' | 'failed' | 'cancelled' | 'released' | 'refunded' | 'not_found';
 export type PaymentType = 'bid' | 'auction_win' | 'buy' | 'listing' | 'subscription' | 'escrow' | 'package_upgrade' | string;
@@ -58,7 +58,7 @@ export class PaymentApiError extends Error {
   }
 }
 
-async function paymentFetch<T>(path: string, options: HttpRequestOptions = {}): Promise<T> {
+async function paymentFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     return await request<T>(path, options);
   } catch (err) {

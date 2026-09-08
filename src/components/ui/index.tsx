@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import Avatar from './Avatar';
-import Progress from './Progress';
-import Skeleton, { EmptyState } from './Skeleton';
-import { Drawer as DesignDrawer } from '../../design-system/Drawer';
 
 /* ==========================================================================
    KAYAD AUTOMOTIVE DESIGN SYSTEM TOKENS & REUSABLE COMPONENTS
@@ -15,23 +11,19 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
   fullWidth?: boolean;
-  full?: boolean;
-  icon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
-  full = false,
-  icon,
   children,
   className = '',
   disabled,
   ...props
 }) => {
   const baseStyles = 'inline-flex items-center justify-center font-bold transition-all focus:outline-none focus:ring-2 focus:ring-[#1E3063]/50 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]';
-  
+
   const variantStyles = {
     primary: 'bg-[#1E3063] hover:bg-[#17244B] text-white shadow-sm',
     secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200/80',
@@ -48,7 +40,7 @@ export const Button: React.FC<ButtonProps> = ({
     lg: 'text-sm px-5 py-3 rounded-xl gap-2.5'
   };
 
-  const widthStyle = fullWidth || full ? 'w-full' : '';
+  const widthStyle = fullWidth ? 'w-full' : '';
 
   return (
     <button
@@ -56,27 +48,24 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
       {...props}
     >
-      {icon && <span aria-hidden="true">{icon}</span>}
       {children}
     </button>
   );
 };
 
 // --- BADGE COMPONENT ---
-export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'verified' | 'inspected' | 'escrow' | 'live' | 'accent' | 'neutral' | 'success' | 'warning' | 'danger' | 'outline' | 'secondary' | 'blue' | 'green' | 'orange' | 'premium' | 'emerald' | 'amber';
+export interface BadgeProps {
+  variant?: 'verified' | 'inspected' | 'escrow' | 'live' | 'accent' | 'neutral' | 'success' | 'warning' | 'danger' | 'outline' | 'secondary';
   size?: 'sm' | 'md';
   children: React.ReactNode;
-  icon?: React.ReactNode;
+  className?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
   variant = 'neutral',
   size = 'sm',
   children,
-  className = '',
-  icon,
-  ...props
+  className = ''
 }) => {
   const baseStyles = 'inline-flex items-center font-bold rounded-md backdrop-blur-md select-none';
 
@@ -91,13 +80,7 @@ export const Badge: React.FC<BadgeProps> = ({
     warning: 'bg-amber-50 text-amber-800 border border-amber-200',
     danger: 'bg-rose-50 text-rose-700 border border-rose-200',
     outline: 'bg-transparent text-slate-600 border border-slate-300',
-    secondary: 'bg-slate-200 text-slate-800 border border-slate-300',
-    blue: 'bg-blue-50 text-blue-700 border border-blue-200',
-    green: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-    orange: 'bg-orange-50 text-orange-700 border border-orange-200',
-    premium: 'bg-amber-400 text-[#17244B] border border-amber-300',
-    emerald: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-    amber: 'bg-amber-50 text-amber-800 border border-amber-200'
+    secondary: 'bg-slate-200 text-slate-800 border border-slate-300'
   };
 
   const sizeStyles = {
@@ -106,8 +89,7 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   return (
-    <span className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`} {...props}>
-      {icon && <span aria-hidden="true">{icon}</span>}
+    <span className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}>
       {children}
     </span>
   );
@@ -518,121 +500,3 @@ export const Image: React.FC<LazyImageProps> = ({
 
 // Export Image as LazyImage for backward compatibility
 export const LazyImage = Image;
-
-
-
-// --- LEGACY MARKETPLACE COMPATIBILITY PRIMITIVES ---
-// These primitives remain intentionally small and data-agnostic. They preserve the
-// established page contracts while keeping the canonical design-system components
-// above as the source of truth for styling and behavior.
-export interface PriceTagProps {
-  value: number;
-  size?: 'sm' | 'md' | 'lg';
-  sub?: React.ReactNode;
-}
-
-export const PriceTag: React.FC<PriceTagProps> = ({ value, size = 'md', sub }) => {
-  const sizes = { sm: 'text-sm', md: 'text-lg', lg: 'text-2xl' };
-  return (
-    <div>
-      <div className={`${sizes[size]} font-extrabold text-[#1E3063]`}>
-        KES {Number(value || 0).toLocaleString('en-KE')}
-      </div>
-      {sub && <div className="text-xs text-slate-500 mt-1">{sub}</div>}
-    </div>
-  );
-};
-
-export interface BreadcrumbItem {
-  label: string;
-  href?: string;
-}
-
-export const Breadcrumb: React.FC<{ items: BreadcrumbItem[] }> = ({ items }) => (
-  <nav aria-label="Breadcrumb" className="text-xs text-slate-500 flex flex-wrap items-center gap-2">
-    {items.map((item, index) => (
-      <React.Fragment key={`${item.label}-${index}`}>
-        {index > 0 && <span aria-hidden="true">/</span>}
-        {item.href ? <a href={item.href} className="hover:text-[#1E3063]">{item.label}</a> : <span className="text-slate-700 font-semibold">{item.label}</span>}
-      </React.Fragment>
-    ))}
-  </nav>
-);
-
-export const MapPlaceholder: React.FC<{ label?: string; pin?: React.ReactNode; height?: number }> = ({
-  label = 'Location', pin = '📍', height = 180,
-}) => (
-  <div
-    role="img"
-    aria-label={label}
-    className="rounded-xl border border-slate-200 bg-slate-100 flex flex-col items-center justify-center text-slate-500"
-    style={{ height }}
-  >
-    <span className="text-2xl">{pin}</span>
-    <span className="text-xs font-semibold mt-2">{label}</span>
-  </div>
-);
-
-export interface StatCardProps {
-  icon?: React.ReactNode;
-  iconVariant?: string;
-  label: string;
-  value: React.ReactNode;
-}
-
-export const StatCard: React.FC<StatCardProps> = ({ icon, label, value }) => (
-  <Card className="p-4">
-    <div className="flex items-center gap-3">
-      {icon && <div className="text-xl" aria-hidden="true">{icon}</div>}
-      <div>
-        <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400">{label}</div>
-        <div className="text-lg font-extrabold text-[#1E3063]">{value}</div>
-      </div>
-    </div>
-  </Card>
-);
-
-export const FilterChip: React.FC<{
-  label: string;
-  active?: boolean;
-  onToggle?: () => void;
-  onRemove?: () => void;
-}> = ({ label, active = false, onToggle, onRemove }) => (
-  <button type="button" onClick={onRemove || onToggle} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${active ? 'bg-[#1E3063] text-white border-[#1E3063]' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
-    {label}{active && onRemove && <span aria-hidden="true">×</span>}
-  </button>
-);
-
-export const RangeSlider: React.FC<{
-  label?: string;
-  min: number;
-  max: number;
-  step?: number;
-  value: number;
-  onChange: (value: number) => void;
-}> = ({ label, min, max, step = 1, value, onChange }) => (
-  <label className="block">
-    {label && <span className="block text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">{label}</span>}
-    <input aria-label={label} type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} className="w-full" />
-    <span className="block text-xs font-semibold text-slate-600 mt-1">{Number(value).toLocaleString('en-KE')}</span>
-  </label>
-);
-
-export const Segmented: React.FC<{
-  options: Array<{ id?: string; value?: string; label?: string; icon?: React.ReactNode }>;
-  value: string;
-  onChange: (value: string) => void;
-}> = ({ options, value, onChange }) => (
-  <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 gap-1">
-    {options.map(option => {
-      const key = option.id ?? option.value ?? option.label;
-      return <button key={key} type="button" onClick={() => onChange(key)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${value === key ? 'bg-white shadow-sm text-[#1E3063]' : 'text-slate-500'}`}>{option.icon ?? option.label}</button>;
-    })}
-  </div>
-);
-
-export const Drawer: React.FC<React.ComponentProps<typeof DesignDrawer> & { open?: boolean }> = ({ open, isOpen, ...props }) => (
-  <DesignDrawer isOpen={open ?? isOpen} {...props} />
-);
-
-export { Avatar, Progress, EmptyState, Skeleton };

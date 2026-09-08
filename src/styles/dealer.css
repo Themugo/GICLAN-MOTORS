@@ -54,14 +54,14 @@
   --dealer-space-10: 40px;
   --dealer-space-12: 48px;
   --dealer-space-16: 64px;
-  
+
   /* Dealer radius */
   --dealer-radius-sm: 6px;
   --dealer-radius-md: 10px;
   --dealer-radius-lg: 14px;
   --dealer-radius-xl: 20px;
   --dealer-radius-2xl: 28px;
-  
+
   /* Dealer typography */
   --dealer-text-xs: 0.6875rem;
   --dealer-text-sm: 0.8125rem;
@@ -70,7 +70,7 @@
   --dealer-text-xl: 1.25rem;
   --dealer-text-2xl: 1.5rem;
   --dealer-text-3xl: 1.875rem;
-  
+
   /* Dealer transitions */
   --dealer-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --dealer-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);

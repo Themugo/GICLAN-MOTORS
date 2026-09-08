@@ -90,7 +90,7 @@ class IdentityService {
    */
   async authenticate(email, password, context = {}) {
     const user = await this.getUserByEmail(email);
-    
+
     if (!user) {
       await this.logAuthAttempt(null, email, 'login', false, 'user_not_found', context);
       throw new AppError('Invalid credentials', 401);
@@ -109,7 +109,7 @@ class IdentityService {
 
     // Verify password
     const passwordValid = await this.verifyPassword(password, user.password_hash);
-    
+
     if (!passwordValid) {
       await this.handleFailedLogin(user);
       await this.logAuthAttempt(user.id, email, 'login', false, 'invalid_password', context);
@@ -407,7 +407,7 @@ class IdentityService {
    */
   async revokeSession(sessionId, userId) {
     const session = await db.findOne('user_sessions', { session_id: sessionId });
-    
+
     if (!session) {
       throw new AppError('Session not found', 404);
     }
@@ -417,9 +417,9 @@ class IdentityService {
     }
 
     await this.terminateSession(sessionId);
-    
+
     await this.logSecurityEvent('session_revoked', userId, { sessionId });
-    
+
     return { success: true };
   }
 
@@ -438,7 +438,7 @@ class IdentityService {
     });
 
     await this.logSecurityEvent('all_sessions_revoked', userId);
-    
+
     return { success: true };
   }
 
@@ -675,12 +675,12 @@ class IdentityService {
   async getMFAStats() {
     const totalUsers = await db.find('users', { status: 'active' });
     const mfaEnabled = await db.find('mfa_methods', { is_active: true });
-    
+
     return {
       totalEnabled: new Set(mfaEnabled.map(m => m.user_id)).size,
       totalUsers: totalUsers.length,
-      percentage: totalUsers.length > 0 
-        ? Math.round(new Set(mfaEnabled.map(m => m.user_id)).size / totalUsers.length * 100) 
+      percentage: totalUsers.length > 0
+        ? Math.round(new Set(mfaEnabled.map(m => m.user_id)).size / totalUsers.length * 100)
         : 0,
     };
   }

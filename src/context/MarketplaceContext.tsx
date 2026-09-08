@@ -120,7 +120,7 @@ const PAGE_TO_PATH: Record<PageView, string> = {
 
 
 
-export type PageView = 
+export type PageView =
   | 'home'
   | 'gallery'
   | 'vehicle_detail'
@@ -206,7 +206,7 @@ export const MarketplaceProvider: FC<{ children: React.ReactNode }> = ({ childre
   const [bids, setBids] = useState<BidLocal[]>([]);
   const [bidLoadError, setBidLoadError] = useState<string | null>(null);
   const [escrowContracts, setEscrowContracts] = useState<EscrowContractLocal[]>([]);
-  
+
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeChatVehicleId, setActiveChatVehicleId] = useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -400,7 +400,7 @@ export const MarketplaceProvider: FC<{ children: React.ReactNode }> = ({ childre
     };
 
     setEscrowContracts(prev => [newContract, ...prev]);
-    
+
     return newContract;
   };
 

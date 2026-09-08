@@ -116,10 +116,10 @@ tail -f backend/logs/app.log | grep -i cache
    ```bash
    # Edit redis.conf
    sudo nano /etc/redis/redis.conf
-   
+
    # Set maxmemory
    maxmemory 2gb
-   
+
    # Set eviction policy
    maxmemory-policy allkeys-lru
    ```

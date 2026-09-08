@@ -7,7 +7,7 @@ export async function getTranslations(locale?: string, namespace = 'common') {
   if (locale) params.set('locale', locale);
   if (namespace) params.set('namespace', namespace);
   const response = await request<{ data: { locale: string; namespace: string; translations: Record<string, unknown> } }>(`/localization?${params}`);
-  return unwrap<{ locale: string; namespace: string; translations: Record<string, unknown> }>(response);
+  return unwrap(response);
 }
 
 export async function getAllTranslations(locale?: string) {

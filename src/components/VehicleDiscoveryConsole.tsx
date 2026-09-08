@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
-  RotateCcw, 
-  SlidersHorizontal, 
-  X, 
-  Check, 
-  Car, 
+import {
+  Search,
+  RotateCcw,
+  SlidersHorizontal,
+  X,
+  Check,
+  Car,
   DollarSign,
   ChevronDown,
   Filter,
@@ -24,7 +24,7 @@ import { Button, Select, Input } from './ui';
 
 export interface VehicleDiscoveryConsoleProps {
   vehicles: Vehicle[];
-  
+
   // Keyword
   searchQuery: string;
   onSearchChange: (q: string) => void;
@@ -111,8 +111,8 @@ export const VehicleDiscoveryConsole: React.FC<VehicleDiscoveryConsoleProps> = (
 
   // Dynamic Models (updates when Make changes)
   const models = useMemo(() => {
-    const source = selectedMake === 'All' 
-      ? vehicles 
+    const source = selectedMake === 'All'
+      ? vehicles
       : vehicles.filter((v) => v.make.toLowerCase() === selectedMake.toLowerCase());
     const list = Array.from(new Set(source.map((v) => v.model).filter(Boolean))).sort();
     return ['All', ...list];
@@ -259,9 +259,9 @@ export const VehicleDiscoveryConsole: React.FC<VehicleDiscoveryConsoleProps> = (
               label="Model"
               value={selectedModel}
               onChange={(e) => onModelChange(e.target.value)}
-              options={models.map((m) => ({ 
-                value: m, 
-                label: m === 'All' ? (selectedMake !== 'All' ? `All ${selectedMake}` : 'All Models') : m 
+              options={models.map((m) => ({
+                value: m,
+                label: m === 'All' ? (selectedMake !== 'All' ? `All ${selectedMake}` : 'All Models') : m
               }))}
             />
           </div>

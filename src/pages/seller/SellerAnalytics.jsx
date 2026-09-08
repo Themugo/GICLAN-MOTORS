@@ -8,7 +8,7 @@ import BackButton from '../../components/BackButton';
 export default function SellerAnalytics() {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [loading, setLoading] = useState(true);
   const [listings, setListings] = useState([]);
   const [period, setPeriod] = useState('30d');
@@ -39,11 +39,11 @@ export default function SellerAnalytics() {
   const calculateStats = () => {
     const activeListings = listings.filter(l => l.status === 'active');
     const soldListings = listings.filter(l => l.status === 'sold');
-    
+
     const totalViews = listings.reduce((sum, l) => sum + (l.views || 0), 0);
     const totalInquiries = listings.reduce((sum, l) => sum + (l.inquiries || 0), 0);
     const totalRevenue = soldListings.reduce((sum, l) => sum + (l.finalPrice || l.price || 0), 0);
-    
+
     const avgViewsPerListing = activeListings.length > 0 ? totalViews / activeListings.length : 0;
     const conversionRate = totalInquiries > 0 ? (soldListings.length / totalInquiries) * 100 : 0;
 
@@ -167,9 +167,9 @@ export default function SellerAnalytics() {
                     </td>
                     <td className="py-4 pr-4">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        car.status === 'sold' 
-                          ? 'bg-green-500/20 text-green-400' 
-                          : car.status === 'active' 
+                        car.status === 'sold'
+                          ? 'bg-green-500/20 text-green-400'
+                          : car.status === 'active'
                           ? 'bg-blue-500/20 text-blue-400'
                           : 'bg-white/10 text-white/40'
                       }`}>

@@ -7,7 +7,6 @@ import { atomicSettleBidPayment, atomicSettlePurchasePayment } from "../utils/at
 import { recordPaymentEvent, recordWebhookReceipt, markWebhookProcessed, markAttemptByCheckout } from "./paymentFinancialLifecycle.service.js";
 import { assertPaymentTransition } from "./paymentStateMachine.js";
 import { activateDealerSubscriptionFromPayment } from "./dealerSubscription.service.js";
-import { getSupabase } from "../utils/supabase.js";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
@@ -149,7 +148,7 @@ export const handleMpesaCallback = async (callbackData) => {
 
     await markPaymentEventSafe(payment.id, "amount_verified", { expected: Number(payment.amount), reported: Number(amount), receipt });
 
-    if (!['bid', 'purchase', 'escrow', 'inspection'].includes(payment.type)) {
+    if (!['bid', 'purchase', 'escrow'].includes(payment.type)) {
       assertPaymentTransition(payment.status, "success");
       await update("payments", payment.id, {
         status: "success",
@@ -186,30 +185,6 @@ export const handleMpesaCallback = async (callbackData) => {
         finalized = true;
         return payment;
       }
-    }
-
-    if (payment.type === "inspection") {
-      const bookingId = payment.metadata?.bookingId || payment.referenceId;
-      if (!bookingId) {
-        throw new Error("Inspection payment is missing its booking reference");
-      }
-      const { data: settlement, error: settlementError } = await getSupabase().rpc(
-        "kayad_process_inspection_payment_atomic",
-        {
-          p_booking_id: bookingId,
-          p_payment_method: "mpesa",
-          p_payment_reference: receipt,
-          p_user_id: payment.user,
-        },
-      );
-      if (settlementError) throw settlementError;
-      await assertPaymentTransition(payment.status, "success");
-      await update("payments", payment.id, {
-        status: "success",
-        mpesaReceipt: receipt,
-        paidAt: new Date(),
-      });
-      await markPaymentEventSafe(payment.id, "inspection_settled", { bookingId, settlement });
     }
 
     if (payment.type === "escrow") {

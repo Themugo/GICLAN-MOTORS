@@ -14,7 +14,7 @@ export class CircuitBreaker {
     this.failureThreshold = options.failureThreshold || 5;  // Failures before opening
     this.resetTimeout = options.resetTimeout || 60000;       // 60s before half-open
     this.halfOpenSuccessThreshold = options.halfOpenSuccessThreshold || 2;  // Successes to close
-    
+
     this.state = "CLOSED";  // CLOSED, OPEN, HALF_OPEN
     this.failures = 0;
     this.successes = 0;
@@ -54,7 +54,7 @@ export class CircuitBreaker {
 
   onSuccess() {
     this.failures = 0;
-    
+
     if (this.state === "HALF_OPEN") {
       this.successes++;
       if (this.successes >= this.halfOpenSuccessThreshold) {
@@ -67,7 +67,7 @@ export class CircuitBreaker {
   onFailure(error) {
     this.failures++;
     this.lastFailureTime = Date.now();
-    
+
     if (this.state === "HALF_OPEN") {
       this.state = "OPEN";
       this.nextAttemptTime = Date.now() + this.resetTimeout;

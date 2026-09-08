@@ -90,7 +90,7 @@ class CommentaryService {
    */
   generateCommentary(eventType, data = {}) {
     const template = CommentaryTemplates[eventType];
-    
+
     if (!template) {
       return null;
     }

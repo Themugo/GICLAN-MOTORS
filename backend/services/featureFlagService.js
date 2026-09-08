@@ -6,7 +6,6 @@
 
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { findAll, create, update, findOne, remove } from "../db/index.js";
-import FeatureFlag from "../models/FeatureFlag.js";
 import { getSupabase } from "../utils/supabase.js";
 
 // =============================

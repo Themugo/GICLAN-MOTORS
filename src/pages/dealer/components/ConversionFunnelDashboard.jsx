@@ -131,15 +131,15 @@ export default function ConversionFunnelDashboard({ dealerId }) {
           return (
             <div key={stage.key} style={stageStyle}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ 
-                  width: 32, 
-                  height: 32, 
-                  borderRadius: 8, 
-                  background: `${stage.color}16`, 
-                  color: stage.color, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center' 
+                <div style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  background: `${stage.color}16`,
+                  color: stage.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}>
                   <Icon size={14} />
                 </div>

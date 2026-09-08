@@ -350,7 +350,7 @@ class QualityService {
     // Check if all required gates passed
     const gateResults = await db.find('quality_gate_results', { release_id: releaseId });
     const requiredGates = await db.find('quality_gates', { is_required: true });
-    
+
     const passedGates = gateResults.filter(r => r.status === 'passed');
     const requiredPasses = requiredGates.length;
 
@@ -500,7 +500,7 @@ class QualityService {
 
     // Release readiness
     const testingReleases = releases;
-    const readyForRelease = testingReleases.filter(r => 
+    const readyForRelease = testingReleases.filter(r =>
       r.gates_passed === r.gates_total && r.failed_tests === 0
     ).length;
 

@@ -37,11 +37,11 @@ vi.mock('../../../api/api', () => ({
 }));
 
 vi.mock('../../../context/SocketContext', () => ({
-  useSocket: () => ({ 
+  useSocket: () => ({
     connected: true,
-    emit: vi.fn(), 
-    on: vi.fn(), 
-    off: vi.fn() 
+    emit: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn()
   }),
 }));
 
@@ -59,9 +59,9 @@ describe('OperationsControlRoom', () => {
 
   it('loads operations metrics from API', async () => {
     const { adminAPI } = await import('../../../api/api');
-    
+
     render(<MemoryRouter><OperationsControlRoom /></MemoryRouter>);
-    
+
     await waitFor(() => {
       expect(adminAPI.getOperationsMetrics).toHaveBeenCalled();
     });
@@ -69,7 +69,7 @@ describe('OperationsControlRoom', () => {
 
   it('displays metric cards with values', async () => {
     render(<MemoryRouter><OperationsControlRoom /></MemoryRouter>);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Total Users')).toBeInTheDocument();
       expect(screen.getByText('Active Dealers')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('OperationsControlRoom', () => {
 
   it('displays recent alerts panel', async () => {
     render(<MemoryRouter><OperationsControlRoom /></MemoryRouter>);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Recent Alerts')).toBeInTheDocument();
     });
@@ -86,7 +86,7 @@ describe('OperationsControlRoom', () => {
 
   it('displays live activity feed', async () => {
     render(<MemoryRouter><OperationsControlRoom /></MemoryRouter>);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Live Activity Feed')).toBeInTheDocument();
     });
@@ -94,7 +94,7 @@ describe('OperationsControlRoom', () => {
 
   it('shows refresh button', async () => {
     render(<MemoryRouter><OperationsControlRoom /></MemoryRouter>);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Refresh')).toBeInTheDocument();
     });

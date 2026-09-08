@@ -9,9 +9,9 @@ tags: [monitoring]
 ---
 # Incident Management Workflows
 
-**Version:** 1.0  
-**Date:** June 17, 2026  
-**Platform:** KAYAD Fintech Platform  
+**Version:** 1.0
+**Date:** June 17, 2026
+**Platform:** KAYAD Fintech Platform
 **Author:** SRE & Incident Response Engineer
 
 ---
@@ -241,9 +241,9 @@ P3 LOW INCIDENTS
 
 ### 4.1 Payment Failure Runbook
 
-**Incident Type:** Payment Processing Failure  
-**Severity:** P0-P2  
-**Owner:** Payments Team  
+**Incident Type:** Payment Processing Failure
+**Severity:** P0-P2
+**Owner:** Payments Team
 **On-Call:** Payments Engineer
 
 #### Detection
@@ -340,9 +340,9 @@ P3 LOW INCIDENTS
 
 ### 4.2 Escrow Failure Runbook
 
-**Incident Type:** Escrow System Failure  
-**Severity:** P0-P1  
-**Owner:** Escrow Team  
+**Incident Type:** Escrow System Failure
+**Severity:** P0-P1
+**Owner:** Escrow Team
 **On-Call:** Escrow Engineer
 
 #### Detection
@@ -440,9 +440,9 @@ P3 LOW INCIDENTS
 
 ### 4.3 Auction Outage Runbook
 
-**Incident Type:** Auction Platform Outage  
-**Severity:** P0-P2  
-**Owner:** Auction Team  
+**Incident Type:** Auction Platform Outage
+**Severity:** P0-P2
+**Owner:** Auction Team
 **On-Call:** Auction Engineer
 
 #### Detection
@@ -539,9 +539,9 @@ P3 LOW INCIDENTS
 
 ### 4.4 Database Outage Runbook
 
-**Incident Type:** Database Outage  
-**Severity:** P0-P1  
-**Owner:** Database Team  
+**Incident Type:** Database Outage
+**Severity:** P0-P1
+**Owner:** Database Team
 **On-Call:** Database Engineer
 
 #### Detection
@@ -637,9 +637,9 @@ P3 LOW INCIDENTS
 
 ### 4.5 Notification Failure Runbook
 
-**Incident Type:** Notification System Failure  
-**Severity:** P1-P3  
-**Owner:** Notification Team  
+**Incident Type:** Notification System Failure
+**Severity:** P1-P3
+**Owner:** Notification Team
 **On-Call:** Notification Engineer
 
 #### Detection
@@ -988,6 +988,6 @@ The incident management workflows provide a comprehensive framework for detectin
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** June 17, 2026  
+**Document Version:** 1.0
+**Last Updated:** June 17, 2026
 **Next Review:** July 17, 2026

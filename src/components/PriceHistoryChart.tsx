@@ -33,14 +33,14 @@ export default function PriceHistoryChart({ history, currentPrice }: PriceHistor
 
   const height = 120;
   const width = 100;
-  
+
   const points = chartData.map((d, i) => {
     const x = (i / (chartData.length - 1)) * width;
     const y = height - ((d.price - minPrice) / range) * height;
     return `${x},${y}`;
   }).join(' ');
 
-  const priceChange = chartData.length > 1 
+  const priceChange = chartData.length > 1
     ? ((chartData[chartData.length - 1].price - chartData[0].price) / chartData[0].price) * 100
     : 0;
 
@@ -58,14 +58,14 @@ export default function PriceHistoryChart({ history, currentPrice }: PriceHistor
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full" preserveAspectRatio="none">
           {/* Grid lines */}
           <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="#E5E1D8" strokeDasharray="2,2" />
-          
+
           {/* Area fill */}
           <polygon
             points={`0,${height} ${points} ${width},${height}`}
             fill="url(#goldGradient)"
             opacity="0.2"
           />
-          
+
           {/* Line */}
           <polyline
             points={points}
@@ -75,7 +75,7 @@ export default function PriceHistoryChart({ history, currentPrice }: PriceHistor
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          
+
           {/* Dots */}
           {chartData.map((d, i) => {
             const x = (i / (chartData.length - 1)) * width;

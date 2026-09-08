@@ -13,18 +13,6 @@ export const success = (res, data = null, message = "Success", meta = {}) => {
 };
 
 // =============================
-// ✅ CREATED RESPONSE
-// =============================
-export const created = (res, data = null, message = "Created", meta = {}) => {
-  return res.status(201).json({
-    success: true,
-    message,
-    data,
-    ...(Object.keys(meta).length && { meta }),
-  });
-};
-
-// =============================
 // ❌ ERROR RESPONSE
 // =============================
 export const error = (res, message = "Error", code = 500, details = null) => {
@@ -64,16 +52,4 @@ export const unauthorized = (res, message = "Unauthorized") => {
     success: false,
     message,
   });
-};
-
-// =============================
-// 🔄 RESPONSE COMPATIBILITY FACADE
-// =============================
-export const response = {
-  success,
-  created,
-  error,
-  validationError,
-  notFound,
-  unauthorized,
 };

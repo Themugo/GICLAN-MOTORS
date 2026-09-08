@@ -162,7 +162,7 @@ spec:
 #   kubectl patch virtualservice kayad-backend -p "{\"spec\":{\"http\":[{\"route\":[{\"destination\":{\"host\":\"kayad-backend-canary\"},\"weight\":$weight},{\"destination\":{\"host\":\"kayad-backend-stable\"},\"weight\":$((100-weight))}]}]}}"
 #   echo "Canary traffic set to $weight%"
 #   sleep 300  # Wait 5 minutes between increments
-#   
+#
 #   # Monitor for errors
 #   if ./scripts/check-errors.sh; then
 #     echo "Errors detected, rolling back"

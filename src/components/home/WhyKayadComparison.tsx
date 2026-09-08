@@ -41,7 +41,7 @@ export const WhyKayadComparison: FC = () => {
   return (
     <section className="py-14 sm:py-20 bg-[#0B1628] dark:bg-[#060B14] text-white border-b border-white/10 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
+
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-[#00C9CE] font-mono font-black text-xs uppercase tracking-wider">
@@ -60,7 +60,7 @@ export const WhyKayadComparison: FC = () => {
 
         {/* Comparison Table / Matrix */}
         <div className="bg-[#1E3063]/80 border border-white/15 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-md">
-          
+
           {/* Table Header */}
           <div className="grid grid-cols-1 md:grid-cols-3 bg-[#121D33] p-4 sm:p-6 border-b border-white/15 text-xs font-mono font-black uppercase tracking-wider text-slate-300">
             <div className="hidden md:block text-slate-400">Marketplace Standard</div>

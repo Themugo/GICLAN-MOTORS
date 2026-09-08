@@ -43,7 +43,7 @@ export const Card: React.FC<CardProps> = ({
   };
 
   const Component = onClick ? 'button' : 'div';
-  
+
   return (
     <Component
       className={className}

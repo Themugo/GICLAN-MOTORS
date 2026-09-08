@@ -9,7 +9,7 @@ tags: [deployment]
 ---
 # KAYAD API Guide
 
-**Version:** 2.0.0  
+**Version:** 2.0.0
 **Base URL:** `https://api.kayad.space` (production) or `http://localhost:5000` (development)
 
 ---
@@ -432,8 +432,8 @@ Content-Type: multipart/form-data
 images: [file1, file2, file3]
 ```
 
-**Allowed formats:** jpg, jpeg, png, webp  
-**Max file size:** 5MB per file  
+**Allowed formats:** jpg, jpeg, png, webp
+**Max file size:** 5MB per file
 **Max files:** 10 per request
 
 ---
@@ -442,9 +442,9 @@ images: [file1, file2, file3]
 
 ### M-Pesa Payment Callback
 
-**Endpoint:** `/api/payments/callback`  
-**Method:** POST  
-**IP Whitelist:** Safaricom IPs only  
+**Endpoint:** `/api/payments/callback`
+**Method:** POST
+**IP Whitelist:** Safaricom IPs only
 **Authentication:** None (IP restricted)
 
 ---

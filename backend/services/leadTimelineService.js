@@ -6,7 +6,6 @@
 
 import { logInfo, logError } from "../utils/logger.js";
 import { findAll, findById, update } from "../db/index.js";
-import LeadActivity from "../models/LeadActivity.js";
 
 // =============================
 // 📊 GET LEAD TIMELINE

@@ -10,17 +10,17 @@ export const AuctionEventType = {
   // Creation & Setup
   AUCTION_CREATED: 'auction.created',
   AUCTION_PUBLISHED: 'auction.published',
-  
+
   // Registration
   REGISTRATION_OPENED: 'registration.opened',
   REGISTRATION_CLOSED: 'registration.closed',
-  
+
   // Viewing & Inspection
   VIEWING_DAY_STARTED: 'viewing.started',
   VIEWING_DAY_CLOSED: 'viewing.closed',
   INSPECTION_BOOKED: 'inspection.booked',
   INSPECTION_COMPLETED: 'inspection.completed',
-  
+
   // Auction Lifecycle
   AUCTION_STARTED: 'auction.started',
   AUCTION_PAUSED: 'auction.paused',
@@ -28,27 +28,27 @@ export const AuctionEventType = {
   AUCTION_EXTENDED: 'auction.extended',
   AUCTION_CLOSED: 'auction.closed',
   AUCTION_COMPLETED: 'auction.completed',
-  
+
   // Bidding
   NEW_HIGHEST_BID: 'bid.new_highest',
   RESERVE_PRICE_MET: 'reserve.met',
   RESERVE_PRICE_NOT_MET: 'reserve.not_met',
   FINAL_FIVE_MINUTES: 'auction.final_five_minutes',
   FINAL_MINUTE: 'auction.final_minute',
-  
+
   // Time Events
   TIME_WARNING: 'auction.time_warning',
   TIME_EXTENDED: 'auction.time_extended',
-  
+
   // Outcome
   WINNER_CONFIRMED: 'winner.confirmed',
   DIGITAL_CERTIFICATE_ISSUED: 'certificate.issued',
-  
+
   // Payment & Collection
   PAYMENT_PENDING: 'payment.pending',
   PAYMENT_RECEIVED: 'payment.received',
   VEHICLE_COLLECTED: 'vehicle.collected',
-  
+
   // Administrative
   AUCTION_CANCELLED: 'auction.cancelled',
   AUCTION_POSTPONED: 'auction.postponed',
@@ -234,7 +234,7 @@ export const getEventMetadata = (eventType) => {
       requiresAudit: true,
     },
   };
-  
+
   return metadata[eventType] || {
     priority: EventPriority.NORMAL,
     category: EventCategory.SYSTEM,

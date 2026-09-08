@@ -35,7 +35,7 @@ class ChannelManager {
         queued: 0,
       };
     });
-    
+
     logInfo('Channel Manager initialized', { channels: Object.keys(ChannelType).length });
   }
 
@@ -45,27 +45,27 @@ class ChannelManager {
   async routeEvent(event) {
     const startTime = Date.now();
     const channels = getChannelsForEvent(event.type);
-    
+
     this.metrics.eventsProcessed++;
-    
+
     const results = await Promise.allSettled(
       channels.map(channel => this.deliverToChannel(channel, event))
     );
-    
+
     const duration = Date.now() - startTime;
     recordMetric('channel_manager_route_duration', duration, { eventType: event.type });
-    
+
     // Count results
     const succeeded = results.filter(r => r.status === 'fulfilled').length;
     const failed = results.filter(r => r.status === 'rejected').length;
-    
+
     if (succeeded > 0) {
       this.metrics.eventsDelivered += succeeded;
     }
     if (failed > 0) {
       this.metrics.eventsFailed += failed;
     }
-    
+
     return {
       eventId: event.eventId,
       channels,
@@ -86,7 +86,7 @@ class ChannelManager {
     }
 
     const startTime = Date.now();
-    
+
     try {
       // Get Socket.IO instance
       const io = getIO();
@@ -97,34 +97,34 @@ class ChannelManager {
 
       // Determine room name based on channel type
       const roomName = this.getChannelRoom(channelType, event);
-      
+
       // Prepare event payload (filter sensitive data for public channels)
       const payload = this.filterPayload(channelType, event);
-      
+
       // Emit to channel
       await this.emitToChannel(io, roomName, event.type, payload);
-      
+
       // Update metrics
       const duration = Date.now() - startTime;
       this.metrics.byChannel[channelType].delivered++;
       incrementCounter('channel_delivery_success', { channel: channelType, eventType: event.type });
       recordMetric('channel_delivery_duration', duration, { channel: channelType });
-      
+
       logInfo('Event delivered to channel', {
         channel: channelType,
         room: roomName,
         eventType: event.type,
         duration,
       });
-      
+
       return true;
     } catch (error) {
       this.metrics.byChannel[channelType].failed++;
       this.queueFailedDelivery(channelType, event);
-      
+
       incrementCounter('channel_delivery_failure', { channel: channelType, eventType: event.type });
       logError('Channel delivery failed', error, { channel: channelType });
-      
+
       throw error;
     }
   }
@@ -134,7 +134,7 @@ class ChannelManager {
    */
   getChannelRoom(channelType, event) {
     const auctionId = event.auctionId;
-    
+
     switch (channelType) {
       case ChannelType.PUBLIC_BROADCAST:
         return `auction:${auctionId}:public`;
@@ -167,7 +167,7 @@ class ChannelManager {
   filterPayload(channelType, event) {
     const config = ChannelConfig[channelType];
     const payload = { ...event.payload };
-    
+
     // Remove sensitive data from public channels
     if (config.access === 'public') {
       delete payload.bidderId;
@@ -175,7 +175,7 @@ class ChannelManager {
       delete payload.userId;
       delete payload.sessionId;
     }
-    
+
     // Add channel metadata
     return {
       ...payload,
@@ -213,9 +213,9 @@ class ChannelManager {
       timestamp: Date.now(),
       attempts: 0,
     });
-    
+
     this.metrics.byChannel[channelType].queued++;
-    
+
     // Limit queue size
     if (this.failedDeliveries.length > 1000) {
       this.failedDeliveries.shift();
@@ -227,12 +227,12 @@ class ChannelManager {
    */
   async retryFailedDeliveries() {
     if (this.failedDeliveries.length === 0) return;
-    
+
     const toRetry = [...this.failedDeliveries];
     this.failedDeliveries = [];
-    
+
     logInfo(`Retrying ${toRetry.length} failed channel deliveries`);
-    
+
     for (const item of toRetry) {
       try {
         await this.deliverToChannel(item.channelType, item.event);
@@ -256,7 +256,7 @@ class ChannelManager {
     if (!this.subscribers.has(channelType)) {
       this.subscribers.set(channelType, new Map());
     }
-    
+
     this.subscribers.get(channelType).set(subscriberId, callback);
   }
 
@@ -286,12 +286,12 @@ class ChannelManager {
   getHealth() {
     const totalDeliveries = Object.values(this.metrics.byChannel)
       .reduce((sum, ch) => sum + ch.delivered + ch.failed, 0);
-    
+
     const totalFailures = Object.values(this.metrics.byChannel)
       .reduce((sum, ch) => sum + ch.failed, 0);
-    
+
     const failureRate = totalDeliveries > 0 ? totalFailures / totalDeliveries : 0;
-    
+
     return {
       status: failureRate > 0.1 ? 'degraded' : 'healthy',
       failureRate: failureRate.toFixed(4),

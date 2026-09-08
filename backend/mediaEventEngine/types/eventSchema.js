@@ -18,24 +18,24 @@ export const createEvent = ({
 }) => {
   const eventId = uuidv4();
   const timestamp = Date.now();
-  
+
   return {
     // Core event data
     eventId,
     type,
     timestamp,
-    
+
     // Context
     auctionId,
     vehicleId,
     userId,
     sessionId,
-    
+
     // Event payload (event-specific data)
     payload: {
       ...payload,
     },
-    
+
     // Additional metadata
     metadata: {
       source: 'media-event-engine',
@@ -66,7 +66,7 @@ export const EventPayloadTemplates = {
     startTime: auction.scheduledStartTime,
     endTime: auction.scheduledEndTime,
   }),
-  
+
   newHighestBid: (bid, auction) => ({
     bidId: bid.id,
     amount: bid.amount,
@@ -79,13 +79,13 @@ export const EventPayloadTemplates = {
     previousHighBid: auction.previousHighBid,
     increment: bid.amount - (auction.previousHighBid || auction.startingPrice),
   }),
-  
+
   reserveStatus: (auction) => ({
     reservePrice: auction.reservePrice,
     currentBid: auction.highestBid,
     isMet: auction.reservePrice ? auction.highestBid >= auction.reservePrice : null,
   }),
-  
+
   timeUpdate: (auction) => ({
     endTime: auction.endTime,
     timeRemaining: auction.endTime - Date.now(),
@@ -93,14 +93,14 @@ export const EventPayloadTemplates = {
     isExtended: auction.isExtended || false,
     originalEndTime: auction.originalEndTime,
   }),
-  
+
   auctionPhase: (auction, phase) => ({
     phase,
     status: auction.status,
     startTime: auction.startTime,
     endTime: auction.endTime,
   }),
-  
+
   winnerConfirmed: (auction, winner) => ({
     winnerId: winner.userId,
     winnerTag: winner.bidderTag,
@@ -108,7 +108,7 @@ export const EventPayloadTemplates = {
     formattedAmount: formatCurrency(auction.highestBid),
     reserveMet: auction.reservePrice ? auction.highestBid >= auction.reservePrice : false,
   }),
-  
+
   paymentStatus: (auction, payment) => ({
     auctionId: auction.id,
     amount: payment.amount,
@@ -135,14 +135,14 @@ const formatCurrency = (amount, currency = 'KES') => {
 export const validateEvent = (event) => {
   const required = ['eventId', 'type', 'timestamp', 'auctionId'];
   const missing = required.filter(field => !event[field]);
-  
+
   if (missing.length > 0) {
     return {
       valid: false,
       errors: missing.map(field => `Missing required field: ${field}`),
     };
   }
-  
+
   return { valid: true, errors: [] };
 };
 

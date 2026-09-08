@@ -34,7 +34,7 @@ export default function CarDetailReviews({ reviews = [], dealerId, onAddReview }
     try {
       // API call would go here
       // await reviewsAPI.create({ dealerId, rating, comment });
-      
+
       // Reset form
       setComment('');
       setRating(5);
@@ -99,7 +99,7 @@ export default function CarDetailReviews({ reviews = [], dealerId, onAddReview }
           <h4 className="font-sans text-sm font-semibold text-charcoal-900 mb-3">
             Rate this dealer
           </h4>
-          
+
           {/* Star rating */}
           <div className="flex items-center gap-3 mb-4">
             {renderStars(rating, true, setRating)}

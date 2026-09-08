@@ -19,14 +19,14 @@ export function ToastProvider({ children }) {
   const addToast = useCallback((toast) => {
     const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { ...toast, id }]);
-    
+
     // Auto dismiss
     if (toast.duration !== 0) {
       setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== id));
       }, toast.duration || 4000);
     }
-    
+
     return id;
   }, []);
 
@@ -138,7 +138,7 @@ function Toast({ toast, onDismiss }) {
         <div className="mobile-toast__message">{toast.message}</div>
       </div>
       {toast.action && (
-        <button 
+        <button
           className="mobile-toast__action"
           onClick={() => {
             toast.action.onClick?.();
@@ -148,7 +148,7 @@ function Toast({ toast, onDismiss }) {
           {toast.action.label}
         </button>
       )}
-      <button 
+      <button
         className="mobile-toast__close"
         onClick={handleDismiss}
         aria-label="Dismiss notification"
@@ -177,7 +177,7 @@ function ToastContainer({ toasts, onDismiss }) {
   if (typeof document === 'undefined' || toasts.length === 0) return null;
 
   return createPortal(
-    <div 
+    <div
       style={{
         position: 'fixed',
         bottom: 'calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 16px)',

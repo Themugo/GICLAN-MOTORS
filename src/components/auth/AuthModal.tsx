@@ -5,7 +5,7 @@ import { Input } from '../ui/Input';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, User, Building2, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 
-type UserRole = 'buyer' | 'dealer' | 'ghost_checker' | 'admin';
+type UserRole = 'buyer' | 'dealer' | 'mechanic' | 'admin';
 
 interface UserProfile {
   name: string;
@@ -39,7 +39,7 @@ export const AuthModal: FC = () => {
       maxWidth="md"
     >
       <div className="space-y-5 p-1">
-        
+
         {/* Header Banner */}
         <div className="text-center space-y-2 pb-2 border-b border-[#E8E1D5]">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1E3063] text-[#00C9CE] text-[11px] font-mono font-black uppercase tracking-widest border border-[#00C9CE]/40">
@@ -142,11 +142,11 @@ export const AuthModal: FC = () => {
           />
 
           <div className="pt-2">
-            <Button 
-              type="submit" 
-              variant="primary" 
-              className="w-full bg-[#1E3063] hover:bg-[#0B1628] text-white font-mono font-black text-xs py-3 uppercase tracking-wider rounded-2xl shadow-lg" 
-              size="lg" 
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full bg-[#1E3063] hover:bg-[#0B1628] text-white font-mono font-black text-xs py-3 uppercase tracking-wider rounded-2xl shadow-lg"
+              size="lg"
               rightIcon={<ArrowRight className="w-4 h-4 text-[#00C9CE]" />}
             >
               {isSignUp ? 'Register Account' : 'Sign In to KAYAD'}

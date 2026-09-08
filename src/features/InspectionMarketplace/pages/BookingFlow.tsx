@@ -4,24 +4,24 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Check, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Car, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Calendar,
+  Clock,
+  MapPin,
+  Car,
   User,
   CreditCard,
   FileText,
 } from 'lucide-react';
 import { inspectionApi } from '../services/api';
-import type { 
-  InspectionProvider, 
-  InspectionPackage, 
+import type {
+  InspectionProvider,
+  InspectionPackage,
   TimeSlot,
-  InspectionType 
+  InspectionType
 } from '../types/inspection';
 import { INSPECTION_TYPES } from '../types/inspection';
 
@@ -53,8 +53,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
-  const [paymentError, setPaymentError] = useState('');
-  
+
   const [formData, setFormData] = useState({
     // Vehicle
     vehicleMake: '',
@@ -63,16 +62,16 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
     vehicleRegistration: '',
     vehicleVin: '',
     vehicleType: 'cars',
-    
+
     // Package
     selectedPackage: null as InspectionPackage | null,
     inspectionType: '' as InspectionType | '',
-    
+
     // Schedule
     selectedDate: '',
     selectedTime: '',
     selectedStaff: '',
-    
+
     // Location
     isMobile: true,
     county: provider.location.county,
@@ -80,12 +79,12 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
     inspectionAddress: '',
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
-    
+
     // Seller
     sellerName: '',
     sellerPhone: '',
     sellerIsDealer: false,
-    
+
     // Customer
     customerName: '',
     customerEmail: '',
@@ -126,7 +125,6 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
 
   const handleSubmit = async () => {
     setLoading(true);
-    setPaymentError('');
     try {
       const booking = await inspectionApi.createBooking({
         packageId: formData.selectedPackage!.id,
@@ -153,31 +151,9 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
         staffId: formData.selectedStaff,
         notes: formData.notes,
       });
-      const payment = await inspectionApi.initiateBookingPayment(booking.id, formData.customerPhone);
-      if (!payment?.checkoutID && !payment?.checkoutRequestID) {
-        throw new Error(payment?.message || 'Payment request could not be initiated');
-      }
-
-      // The M-Pesa callback is authoritative. Poll briefly so the customer
-      // only leaves the flow as completed after the booking is actually paid.
-      const checkoutId = payment.checkoutID || payment.checkoutRequestID;
-      for (let attempt = 0; attempt < 30; attempt += 1) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const status = await inspectionApi.getPaymentStatus(checkoutId);
-        if (status?.status === 'success') {
-          onComplete?.(booking.id);
-          return;
-        }
-        if (['failed', 'cancelled'].includes(status?.status)) {
-          throw new Error(status?.payment?.resultDesc || 'Payment was not completed');
-        }
-      }
-      throw new Error('Payment is still pending. Check your M-Pesa prompt and refresh your bookings shortly.');
+      onComplete?.(booking.id);
     } catch (error) {
-      console.error('Booking/payment failed:', error);
-      setPaymentError(error instanceof Error ? error.message : 'Payment could not be completed. Please try again.');
-      // Keep the booking id available to the parent only after settlement;
-      // the booking itself remains safely pending for a later retry.
+      console.error('Booking failed:', error);
     } finally {
       setLoading(false);
     }
@@ -210,7 +186,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
   return (
     <div className="min-h-screen" style={{ backgroundColor: KAYAD_COLORS.warmBeige }}>
       {/* Header */}
-      <header 
+      <header
         className="sticky top-0 z-10 py-4 px-6 shadow-md"
         style={{ backgroundColor: KAYAD_COLORS.white }}
       >
@@ -224,7 +200,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
               <ArrowLeft size={20} />
               Back
             </button>
-            <h1 
+            <h1
               className="text-lg font-semibold"
               style={{ color: KAYAD_COLORS.lightNavy }}
             >
@@ -237,7 +213,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
           <div className="flex items-center justify-between mt-4">
             {STEPS.map((step, index) => (
               <div key={step.id} className="flex items-center">
-                <div 
+                <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     index < currentStep
                       ? 'text-white'
@@ -261,7 +237,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
                   {index < currentStep ? <Check size={16} /> : index + 1}
                 </div>
                 {index < STEPS.length - 1 && (
-                  <div 
+                  <div
                     className="w-8 h-0.5 mx-1"
                     style={{
                       backgroundColor:
@@ -289,35 +265,35 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
           >
             {/* Step Content */}
             {currentStep === 0 && (
-              <VehicleStep 
-                formData={formData} 
-                onChange={setFormData} 
+              <VehicleStep
+                formData={formData}
+                onChange={setFormData}
               />
             )}
             {currentStep === 1 && (
-              <PackageStep 
+              <PackageStep
                 provider={provider}
-                formData={formData} 
-                onChange={setFormData} 
+                formData={formData}
+                onChange={setFormData}
               />
             )}
             {currentStep === 2 && (
-              <ScheduleStep 
+              <ScheduleStep
                 availableSlots={availableSlots}
                 loading={loading}
-                formData={formData} 
-                onChange={setFormData} 
+                formData={formData}
+                onChange={setFormData}
               />
             )}
             {currentStep === 3 && (
-              <LocationStep 
+              <LocationStep
                 provider={provider}
-                formData={formData} 
-                onChange={setFormData} 
+                formData={formData}
+                onChange={setFormData}
               />
             )}
             {currentStep === 4 && (
-              <ConfirmStep 
+              <ConfirmStep
                 provider={provider}
                 formData={formData}
                 totalPrice={totalPrice}
@@ -325,12 +301,11 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
               />
             )}
             {currentStep === 5 && (
-              <PaymentStep 
+              <PaymentStep
                 formData={formData}
                 totalPrice={totalPrice}
                 onSubmit={handleSubmit}
                 loading={loading}
-                error={paymentError}
               />
             )}
           </motion.div>
@@ -342,7 +317,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
             onClick={handleBack}
             disabled={currentStep === 0}
             className="px-6 py-3 rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
-            style={{ 
+            style={{
               backgroundColor: KAYAD_COLORS.white,
               color: KAYAD_COLORS.lightNavy
             }}
@@ -350,13 +325,13 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
             <ArrowLeft size={16} />
             Back
           </button>
-          
+
           {currentStep < STEPS.length - 1 ? (
             <button
               onClick={handleNext}
               disabled={!canProceed()}
               className="px-6 py-3 rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
-              style={{ 
+              style={{
                 backgroundColor: canProceed() ? KAYAD_COLORS.emerald : KAYAD_COLORS.softBlue,
                 color: KAYAD_COLORS.white
               }}
@@ -369,7 +344,7 @@ export default function BookingFlow({ provider, onComplete, onCancel }: BookingF
               onClick={handleSubmit}
               disabled={loading}
               className="px-6 py-3 rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
-              style={{ 
+              style={{
                 backgroundColor: KAYAD_COLORS.emerald,
                 color: KAYAD_COLORS.white
               }}
@@ -390,7 +365,7 @@ function VehicleStep({ formData, onChange }: any) {
       <h2 className="text-xl font-bold mb-6" style={{ color: KAYAD_COLORS.lightNavy }}>
         Vehicle Details
       </h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormInput
           label="Make *"
@@ -433,7 +408,7 @@ function PackageStep({ provider, formData, onChange }: any) {
       <h2 className="text-xl font-bold mb-6" style={{ color: KAYAD_COLORS.lightNavy }}>
         Select Inspection Package
       </h2>
-      
+
       <div className="space-y-4">
         {provider.packages?.map((pkg) => (
           <div
@@ -492,7 +467,7 @@ function ScheduleStep({ availableSlots, loading, formData, onChange }: any) {
       <h2 className="text-xl font-bold mb-6" style={{ color: KAYAD_COLORS.lightNavy }}>
         Choose Date & Time
       </h2>
-      
+
       {/* Date Selection */}
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2" style={{ color: KAYAD_COLORS.lightNavy }}>
@@ -522,7 +497,7 @@ function ScheduleStep({ availableSlots, loading, formData, onChange }: any) {
           ))}
         </div>
       </div>
-      
+
       {/* Time Selection */}
       {formData.selectedDate && (
         <div>
@@ -570,7 +545,7 @@ function LocationStep({ provider, formData, onChange }: any) {
       <h2 className="text-xl font-bold mb-6" style={{ color: KAYAD_COLORS.lightNavy }}>
         Inspection Location
       </h2>
-      
+
       {/* Mobile Toggle */}
       <div className="mb-6">
         <label className="flex items-center gap-3 cursor-pointer">
@@ -590,7 +565,7 @@ function LocationStep({ provider, formData, onChange }: any) {
           </p>
         )}
       </div>
-      
+
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormInput
@@ -610,7 +585,7 @@ function LocationStep({ provider, formData, onChange }: any) {
           onChange={(v) => onChange({ ...formData, inspectionAddress: v })}
           placeholder="Landmark, street name, etc."
         />
-        
+
         {/* Seller Info */}
         <div className="pt-4 border-t" style={{ borderColor: KAYAD_COLORS.warmBeige }}>
           <h3 className="font-medium mb-3" style={{ color: KAYAD_COLORS.lightNavy }}>
@@ -651,14 +626,14 @@ function ConfirmStep({ provider, formData, totalPrice, onChange }: any) {
       <h2 className="text-xl font-bold mb-6" style={{ color: KAYAD_COLORS.lightNavy }}>
         Confirm Your Booking
       </h2>
-      
+
       {/* Summary */}
       <div className="space-y-4 mb-6">
         <SummaryItem label="Provider" value={provider.companyName} />
         <SummaryItem label="Package" value={formData.selectedPackage?.name} />
-        <SummaryItem 
-          label="Date & Time" 
-          value={`${new Date(formData.selectedDate).toLocaleDateString()} at ${formData.selectedTime}`} 
+        <SummaryItem
+          label="Date & Time"
+          value={`${new Date(formData.selectedDate).toLocaleDateString()} at ${formData.selectedTime}`}
         />
         <SummaryItem label="Location" value={formData.inspectionAddress} />
         <SummaryItem label="Vehicle" value={`${formData.vehicleYear} ${formData.vehicleMake} ${formData.vehicleModel}`} />
@@ -666,7 +641,7 @@ function ConfirmStep({ provider, formData, totalPrice, onChange }: any) {
           <SummaryItem label="Registration" value={formData.vehicleRegistration} />
         )}
       </div>
-      
+
       {/* Customer Info */}
       <div className="pt-4 border-t" style={{ borderColor: KAYAD_COLORS.warmBeige }}>
         <h3 className="font-medium mb-3" style={{ color: KAYAD_COLORS.lightNavy }}>
@@ -690,7 +665,7 @@ function ConfirmStep({ provider, formData, totalPrice, onChange }: any) {
             onChange={(v) => onChange({ ...formData, customerPhone: v })}
           />
         </div>
-        
+
         <div className="mt-4">
           <label className="block text-sm font-medium mb-2" style={{ color: KAYAD_COLORS.lightNavy }}>
             Additional Notes
@@ -704,14 +679,14 @@ function ConfirmStep({ provider, formData, totalPrice, onChange }: any) {
           />
         </div>
       </div>
-      
+
       {/* Total */}
       <div className="mt-6 pt-4 border-t" style={{ borderColor: KAYAD_COLORS.warmBeige }}>
         <div className="flex justify-between items-center">
           <span className="text-lg font-medium" style={{ color: KAYAD_COLORS.lightNavy }}>
             Total
           </span>
-          <span 
+          <span
             className="text-2xl font-bold"
             style={{ color: KAYAD_COLORS.emerald }}
           >
@@ -723,42 +698,36 @@ function ConfirmStep({ provider, formData, totalPrice, onChange }: any) {
   );
 }
 
-function PaymentStep({ formData, totalPrice, onSubmit, loading, error }: any) {
+function PaymentStep({ formData, totalPrice, onSubmit, loading }: any) {
   return (
     <div className="rounded-xl p-6" style={{ backgroundColor: KAYAD_COLORS.white }}>
       <h2 className="text-xl font-bold mb-6" style={{ color: KAYAD_COLORS.lightNavy }}>
         Payment
       </h2>
-      
+
       <div className="text-center py-8">
         <p className="mb-4" style={{ color: KAYAD_COLORS.softBlue }}>
           Total Amount to Pay
         </p>
-        <p 
+        <p
           className="text-4xl font-bold mb-8"
           style={{ color: KAYAD_COLORS.emerald }}
         >
           KES {totalPrice.toLocaleString()}
         </p>
-        
+
         <p style={{ color: KAYAD_COLORS.softBlue }}>
-          Payment will be processed securely via M-PESA.
+          Payment will be processed securely via M-PESA or card.
           <br />
           You will receive an SMS confirmation after payment.
         </p>
       </div>
-      
-      {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-          {error}
-        </div>
-      )}
 
       <button
         onClick={onSubmit}
         disabled={loading}
         className="w-full py-4 rounded-lg font-semibold text-lg"
-        style={{ 
+        style={{
           backgroundColor: KAYAD_COLORS.emerald,
           color: KAYAD_COLORS.white
         }}
@@ -770,16 +739,16 @@ function PaymentStep({ formData, totalPrice, onSubmit, loading, error }: any) {
 }
 
 // Helper Components
-function FormInput({ 
-  label, 
-  value, 
-  onChange, 
+function FormInput({
+  label,
+  value,
+  onChange,
   placeholder = '',
-  type = 'text' 
-}: { 
-  label: string; 
-  value: any; 
-  onChange: (v: any) => void; 
+  type = 'text'
+}: {
+  label: string;
+  value: any;
+  onChange: (v: any) => void;
   placeholder?: string;
   type?: string;
 }) {

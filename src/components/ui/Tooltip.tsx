@@ -67,7 +67,7 @@ export function Tooltip({
       onBlur={hideTooltip}
     >
       {children}
-      
+
       {isVisible && (
         <div
           role="tooltip"
@@ -150,7 +150,7 @@ export function Popover({
       <div ref={triggerRef} onClick={() => setIsOpen(!isOpen)}>
         {trigger}
       </div>
-      
+
       {isOpen && (
         <div
           ref={popoverRef}

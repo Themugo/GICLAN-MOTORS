@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { dealerAPI, carsAPI } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { 
+import {
   Plus, Eye, MessageSquare, DollarSign, TrendingUp, TrendingDown,
   Car, Users, Star, Settings, BarChart3, Bell, Zap, ArrowUp, ChevronRight
 } from 'lucide-react';
@@ -51,9 +51,9 @@ export default function DealerDashboard() {
   if (!user?.approved && user?.role === 'dealer') {
     return (
       <DealerHub>
-        <div style={{ 
-          maxWidth: 600, 
-          margin: '80px auto', 
+        <div style={{
+          maxWidth: 600,
+          margin: '80px auto',
           textAlign: 'center',
           padding: 40,
           background: 'var(--dealer-surface)',
@@ -103,25 +103,25 @@ export default function DealerDashboard() {
   return (
     <DealerHub user={user}>
       {/* Welcome Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 32,
         flexWrap: 'wrap',
         gap: 16,
       }}>
         <div>
-          <h1 style={{ 
-            fontSize: 'var(--dealer-text-2xl)', 
-            fontWeight: 800, 
+          <h1 style={{
+            fontSize: 'var(--dealer-text-2xl)',
+            fontWeight: 800,
             color: 'var(--dealer-text)',
             margin: 0,
           }}>
             Welcome back, {user?.businessName || user?.name || 'Dealer'} 👋
           </h1>
-          <p style={{ 
-            color: 'var(--dealer-text-muted)', 
+          <p style={{
+            color: 'var(--dealer-text-muted)',
             margin: '8px 0 0',
             fontSize: 'var(--dealer-text-sm)',
           }}>
@@ -175,9 +175,9 @@ export default function DealerDashboard() {
 
       {/* Quick Actions */}
       <div style={{ marginBottom: 32 }}>
-        <h2 style={{ 
-          fontSize: 'var(--dealer-text-lg)', 
-          fontWeight: 700, 
+        <h2 style={{
+          fontSize: 'var(--dealer-text-lg)',
+          fontWeight: 700,
           color: 'var(--dealer-text)',
           marginBottom: 16,
         }}>
@@ -226,9 +226,9 @@ export default function DealerDashboard() {
 
       {/* Lead Funnel */}
       <div style={{ marginBottom: 32 }}>
-        <h2 style={{ 
-          fontSize: 'var(--dealer-text-lg)', 
-          fontWeight: 700, 
+        <h2 style={{
+          fontSize: 'var(--dealer-text-lg)',
+          fontWeight: 700,
           color: 'var(--dealer-text)',
           marginBottom: 16,
         }}>
@@ -238,14 +238,14 @@ export default function DealerDashboard() {
       </div>
 
       {/* Two Column Layout */}
-      <div style={{ 
-        display: 'grid', 
+      <div style={{
+        display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: 24,
         marginBottom: 32,
       }}>
         {/* Recent Leads */}
-        <DealerLeadsTable 
+        <DealerLeadsTable
           leads={leads.length > 0 ? leads : (loading ? [] : [])}
           loading={loading}
           onView={(lead) => toast.info(`Viewing lead: ${lead.name}`)}
@@ -296,8 +296,8 @@ export default function DealerDashboard() {
                       <span>💬 {car.inquiries || 0}</span>
                     </div>
                   </div>
-                  <div style={{ 
-                    fontWeight: 700, 
+                  <div style={{
+                    fontWeight: 700,
                     color: 'var(--dealer-gold)',
                     fontSize: 13,
                   }}>
@@ -316,15 +316,15 @@ export default function DealerDashboard() {
 
       {/* Featured Inventory */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: 16,
         }}>
-          <h2 style={{ 
-            fontSize: 'var(--dealer-text-lg)', 
-            fontWeight: 700, 
+          <h2 style={{
+            fontSize: 'var(--dealer-text-lg)',
+            fontWeight: 700,
             color: 'var(--dealer-text)',
             margin: 0,
           }}>
@@ -376,7 +376,7 @@ export default function DealerDashboard() {
 
       {/* AI Insights - Only show when we have real data */}
       {!loading && summary && (
-        <div style={{ 
+        <div style={{
           background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(168, 85, 247, 0.05))',
           border: '1px solid var(--dealer-border-gold)',
           borderRadius: 'var(--dealer-radius-xl)',

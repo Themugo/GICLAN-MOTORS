@@ -95,7 +95,7 @@ describe('CarDetailPage', () => {
 
   it('renders Chat Dealer button', async () => {
     render(<MemoryRouter initialEntries={['/cars/veh_1']}><MarketplaceProvider><CarDetailPage /></MarketplaceProvider></MemoryRouter>);
-    const buttons = await screen.findAllByText('Message Dealer');
+    const buttons = await screen.findAllByText('Chat Dealer');
     expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
 });

@@ -47,10 +47,10 @@ export interface User {
   phone?: string;
 }
 
-export const isStaffRole = (role?: string): role is StaffRole => 
+export const isStaffRole = (role?: string): role is StaffRole =>
   STAFF_ROLES.includes(role as StaffRole);
 
-export const isSellerRole = (role?: string): role is SellerRole => 
+export const isSellerRole = (role?: string): role is SellerRole =>
   SELLER_ROLES.includes(role as SellerRole);
 
 export function safeRedirectPath(path: string, fallback = '/'): string {

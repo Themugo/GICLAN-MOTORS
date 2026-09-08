@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
 import { adminAPI } from "../../api/api";
-import { 
+import {
   EnterpriseCard, EnterpriseKPI, EnterpriseRevenue, EnterpriseTimeline,
   EnterpriseNotifications, EnterpriseChart, EnterpriseDonut,
   EnterpriseTable, EnterpriseBadge,
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
               <EnterpriseCard header="Revenue Trend" icon="📈">
                 <EnterpriseChart data={MONTHLY_REVENUE} height={180} showLabels color={EnterpriseTokens.gold} />
               </EnterpriseCard>
-              
+
               <EnterpriseCard header="Platform Health" icon="💚">
                 <div style={{ display: "flex", justifyContent: "space-around", marginBottom: 20 }}>
                   {PLATFORM_HEALTH.map((item, i) => (
@@ -172,11 +172,11 @@ export default function AdminDashboard() {
               <EnterpriseCard header="Recent Activity" icon="🔔">
                 <EnterpriseTimeline items={RECENT_ACTIVITY} maxHeight={320} />
               </EnterpriseCard>
-              
+
               <EnterpriseCard header="Notifications" icon="📨">
                 <EnterpriseNotifications items={NOTIFICATIONS} />
               </EnterpriseCard>
-              
+
               <EnterpriseCard header="Quick Actions" icon="⚡">
                 <EnterpriseQuickActions actions={PLATFORM_QUICK_ACTIONS} cols={2} />
               </EnterpriseCard>

@@ -1,7 +1,7 @@
 import { useState, useMemo, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Car, Users, MessageSquare, BarChart3, 
+import {
+  LayoutDashboard, Car, Users, MessageSquare, BarChart3,
   Settings, Bell, Plus, TrendingUp, ChevronDown, Menu, X,
   Package, ShoppingCart, DollarSign, Eye, Heart, Star, TrendingDown
 } from 'lucide-react';
@@ -27,14 +27,14 @@ interface DealerMetricProps {
   className?: string;
 }
 
-export const DealerMetric = memo(function DealerMetric({ 
-  icon, 
-  label, 
-  value, 
-  trend, 
+export const DealerMetric = memo(function DealerMetric({
+  icon,
+  label,
+  value,
+  trend,
   trendLabel,
   accent = 'gold',
-  className = '' 
+  className = ''
 }: DealerMetricProps) {
   const iconColors = {
     gold: { bg: 'rgba(22, 196, 164, 0.12)', color: '#16C4A4' },
@@ -83,14 +83,14 @@ interface DealerActionProps {
   className?: string;
 }
 
-export const DealerAction = memo(function DealerAction({ 
-  icon, 
-  label, 
-  description, 
-  to, 
+export const DealerAction = memo(function DealerAction({
+  icon,
+  label,
+  description,
+  to,
   onClick,
   variant = 'default',
-  className = '' 
+  className = ''
 }: DealerActionProps) {
   const content = (
     <>
@@ -161,12 +161,12 @@ interface DealerLeadsTableProps {
   className?: string;
 }
 
-export const DealerLeadsTable = memo(function DealerLeadsTable({ 
-  leads, 
-  onView, 
+export const DealerLeadsTable = memo(function DealerLeadsTable({
+  leads,
+  onView,
   onContact,
   onConvert,
-  className = '' 
+  className = ''
 }: DealerLeadsTableProps) {
   const statusColors = {
     new: 'dealer-leads__status--new',
@@ -264,12 +264,12 @@ interface DealerInventoryCardProps {
   className?: string;
 }
 
-export const DealerInventoryCard = memo(function DealerInventoryCard({ 
-  car, 
-  onEdit, 
-  onPromote, 
+export const DealerInventoryCard = memo(function DealerInventoryCard({
+  car,
+  onEdit,
+  onPromote,
   onDelete,
-  className = '' 
+  className = ''
 }: DealerInventoryCardProps) {
   const statusMap = {
     active: 'active',
@@ -328,11 +328,11 @@ interface DealerChartProps {
   className?: string;
 }
 
-export const DealerChart = memo(function DealerChart({ 
-  title, 
+export const DealerChart = memo(function DealerChart({
+  title,
   period,
   children,
-  className = '' 
+  className = ''
 }: DealerChartProps) {
   return (
     <div className={`dealer-chart ${className}`}>

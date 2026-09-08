@@ -4,12 +4,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Calendar, 
-  DollarSign, 
-  Star, 
-  Clock, 
-  FileText, 
+import {
+  Calendar,
+  DollarSign,
+  Star,
+  Clock,
+  FileText,
   Users,
   TrendingUp,
   AlertCircle,
@@ -88,13 +88,13 @@ export default function ProviderBusinessCenter({ providerId }: ProviderBusinessC
   return (
     <div className="min-h-screen" style={{ backgroundColor: KAYAD_COLORS.warmBeige }}>
       {/* Header */}
-      <header 
+      <header
         className="sticky top-0 z-10 py-4 px-6 shadow-md"
         style={{ backgroundColor: KAYAD_COLORS.lightNavy }}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 
+            <h1
               className="text-2xl font-bold"
               style={{ color: KAYAD_COLORS.white }}
             >
@@ -204,7 +204,7 @@ function DashboardTab({ dashboard, earnings }: { dashboard: ProviderDashboard | 
             </h2>
             <a href="#" style={{ color: KAYAD_COLORS.emerald }}>View All</a>
           </div>
-          
+
           {dashboard.upcomingBookings.length === 0 ? (
             <div className="text-center py-8" style={{ color: KAYAD_COLORS.softBlue }}>
               <Calendar size={48} className="mx-auto mb-4 opacity-50" />
@@ -231,10 +231,10 @@ function DashboardTab({ dashboard, earnings }: { dashboard: ProviderDashboard | 
               <EarningsRow label="Commission" value={`KES ${earnings?.totalCommission.toLocaleString() || '0'}`} isNegative />
               <EarningsRow label="Net Earnings" value={`KES ${earnings?.netEarnings.toLocaleString() || '0'}`} isBold />
               <div className="pt-3 border-t" style={{ borderColor: KAYAD_COLORS.warmBeige }}>
-                <EarningsRow 
-                  label="Pending Payout" 
-                  value={`KES ${earnings?.totalPending.toLocaleString() || '0'}`} 
-                  highlight 
+                <EarningsRow
+                  label="Pending Payout"
+                  value={`KES ${earnings?.totalPending.toLocaleString() || '0'}`}
+                  highlight
                 />
               </div>
             </div>
@@ -454,12 +454,12 @@ function BookingCard({ booking, showActions = false }: { booking: Booking; showA
   };
 
   return (
-    <div 
+    <div
       className="rounded-lg p-4 flex items-center justify-between"
       style={{ backgroundColor: KAYAD_COLORS.warmBeige }}
     >
       <div className="flex items-center gap-4">
-        <div 
+        <div
           className="w-2 h-12 rounded-full"
           style={{ backgroundColor: statusColors[booking.status] || KAYAD_COLORS.softBlue }}
         />
@@ -475,18 +475,18 @@ function BookingCard({ booking, showActions = false }: { booking: Booking; showA
           </p>
         </div>
       </div>
-      
+
       <div className="text-right">
         <p className="font-bold" style={{ color: KAYAD_COLORS.emerald }}>
           KES {booking.totalPrice.toLocaleString()}
         </p>
-        <span 
+        <span
           className="text-xs px-2 py-1 rounded-full capitalize"
           style={{ backgroundColor: statusColors[booking.status] + '20', color: statusColors[booking.status] }}
         >
           {booking.status.replace('_', ' ')}
         </span>
-        
+
         {showActions && (
           <div className="flex gap-2 mt-2 justify-end">
             <button className="p-2 rounded" style={{ backgroundColor: KAYAD_COLORS.white }}>
@@ -506,14 +506,14 @@ function EarningsRow({ label, value, isBold = false, isNegative = false, highlig
   return (
     <div className="flex justify-between">
       <span style={{ color: KAYAD_COLORS.softBlue }}>{label}</span>
-      <span 
+      <span
         className={`font-medium ${isBold ? 'font-bold text-lg' : ''}`}
-        style={{ 
-          color: isNegative 
-            ? KAYAD_COLORS.mutedTerracotta 
-            : highlight 
-              ? KAYAD_COLORS.emerald 
-              : KAYAD_COLORS.lightNavy 
+        style={{
+          color: isNegative
+            ? KAYAD_COLORS.mutedTerracotta
+            : highlight
+              ? KAYAD_COLORS.emerald
+              : KAYAD_COLORS.lightNavy
         }}
       >
         {value}
@@ -534,7 +534,7 @@ function QuickAction({ icon, label, href, badge }: { icon: React.ReactNode; labe
         {label}
       </span>
       {badge && (
-        <span 
+        <span
           className="px-2 py-0.5 rounded-full text-xs text-white"
           style={{ backgroundColor: KAYAD_COLORS.emerald }}
         >

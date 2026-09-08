@@ -23,7 +23,7 @@ export async function getEscrowRules() {
   return mergeRules(config?.escrowRules || config?.escrow_rules || {});
 }
 
-async function getActiveEscrowAccounts() {
+export async function getActiveEscrowAccounts() {
   return findAll("escrow_accounts", {
     filters: { isActive: true },
     orderBy: [{ field: "isPrimary", ascending: false }, { field: "createdAt", ascending: true }],
@@ -36,11 +36,11 @@ export async function getPrimaryEscrowAccount() {
   return findOne("escrow_accounts", { isActive: true });
 }
 
-async function getEscrowAccountById(id) {
+export async function getEscrowAccountById(id) {
   return findById("escrow_accounts", id);
 }
 
-async function saveEscrowAccount(data, id = null) {
+export async function saveEscrowAccount(data, id = null) {
   const payload = {
     accountName: String(data.accountName || "").trim(),
     accountType: "bank",
@@ -59,7 +59,7 @@ async function saveEscrowAccount(data, id = null) {
   return create("escrow_accounts", payload);
 }
 
-async function removeEscrowAccount(id) {
+export async function removeEscrowAccount(id) {
   const account = await findById("escrow_accounts", id);
   if (!account) throw new Error("Escrow account not found");
   const inUse = await findOne("escrows", { custodianAccount: id });
@@ -68,7 +68,7 @@ async function removeEscrowAccount(id) {
   return true;
 }
 
-async function validatePrivateSellerEscrow({ car, seller, amount }) {
+export async function validatePrivateSellerEscrow({ car, seller, amount }) {
   if (!seller || seller.role !== "individual_seller") {
     throw new Error("KAYAD vehicle escrow is available only for private-seller transactions");
   }
@@ -89,7 +89,7 @@ async function validatePrivateSellerEscrow({ car, seller, amount }) {
   return { rules, account };
 }
 
-function sanitizeEscrowAccount(account) {
+export function sanitizeEscrowAccount(account) {
   if (!account) return null;
   return {
     id: account.id,
@@ -103,7 +103,7 @@ function sanitizeEscrowAccount(account) {
   };
 }
 
-async function verifyEscrowFunding(escrowId, actorId, fundingReference) {
+export async function verifyEscrowFunding(escrowId, actorId, fundingReference) {
   const { atomicVerifyEscrowFunding } = await import("../utils/atomicTransactions.js");
   return atomicVerifyEscrowFunding(escrowId, actorId, fundingReference);
 }

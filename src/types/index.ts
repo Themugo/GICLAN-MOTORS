@@ -480,7 +480,7 @@ export interface Advert {
 // Auction Organizer Types
 // ============================================================
 
-export type AuctionOrganizerType = 
+export type AuctionOrganizerType =
   | 'verified_dealer'
   | 'licensed_auctioneer'
   | 'commercial_bank'

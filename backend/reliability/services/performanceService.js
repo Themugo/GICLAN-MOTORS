@@ -323,18 +323,18 @@ class PerformanceService {
     const userPromises = [];
     for (let user = 0; user < concurrentUsers; user++) {
       const userDelay = (user / concurrentUsers) * rampUpTime * 1000;
-      
+
       userPromises.push(
         new Promise(async (resolve) => {
           await new Promise(res => setTimeout(res, userDelay));
-          
+
           const userResults = [];
           for (let req = 0; req < requestsPerUser; req++) {
             const reqStart = Date.now();
             await new Promise(res => setTimeout(res, Math.random() * 50 + 10));
             const duration = Date.now() - reqStart;
             const success = Math.random() > 0.01; // 99% success rate
-            
+
             userResults.push({
               user,
               request: req,
@@ -343,7 +343,7 @@ class PerformanceService {
               timestamp: new Date().toISOString(),
             });
           }
-          
+
           resolve(userResults);
         })
       );

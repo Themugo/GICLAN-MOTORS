@@ -87,26 +87,6 @@ export const carsAPI = {
   adminEnd:   (id: string) => api.post(`/cars/admin/${id}/end`).then(unwrap),
 };
 
-
-// ── CHAT ──────────────────────────────────────────────
-// Compatibility facade for legacy chat callers. The canonical transport and
-// concurrency-safe mutations live in services/chatApi.ts.
-import { getMyChats, getChatMessages, sendChatMessage, markChatSeen } from '../services/chatApi';
-export const chatAPI = {
-  inbox: () => getMyChats().then((chats) => ({ chats })),
-  messages: (chatId: string, _params?: { limit?: number }) => getChatMessages(chatId).then((messages) => ({ messages })),
-  seen: (chatId: string) => markChatSeen(chatId),
-  start: async (body: { recipientId: string; carId?: string }) => {
-    const response = await api.post('/chat', body).then(unwrap);
-    return response;
-  },
-  send: async (chatId: string, body: { text?: string; content?: string; message?: string }) => {
-    const text = body.text ?? body.content ?? body.message ?? '';
-    return sendChatMessage(chatId, text);
-  },
-  confirmDelivery: (_chatId: string, body: { escrowId: string }) => api.post(`/escrow/${body.escrowId}/confirm-delivery`).then(unwrap),
-};
-
 // ── BIDS ──────────────────────────────────────────────
 export const bidsAPI = {
   place:           (carId: string, body: any) => api.post(`/bids/${carId}/bid`, body).then(unwrap),
@@ -561,12 +541,12 @@ export const bidLogsAPI = {
   // User endpoints
   getMyHistory: (params?: any) => api.get('/bid-logs/my', { params }).then(unwrap),
   getDetail: (logId: string) => api.get(`/bid-logs/${logId}`).then(unwrap),
-  
+
   // Public endpoints
   getActive: (carId: string, params?: any) => api.get(`/bid-logs/car/${carId}`, { params }).then(unwrap),
   getWinning: (carId: string) => api.get(`/bid-logs/car/${carId}/winning`).then(unwrap),
   getStats: (carId: string, params?: any) => api.get(`/bid-logs/car/${carId}/stats`, { params }).then(unwrap),
-  
+
   // Admin endpoints
   getAll: (params?: any) => api.get('/bid-logs/admin/all', { params }).then(unwrap),
   getAdminStats: (params?: any) => api.get('/bid-logs/admin/stats', { params }).then(unwrap),
@@ -584,7 +564,7 @@ export const ledgerAPI = {
   createEscrowRelease: (body: any) => api.post('/ledger/escrow/release', body).then(unwrap),
   getEscrowTransactions: (escrowId: string, params?: any) => api.get(`/ledger/escrow/${escrowId}`, { params }).then(unwrap),
   getChain: (ledgerId: string) => api.get(`/ledger/chain/${ledgerId}`).then(unwrap),
-  
+
   // Admin endpoints
   getAll: (params?: any) => api.get('/ledger/admin/all', { params }).then(unwrap),
   verifyChain: (params?: any) => api.get('/ledger/admin/verify', { params }).then(unwrap),
@@ -598,7 +578,7 @@ export const preferencesAPI = {
   setTheme: (theme: 'light' | 'dark' | 'system') => api.post('/preferences/theme', { theme }).then(unwrap),
   toggleDarkMode: () => api.post('/preferences/theme/toggle').then(unwrap),
   setLanguage: (language: string) => api.post('/preferences/language', { language }).then(unwrap),
-  updateNotifications: (channel: string, settings: any) => 
+  updateNotifications: (channel: string, settings: any) =>
     api.post('/preferences/notifications', { channel, settings }).then(unwrap),
   addRecentSearch: (query: string) => api.post('/preferences/search/recent', { query }).then(unwrap),
   clearRecentSearches: () => api.delete('/preferences/search/recent').then(unwrap),

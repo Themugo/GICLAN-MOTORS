@@ -262,7 +262,7 @@ class AIIntelligenceService {
     return {
       count: slowMoving.length,
       vehicles: recommendations,
-      overallRecommendation: slowMoving.length > 3 
+      overallRecommendation: slowMoving.length > 3
         ? 'Consider reviewing your pricing strategy and adding more photos'
         : 'Your inventory is moving well',
       confidenceScore: 82,
@@ -283,7 +283,7 @@ class AIIntelligenceService {
     ];
 
     const completed = reportData.checks?.length || 0;
-    const missing = requiredChecks.filter(check => 
+    const missing = requiredChecks.filter(check =>
       !reportData.checks?.some(c => c.toLowerCase().includes(check))
     );
 
@@ -408,8 +408,8 @@ class AIIntelligenceService {
       auctionId,
       flags,
       riskScore: flags.reduce((sum, f) => sum + (f.severity === 'high' ? 30 : f.severity === 'medium' ? 15 : 5), 0),
-      recommendation: flags.length > 0 
-        ? 'Review auction activity manually' 
+      recommendation: flags.length > 0
+        ? 'Review auction activity manually'
         : 'No suspicious patterns detected',
       confidenceScore: 78,
     };
@@ -778,7 +778,7 @@ class AIIntelligenceService {
   }
 
   formatRecommendationText(recommendations) {
-    return recommendations.slice(0, 3).map((r, i) => 
+    return recommendations.slice(0, 3).map((r, i) =>
       `${i + 1}. ${r.name} - KES ${r.price.toLocaleString()} (${r.matchScore}% match)`
     ).join('\n');
   }
@@ -847,7 +847,7 @@ class AIIntelligenceService {
     if (flags.length === 0) return 'No action required';
     const critical = flags.filter(f => f.severity === 'critical');
     const high = flags.filter(f => f.severity === 'high');
-    
+
     if (critical.length > 0) return 'Immediate review required';
     if (high.length > 0) return 'Review within 24 hours';
     return 'Monitor for additional signals';

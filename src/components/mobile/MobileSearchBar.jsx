@@ -74,7 +74,7 @@ function MobileSearchBar({
     }
 
     const query = value.toLowerCase();
-    const filtered = BRAND_SUGGESTIONS.filter(s => 
+    const filtered = BRAND_SUGGESTIONS.filter(s =>
       s.value.toLowerCase().includes(query)
     );
     setSuggestions(filtered);
@@ -149,12 +149,12 @@ function MobileSearchBar({
   return (
     <div className={`mobile-search ${className}`} ref={containerRef}>
       <div className={`mobile-search__container ${focused ? 'mobile-search__container--focused' : ''}`}>
-        <Search 
-          size={20} 
+        <Search
+          size={20}
           className="mobile-search__icon"
           aria-hidden="true"
         />
-        
+
         <input
           ref={inputRef}
           type="search"
@@ -195,7 +195,7 @@ function MobileSearchBar({
       </div>
 
       {showDropdown && (
-        <div 
+        <div
           className="mobile-search__suggestions"
           role="listbox"
           aria-label="Search suggestions"
@@ -204,7 +204,7 @@ function MobileSearchBar({
             <>
               <div className="mobile-search__recent">
                 <span>Recent Searches</span>
-                <button 
+                <button
                   className="mobile-search__recent-btn"
                   onClick={handleClearRecent}
                 >
@@ -274,17 +274,17 @@ function MobileSearchBar({
 // Helper to highlight matching text
 function highlightMatch(text, query) {
   if (!query) return text;
-  
+
   const lowerText = text.toLowerCase();
   const lowerQuery = query.toLowerCase();
   const index = lowerText.indexOf(lowerQuery);
-  
+
   if (index === -1) return text;
-  
+
   const before = text.slice(0, index);
   const match = text.slice(index, index + query.length);
   const after = text.slice(index + query.length);
-  
+
   return (
     <>
       {before}

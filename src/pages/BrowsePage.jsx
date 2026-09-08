@@ -86,8 +86,8 @@ export default function BrowsePage() {
   });
 
   const hasActiveFilters = useMemo(() => {
-    return filters.search || filters.brand !== 'All' || filters.fuel !== 'All' || 
-           filters.transmission !== 'All' || filters.bodyType !== 'All' || 
+    return filters.search || filters.brand !== 'All' || filters.fuel !== 'All' ||
+           filters.transmission !== 'All' || filters.bodyType !== 'All' ||
            filters.priceMax < 20000000 || filters.mileageMax < 200000 ||
            filters.auctionOnly || filters.verifiedOnly || filters.inspectedOnly;
   }, [filters]);

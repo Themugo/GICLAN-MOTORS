@@ -21,7 +21,7 @@ class DashboardService {
 
     // Get all bookings for the provider
     const allBookings = await db.find('inspection_bookings', { provider_id: providerId });
-    
+
     // Get all engineers
     const engineers = await db.find('inspection_engineers', { provider_id: providerId, is_active: true });
 
@@ -40,7 +40,7 @@ class DashboardService {
 
     // Reports
     const reportsPending = allBookings.filter(b => b.status === 'inspection_complete').length;
-    const reportsInQA = await db.count('report_versions', { 
+    const reportsInQA = await db.count('report_versions', {
       provider_id: providerId,
       status: 'qa_review'
     });
@@ -53,7 +53,7 @@ class DashboardService {
       .filter(b => b.payment_status === 'fully_paid')
       .reduce((sum, b) => sum + parseFloat(b.total_price), 0);
 
-    const monthlyBookings = allBookings.filter(b => 
+    const monthlyBookings = allBookings.filter(b =>
       new Date(b.paid_at || b.created_at) >= startOfMonth &&
       b.payment_status === 'fully_paid'
     );
@@ -66,8 +66,8 @@ class DashboardService {
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
     const upcomingJobs = allBookings
-      .filter(b => 
-        b.scheduled_date > today && 
+      .filter(b =>
+        b.scheduled_date > today &&
         b.scheduled_date <= nextWeek.toISOString().split('T')[0] &&
         !['cancelled', 'closed'].includes(b.status)
       )
@@ -138,12 +138,12 @@ class DashboardService {
    * Calculate average inspection time
    */
   calculateAvgInspectionTime(bookings) {
-    const completed = bookings.filter(b => 
-      b.status === 'closed' && 
-      b.started_at && 
+    const completed = bookings.filter(b =>
+      b.status === 'closed' &&
+      b.started_at &&
       b.completed_at
     );
-    
+
     if (completed.length === 0) return 0;
 
     const totalMinutes = completed.reduce((sum, b) => {
@@ -176,8 +176,8 @@ class DashboardService {
       },
       scheduled: {
         label: 'Scheduled',
-        bookings: bookings.filter(b => 
-          ['confirmed', 'inspector_assigned'].includes(b.status) && 
+        bookings: bookings.filter(b =>
+          ['confirmed', 'inspector_assigned'].includes(b.status) &&
           b.scheduled_date >= new Date().toISOString().split('T')[0]
         ),
       },
@@ -222,7 +222,7 @@ class DashboardService {
    * Get jobs needing attention (prioritized queue)
    */
   async getJobsNeedingAttention(providerId) {
-    const bookings = await db.find('inspection_bookings', { 
+    const bookings = await db.find('inspection_bookings', {
       provider_id: providerId,
       status: { $nin: ['closed', 'cancelled'] }
     });
@@ -242,7 +242,7 @@ class DashboardService {
     }
 
     // Awaiting assignment
-    const awaitingAssignment = bookings.filter(b => 
+    const awaitingAssignment = bookings.filter(b =>
       ['confirmed', 'booked'].includes(b.status) && !b.assigned_staff_id
     );
     for (const booking of awaitingAssignment) {
@@ -306,9 +306,9 @@ class DashboardService {
       status: { $nin: ['cancelled'] }
     });
 
-    const engineers = await db.find('inspection_engineers', { 
-      provider_id: providerId, 
-      is_active: true 
+    const engineers = await db.find('inspection_engineers', {
+      provider_id: providerId,
+      is_active: true
     });
 
     // Group by engineer
@@ -405,12 +405,12 @@ class DashboardService {
       totalJobs: bookings.length,
       completedJobs: completed.length,
       cancelledJobs: cancelled.length,
-      completionRate: bookings.length > 0 
-        ? Math.round((completed.length / bookings.length) * 100) 
+      completionRate: bookings.length > 0
+        ? Math.round((completed.length / bookings.length) * 100)
         : 0,
       grossRevenue: revenue.reduce((sum, b) => sum + parseFloat(b.total_price), 0),
-      averageJobValue: revenue.length > 0 
-        ? revenue.reduce((sum, b) => sum + parseFloat(b.total_price), 0) / revenue.length 
+      averageJobValue: revenue.length > 0
+        ? revenue.reduce((sum, b) => sum + parseFloat(b.total_price), 0) / revenue.length
         : 0,
       byWeek: this.groupByWeek(bookings, year, month),
       byInspectionType: this.groupByInspectionType(bookings),

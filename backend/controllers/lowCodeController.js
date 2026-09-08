@@ -255,7 +255,7 @@ export async function publishBusinessObject(req, res) {
   // Validate required fields
   const fields = await ObjectField.findAll({ filters: { objectId: req.params.id } });
   const hasNameField = fields.some(f => f.fieldKey === 'name' || f.fieldKey === 'title');
-  
+
   if (!hasNameField) {
     return res.status(400).json({ success: false, error: "Object must have a 'name' or 'title' field" });
   }
@@ -748,7 +748,7 @@ function generateObjectKey(name) {
 function generateTableSql(object, fields) {
   const lines = [`CREATE TABLE custom_${object.objectKey} (`];
   lines.push(`  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),`);
-  
+
   for (const field of fields) {
     const sqlType = mapFieldTypeToSql(field.fieldType);
     const nullable = field.required ? 'NOT NULL' : '';
@@ -756,13 +756,13 @@ function generateTableSql(object, fields) {
     const defaultVal = field.defaultValue ? `DEFAULT ${field.defaultValue}` : '';
     lines.push(`  ${field.fieldKey} ${sqlType} ${nullable} ${unique} ${defaultVal},`);
   }
-  
+
   lines.push(`  created_at TIMESTAMP DEFAULT NOW(),`);
   lines.push(`  updated_at TIMESTAMP DEFAULT NOW(),`);
   lines.push(`  created_by UUID REFERENCES users(id),`);
   lines.push(`  updated_by UUID REFERENCES users(id)`);
   lines.push(`);`);
-  
+
   return lines.join('\n');
 }
 

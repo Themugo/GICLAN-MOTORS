@@ -30,11 +30,11 @@ let violations = [];
 
 files.forEach(file => {
   if (!file.endsWith('.js')) return;
-  
+
   const filePath = path.join(distDir, file);
   const stats = fs.statSync(filePath);
   const size = stats.size;
-  
+
   let budget = BUDGETS.default;
   for (const [key, value] of Object.entries(BUDGETS)) {
     if (file.includes(key)) {
@@ -42,7 +42,7 @@ files.forEach(file => {
       break;
     }
   }
-  
+
   if (size > budget) {
     violations.push({
       file,

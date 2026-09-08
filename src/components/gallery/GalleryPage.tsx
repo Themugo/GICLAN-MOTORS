@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import { 
-  LayoutGrid, 
-  List, 
-  SlidersHorizontal, 
-  ArrowUpDown, 
-  ShieldCheck, 
-  Search, 
-  Sparkles, 
+import {
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+  ArrowUpDown,
+  ShieldCheck,
+  Search,
+  Sparkles,
   X,
   CheckCircle2,
   Lock,
@@ -110,7 +110,7 @@ export const GalleryPage: FC = () => {
     });
   }, [vehicles, filters]);
 
-  const activeFiltersCount = 
+  const activeFiltersCount =
     (filters.searchQuery ? 1 : 0) +
     filters.makes.length +
     filters.bodyStyles.length +
@@ -120,7 +120,7 @@ export const GalleryPage: FC = () => {
 
   return (
     <div className="pt-3 sm:pt-5 pb-10 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-6 bg-[#FCF9F4] text-[#2E4080] font-sans min-h-screen">
-      
+
       {/* KAYAD Premium Showroom Hero Card */}
       <div className="p-4 sm:p-5 rounded-2xl bg-[#2E4080] text-white border border-white/10 shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Subtle background glow */}
@@ -192,7 +192,7 @@ export const GalleryPage: FC = () => {
 
       {/* Main Showroom Content Layout */}
       <div className="flex flex-col lg:flex-row gap-8">
-        
+
         {/* Left Sidebar ("REFINE") */}
         <div className="hidden lg:block shrink-0">
           <FilterSidebar />
@@ -207,7 +207,7 @@ export const GalleryPage: FC = () => {
 
         {/* Showroom Vehicle Grid */}
         <div className="flex-1 min-w-0 space-y-5">
-          
+
           {/* Results Count Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 pb-2 border-b border-[#E2D8C7]/70">
             <div className="flex items-center gap-3">

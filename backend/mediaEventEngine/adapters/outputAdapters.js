@@ -39,7 +39,7 @@ class OutputAdapter {
 
   async sendWithRetry(data) {
     let lastError;
-    
+
     for (let attempt = 1; attempt <= this.config.retryAttempts; attempt++) {
       try {
         await this.send(data);
@@ -48,13 +48,13 @@ class OutputAdapter {
       } catch (error) {
         lastError = error;
         this.metrics.retries++;
-        
+
         if (attempt < this.config.retryAttempts) {
           await this.delay(this.config.retryDelay * attempt);
         }
       }
     }
-    
+
     this.metrics.failed++;
     logError(`${this.name} adapter send failed`, lastError);
     return false;
@@ -181,7 +181,7 @@ class EmailAdapter extends OutputAdapter {
    */
   async sendBatch(recipients, emailData) {
     let successCount = 0;
-    
+
     for (const recipient of recipients) {
       const success = await this.sendWithRetry({
         to: recipient.email,
@@ -189,7 +189,7 @@ class EmailAdapter extends OutputAdapter {
       });
       if (success) successCount++;
     }
-    
+
     return successCount;
   }
 }

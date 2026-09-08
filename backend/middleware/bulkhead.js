@@ -136,7 +136,7 @@ export const createBulkheadMiddleware = (name, maxConcurrent, timeoutMs = 30000)
       }
       logError(`Bulkhead error for ${name}`, error, { path: req.path });
       incrementCounter("bulkhead_error", { name });
-      
+
       if (!res.headersSent) {
         res.status(503).json({
           success: false,

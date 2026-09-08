@@ -20,29 +20,29 @@ export const SECURITY_EVENTS = {
   AUTH_LOGOUT: "AUTH_LOGOUT",
   PASSWORD_CHANGE: "PASSWORD_CHANGE",
   PASSWORD_RESET: "PASSWORD_RESET",
-  
+
   // Authorization events
   AUTHORIZATION_SUCCESS: "AUTHORIZATION_SUCCESS",
   AUTHORIZATION_FAILED: "AUTHORIZATION_FAILED",
   IDOR_ATTEMPT: "IDOR_ATTEMPT",
   PRIVILEGE_ESCALATION: "PRIVILEGE_ESCALATION",
-  
+
   // CSRF events
   CSRF_FAILED: "CSRF_FAILED",
-  
+
   // Injection events
   INJECTION_ATTEMPT: "INJECTION_ATTEMPT",
   XSS_ATTEMPT: "XSS_ATTEMPT",
-  
+
   // Rate limiting events
   RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
-  
+
   // Data events
   DATA_ACCESS: "DATA_ACCESS",
   DATA_MODIFICATION: "DATA_MODIFICATION",
   DATA_DELETION: "DATA_DELETION",
   DATA_EXPORT: "DATA_EXPORT",
-  
+
   // System events
   SYSTEM_CONFIG_CHANGE: "SYSTEM_CONFIG_CHANGE",
   ADMIN_ACTION: "ADMIN_ACTION",
@@ -193,11 +193,11 @@ export const cleanupOldSecurityLogs = async () => {
   try {
     const retentionDays = parseInt(process.env.SECURITY_LOG_RETENTION_DAYS || "90");
     const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
-    
+
     const result = await SecurityLog.deleteMany({
       timestamp: { $lt: cutoffDate }
     });
-    
+
     if (result.deletedCount > 0) {
       logInfo(`Cleaned up ${result.deletedCount} old security logs`);
     }

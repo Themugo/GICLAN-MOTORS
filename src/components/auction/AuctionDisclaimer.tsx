@@ -10,10 +10,10 @@ export interface AuctionDisclaimerProps {
 
 /**
  * Auction Disclaimer Component
- * 
+ *
  * This component displays the official KAYAD auction disclaimer to ensure
  * complete transparency about the marketplace's role.
- * 
+ *
  * Key points:
  * - KAYAD is a technology marketplace, not an auction organizer
  * - Auction organizers conduct auctions independently
@@ -53,8 +53,8 @@ export const AuctionDisclaimer: React.FC<AuctionDisclaimerProps> = ({
                 Auction Transparency Notice
               </h4>
               <p className="text-sm text-slate-700 leading-relaxed">
-                Every auction published on KAYAD is independently conducted by the verified 
-                Auction Organizer displayed on each listing. KAYAD provides the digital marketplace 
+                Every auction published on KAYAD is independently conducted by the verified
+                Auction Organizer displayed on each listing. KAYAD provides the digital marketplace
                 and auction technology tools.
               </p>
             </div>
@@ -119,9 +119,9 @@ export const AuctionDisclaimer: React.FC<AuctionDisclaimerProps> = ({
                     Important Payment Information
                   </p>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    All financial transactions related to auction participation—including bid security deposits 
-                    and final vehicle payments—must be made directly to the Auction Organizer using their 
-                    verified payment channels. KAYAD's Escrow Vault facilitates secure title transfer 
+                    All financial transactions related to auction participation—including bid security deposits
+                    and final vehicle payments—must be made directly to the Auction Organizer using their
+                    verified payment channels. KAYAD's Escrow Vault facilitates secure title transfer
                     only, not payment collection.
                   </p>
                 </div>
@@ -148,16 +148,16 @@ export const AuctionDisclaimer: React.FC<AuctionDisclaimerProps> = ({
           </h4>
           <div className="space-y-2 text-sm text-slate-600">
             <p>
-              Every auction on KAYAD is independently conducted by the verified Auction Organizer 
+              Every auction on KAYAD is independently conducted by the verified Auction Organizer
               shown on each listing.
             </p>
             <p>
-              <strong>Bid Security deposits and vehicle purchase payments are made directly to the 
+              <strong>Bid Security deposits and vehicle purchase payments are made directly to the
               Auction Organizer</strong> using their verified payment channels—not to KAYAD.
             </p>
             <p className="text-xs text-slate-500">
-              KAYAD provides the digital marketplace, bidder registration, live auction technology, 
-              digital certificates and auction management tools. KAYAD does not receive Bid Security 
+              KAYAD provides the digital marketplace, bidder registration, live auction technology,
+              digital certificates and auction management tools. KAYAD does not receive Bid Security
               deposits or vehicle purchase payments.
             </p>
           </div>

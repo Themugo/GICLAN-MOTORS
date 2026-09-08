@@ -103,7 +103,7 @@ export default function InspectionMarketplacePage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: KAYAD_COLORS.warmBeige }}>
       {/* Header */}
-      <header 
+      <header
         className="py-12 px-4"
         style={{ backgroundColor: KAYAD_COLORS.lightNavy }}
       >
@@ -113,13 +113,13 @@ export default function InspectionMarketplacePage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <h1 
+            <h1
               className="text-4xl md:text-5xl font-bold mb-4"
               style={{ color: KAYAD_COLORS.white }}
             >
               Inspection Marketplace
             </h1>
-            <p 
+            <p
               className="text-xl mb-8 max-w-2xl mx-auto"
               style={{ color: KAYAD_COLORS.mutedTerracotta }}
             >
@@ -135,7 +135,7 @@ export default function InspectionMarketplacePage() {
             className="max-w-2xl mx-auto"
           >
             <div className="relative">
-              <Search 
+              <Search
                 className="absolute left-4 top-1/2 transform -translate-y-1/2"
                 style={{ color: KAYAD_COLORS.softBlue }}
                 size={20}
@@ -150,7 +150,7 @@ export default function InspectionMarketplacePage() {
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-colors"
-                style={{ 
+                style={{
                   backgroundColor: showFilters ? KAYAD_COLORS.emerald : KAYAD_COLORS.warmBeige,
                   color: showFilters ? KAYAD_COLORS.white : KAYAD_COLORS.lightNavy
                 }}
@@ -205,7 +205,7 @@ export default function InspectionMarketplacePage() {
 
       {/* Inspection Types */}
       <section className="max-w-7xl mx-auto px-4 pb-8">
-        <h2 
+        <h2
           className="text-2xl font-bold mb-6"
           style={{ color: KAYAD_COLORS.lightNavy }}
         >
@@ -222,8 +222,8 @@ export default function InspectionMarketplacePage() {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
               style={{
-                backgroundColor: filters.inspectionType === type.value 
-                  ? KAYAD_COLORS.emerald 
+                backgroundColor: filters.inspectionType === type.value
+                  ? KAYAD_COLORS.emerald
                   : KAYAD_COLORS.white,
               }}
             >
@@ -250,7 +250,7 @@ export default function InspectionMarketplacePage() {
             value={filters.sortBy || 'rating'}
             onChange={(e) => handleFilterChange({ sortBy: e.target.value as any })}
             className="px-4 py-2 rounded-lg border outline-none"
-            style={{ 
+            style={{
               backgroundColor: KAYAD_COLORS.white,
               borderColor: KAYAD_COLORS.softBlue,
               color: KAYAD_COLORS.lightNavy
@@ -276,12 +276,12 @@ export default function InspectionMarketplacePage() {
           </div>
         ) : providers.length === 0 ? (
           <div className="text-center py-12">
-            <Wrench 
-              className="mx-auto mb-4" 
-              size={64} 
-              style={{ color: KAYAD_COLORS.mutedTerracotta }} 
+            <Wrench
+              className="mx-auto mb-4"
+              size={64}
+              style={{ color: KAYAD_COLORS.mutedTerracotta }}
             />
-            <h3 
+            <h3
               className="text-xl font-semibold mb-2"
               style={{ color: KAYAD_COLORS.lightNavy }}
             >
@@ -310,7 +310,7 @@ export default function InspectionMarketplacePage() {
             >
               Previous
             </button>
-            <span 
+            <span
               className="px-4 py-2"
               style={{ color: KAYAD_COLORS.softBlue }}
             >
@@ -329,18 +329,18 @@ export default function InspectionMarketplacePage() {
       </section>
 
       {/* CTA Section */}
-      <section 
+      <section
         className="py-16 px-4"
         style={{ backgroundColor: KAYAD_COLORS.lightNavy }}
       >
         <div className="max-w-3xl mx-auto text-center">
-          <h2 
+          <h2
             className="text-3xl font-bold mb-4"
             style={{ color: KAYAD_COLORS.white }}
           >
             Become an Inspection Provider
           </h2>
-          <p 
+          <p
             className="text-lg mb-8"
             style={{ color: KAYAD_COLORS.mutedTerracotta }}
           >
@@ -359,14 +359,14 @@ export default function InspectionMarketplacePage() {
   );
 }
 
-function QuickStatCard({ 
-  icon, 
-  label, 
-  value 
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  value: string; 
+function QuickStatCard({
+  icon,
+  label,
+  value
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
 }) {
   return (
     <motion.div
@@ -380,7 +380,7 @@ function QuickStatCard({
           {label}
         </span>
       </div>
-      <p 
+      <p
         className="text-2xl font-bold"
         style={{ color: KAYAD_COLORS.lightNavy }}
       >

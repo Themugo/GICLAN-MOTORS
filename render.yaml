@@ -1,18 +1,18 @@
-# KAYAD Backend Render Blueprint
-# Canonical production runtime: native Node.js from the backend monorepo root.
+# render.yaml — KAYAD Backend
+# Deploy on Render: Connect GitHub repo → Render auto-detects this file
+
 services:
   - type: web
     name: kayad-backend
-    runtime: node
     region: oregon
-    rootDir: backend
-    buildCommand: npm ci --omit=dev
-    startCommand: npm start
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    dockerCommand: []
+    dockerContext: ./
     healthCheckPath: /health
-    autoDeploy: true
     disk:
       name: uploads
-      mountPath: /opt/render/project/src/backend/uploads
+      mountPath: /app/uploads
       sizeGB: 5
     envVars:
       - key: NODE_ENV

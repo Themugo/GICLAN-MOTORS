@@ -39,8 +39,8 @@ class RevenueService {
     const subscriptionCode = await this.generateSubscriptionCode();
     const startDate = new Date();
     const endDate = this.calculateEndDate(startDate, plan.billing_cycle);
-    const nextBillingDate = plan.billing_cycle === 'monthly' 
-      ? this.addMonths(startDate, 1) 
+    const nextBillingDate = plan.billing_cycle === 'monthly'
+      ? this.addMonths(startDate, 1)
       : this.addMonths(startDate, 12);
 
     const subscription = await db.create('business_subscriptions', {
@@ -331,7 +331,7 @@ class RevenueService {
 
     // Record revenue
     await this.recordRevenue({
-      revenueType: commissionData.sourceType === 'inspection' ? 'inspection_commission' : 
+      revenueType: commissionData.sourceType === 'inspection' ? 'inspection_commission' :
                    commissionData.sourceType === 'auction' ? 'auction_fee' : 'other',
       businessId: commissionData.businessId,
       businessName: commissionData.businessName,
@@ -655,7 +655,7 @@ class RevenueService {
 
   getRevenuePeriod(date) {
     const d = new Date(date);
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
                    'July', 'August', 'September', 'October', 'November', 'December'];
     return `${months[d.getMonth()]} ${d.getFullYear()}`;
   }

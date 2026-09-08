@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { 
-  ShieldCheck, 
-  Lock, 
-  FileCheck2, 
-  Truck, 
-  CheckCircle2, 
-  DollarSign, 
-  ArrowRight, 
-  Shield, 
-  KeyRound, 
+import {
+  ShieldCheck,
+  Lock,
+  FileCheck2,
+  Truck,
+  CheckCircle2,
+  DollarSign,
+  ArrowRight,
+  Shield,
+  KeyRound,
   Award,
   BadgeCheck,
   UserCheck,
@@ -75,7 +75,7 @@ export const EscrowWorkflowSection: FC = () => {
   return (
     <section className="py-14 sm:py-20 bg-[#FCF9F4] dark:bg-[#0B132B] text-[#1E3063] dark:text-slate-100 border-b border-[#E8E1D5] dark:border-white/10 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#E2D8C7] dark:border-white/10">
           <div className="space-y-3 max-w-2xl">
@@ -83,11 +83,11 @@ export const EscrowWorkflowSection: FC = () => {
               <ShieldCheck className="w-4 h-4 text-[#00C9CE]" />
               <span>REGULATED MULTI-SIGNATURE ESCROW VAULT</span>
             </div>
-            
+
             <h2 className="text-3xl sm:text-4xl font-black text-[#1E3063] dark:text-white font-serif tracking-tight leading-tight">
               The 6-Step Protected Escrow Flow
             </h2>
-            
+
             <p className="text-xs sm:text-sm text-[#6B7A99] dark:text-slate-300 font-sans font-medium leading-relaxed">
               Your money is never sent directly to a stranger. Funds remain 100% secured in CBK-regulated bank escrow until you physically inspect and approve the vehicle.
             </p>
@@ -133,8 +133,8 @@ export const EscrowWorkflowSection: FC = () => {
 
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${
-                      isActive 
-                        ? 'bg-[#00C9CE]/20 border-[#00C9CE]' 
+                      isActive
+                        ? 'bg-[#00C9CE]/20 border-[#00C9CE]'
                         : 'bg-[#1E3063]/10 dark:bg-white/10 border-[#1E3063]/20 dark:border-white/20'
                     }`}>
                       {item.icon}
@@ -170,7 +170,7 @@ export const EscrowWorkflowSection: FC = () => {
 
         {/* Security Guarantees Bar */}
         <div className="p-6 rounded-3xl bg-[#1E3063] text-white border border-[#1E3063] shadow-xl grid grid-cols-2 md:grid-cols-4 gap-4 divide-y-0 sm:divide-x divide-white/15">
-          
+
           <div className="flex items-center gap-3 sm:px-2">
             <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
               <Shield className="w-5 h-5 text-[#00C9CE]" />

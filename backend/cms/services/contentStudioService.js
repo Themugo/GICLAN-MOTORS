@@ -114,7 +114,7 @@ class ContentStudioService {
    */
   async publishArticle(articleId, userId, userName) {
     const article = await db.findById('cs_articles', articleId);
-    
+
     // Create version before publishing
     await this.createVersion('article', articleId, article, `Published: ${article.title}`, userId, userName);
 
@@ -171,9 +171,9 @@ class ContentStudioService {
    * Get featured articles
    */
   async getFeaturedArticles(limit = 5) {
-    return db.find('cs_articles', { 
-      status: 'published', 
-      is_featured: true 
+    return db.find('cs_articles', {
+      status: 'published',
+      is_featured: true
     }, { sort: { published_at: -1 }, limit });
   }
 

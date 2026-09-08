@@ -24,8 +24,7 @@ export interface HttpRequestOptions {
 export async function request<T>(path: string, options: HttpRequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers, params } = options;
   const configuredApiUrl = String(import.meta.env.VITE_API_URL || '');
-  const hasProductionApiFallback = import.meta.env.PROD && !configuredApiUrl;
-  const requestPath = !configuredApiUrl && !hasProductionApiFallback && /^\/api(?:\/|$)/.test(path)
+  const requestPath = !configuredApiUrl && /^\/api(?:\/|$)/.test(path)
     ? path.slice(4) || '/'
     : path;
 
@@ -56,6 +55,3 @@ export async function request<T>(path: string, options: HttpRequestOptions = {})
     throw new HttpRequestError('Unable to reach KAYAD servers. Please check your connection and try again.');
   }
 }
-
-/** Backwards-compatible name retained for older service modules. */
-export const httpRequest = request;

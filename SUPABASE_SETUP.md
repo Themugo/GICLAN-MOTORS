@@ -76,7 +76,7 @@ FOR SELECT USING (bucket_id = 'kayad-images');
 -- Allow authenticated uploads
 CREATE POLICY "Authenticated Uploads" ON storage.objects
 FOR INSERT WITH CHECK (
-  bucket_id = 'kayad-images' AND 
+  bucket_id = 'kayad-images' AND
   auth.role() = 'authenticated'
 );
 ```

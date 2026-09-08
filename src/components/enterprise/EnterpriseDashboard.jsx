@@ -14,7 +14,7 @@ export const EnterpriseTokens = {
   beige: '#F6F1E8',
   beigeLight: '#FAF7F2',
   white: '#FFFFFF',
-  
+
   // Semantic Colors
   emerald: '#10B981',
   emeraldLight: '#D1FAE5',
@@ -28,7 +28,7 @@ export const EnterpriseTokens = {
   mutedCrimsonLight: '#FEE2E2',
   purple: '#8B5CF6',
   purpleLight: '#EDE9FE',
-  
+
   // Neutrals
   slate: {
     50: '#F8FAFC',
@@ -42,7 +42,7 @@ export const EnterpriseTokens = {
     800: '#1E293B',
     900: '#0F172A',
   },
-  
+
   // Semantic Aliases
   success: '#10B981',
   successBg: '#D1FAE5',
@@ -56,26 +56,26 @@ export const EnterpriseTokens = {
   info: '#3B82F6',
   infoBg: '#DBEAFE',
   infoBorder: '#BFDBFE',
-  
+
   // Text Colors
   textPrimary: '#1E293B',
   textSecondary: '#475569',
   textMuted: '#64748B',
   textDisabled: '#94A3B8',
-  
+
   // Backgrounds
   bg: '#F6F1E8',
   bgLight: '#FAF7F2',
   card: '#FFFFFF',
   surface: '#F8FAFC',
   surfaceHover: '#F1F5F9',
-  
+
   // Borders
   border: 'rgba(15, 23, 42, 0.08)',
   borderLight: 'rgba(15, 23, 42, 0.05)',
   borderMedium: 'rgba(15, 23, 42, 0.12)',
   borderFocus: '#17244B',
-  
+
   // Shadows
   shadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)',
   shadowSm: '0 1px 2px rgba(0, 0, 0, 0.04)',
@@ -109,7 +109,7 @@ const S = {
   body: {
     padding: '20px',
   },
-  
+
   // KPI Card styles
   kpi: {
     background: EnterpriseTokens.card,
@@ -160,7 +160,7 @@ const S = {
     color: EnterpriseTokens.textMuted,
     marginTop: 2,
   },
-  
+
   // Badge styles
   badge: (color, bgColor) => ({
     padding: '4px 10px',
@@ -172,12 +172,12 @@ const S = {
     display: 'inline-flex',
     alignItems: 'center',
   }),
-  
+
   // Grid layouts
   grid2: { display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 24 },
   grid3: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 },
   grid4: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 },
-  
+
   // Quick action styles
   actionLink: {
     display: 'flex',
@@ -192,7 +192,7 @@ const S = {
     transition: 'all 0.2s ease',
     cursor: 'pointer',
   },
-  
+
   // Activity item styles
   activityItem: {
     display: 'flex',
@@ -208,7 +208,7 @@ const S = {
     flexShrink: 0,
     marginTop: 6,
   }),
-  
+
   // Notification styles
   notification: {
     display: 'flex',
@@ -217,7 +217,7 @@ const S = {
     borderBottom: `1px solid ${EnterpriseTokens.borderLight}`,
     cursor: 'pointer',
   },
-  
+
   // Table styles
   table: { width: '100%', borderCollapse: 'collapse' },
   th: {
@@ -237,14 +237,14 @@ const S = {
     color: EnterpriseTokens.textSecondary,
     borderBottom: `1px solid ${EnterpriseTokens.borderLight}`,
   },
-  
+
   // Empty state
   emptyState: {
     textAlign: 'center',
     padding: '40px 20px',
     color: EnterpriseTokens.textMuted,
   },
-  
+
   // Skeleton loading
   skeleton: {
     background: `linear-gradient(90deg, ${EnterpriseTokens.surface} 25%, ${EnterpriseTokens.surfaceHover} 50%, ${EnterpriseTokens.surface} 75%)`,
@@ -258,19 +258,19 @@ const S = {
 // ENTERPRISE COMPONENTS
 // ============================================================
 
-export function EnterpriseCard({ 
-  children, 
-  header, 
-  action, 
-  className, 
-  onMouseEnter, 
-  onMouseLeave, 
+export function EnterpriseCard({
+  children,
+  header,
+  action,
+  className,
+  onMouseEnter,
+  onMouseLeave,
   style,
-  noPadding = false 
+  noPadding = false
 }) {
   return (
-    <div 
-      style={{ ...S.card, ...style }} 
+    <div
+      style={{ ...S.card, ...style }}
       className={className}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -294,14 +294,14 @@ export function EnterpriseCard({
   );
 }
 
-export function EnterpriseKPI({ 
-  icon, 
-  label, 
-  value, 
-  sub, 
-  trend, 
+export function EnterpriseKPI({
+  icon,
+  label,
+  value,
+  sub,
+  trend,
   accent = EnterpriseTokens.navy,
-  className 
+  className
 }) {
   return (
     <div style={{ ...S.kpi, ...(className || {}) }}>
@@ -313,10 +313,10 @@ export function EnterpriseKPI({
       <div style={S.kpiValue}>{value ?? '—'}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {trend !== undefined && (
-          <span style={{ 
-            fontSize: 12, 
-            fontWeight: 600, 
-            color: trend >= 0 ? EnterpriseTokens.success : EnterpriseTokens.danger 
+          <span style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: trend >= 0 ? EnterpriseTokens.success : EnterpriseTokens.danger
           }}>
             {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
           </span>
@@ -335,7 +335,7 @@ export function EnterpriseTimeline({ items }) {
       </div>
     );
   }
-  
+
   return (
     <div>
       {items.map((item, i) => (
@@ -368,7 +368,7 @@ export function EnterpriseNotifications({ items }) {
       </div>
     );
   }
-  
+
   return (
     <div>
       {items.map((item, i) => (
@@ -406,22 +406,22 @@ export function EnterpriseRevenue({ data, height = 200 }) {
       </div>
     );
   }
-  
+
   const maxValue = Math.max(...data.map(d => d.value));
-  
+
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height }}>
       {data.map((item, i) => (
         <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div 
-            style={{ 
-              width: '100%', 
+          <div
+            style={{
+              width: '100%',
               background: `linear-gradient(180deg, ${EnterpriseTokens.navy} 0%, ${EnterpriseTokens.navyLight} 100%)`,
               borderRadius: '6px 6px 0 0',
               minHeight: 4,
               height: `${(item.value / maxValue) * (height - 40)}px`,
               transition: 'height 0.3s ease',
-            }} 
+            }}
           />
           <span style={{ fontSize: 10, color: EnterpriseTokens.textMuted }}>
             {item.label}
@@ -440,22 +440,22 @@ export function EnterpriseChart({ data, type = 'line', height = 200 }) {
       </div>
     );
   }
-  
+
   const maxValue = Math.max(...data.map(d => d.value));
-  
+
   if (type === 'bar') {
     return (
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height }}>
         {data.map((item, i) => (
           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <div 
-              style={{ 
-                width: '100%', 
+            <div
+              style={{
+                width: '100%',
                 background: EnterpriseTokens.surface,
                 borderRadius: 4,
                 minHeight: 2,
                 height: `${(item.value / maxValue) * (height - 30)}px`,
-              }} 
+              }}
             />
             <span style={{ fontSize: 10, color: EnterpriseTokens.textMuted }}>
               {item.label}
@@ -465,7 +465,7 @@ export function EnterpriseChart({ data, type = 'line', height = 200 }) {
       </div>
     );
   }
-  
+
   // Default: line chart visualization
   return (
     <div style={{ position: 'relative', height }}>
@@ -528,28 +528,28 @@ export function EnterpriseDonut({ data, size = 120 }) {
       </div>
     );
   }
-  
+
   const total = data.reduce((sum, item) => sum + item.value, 0);
   let currentAngle = -90;
-  
+
   const paths = data.map((item, i) => {
     const angle = (item.value / total) * 360;
     const startAngle = currentAngle;
     const endAngle = currentAngle + angle;
     currentAngle = endAngle;
-    
+
     const start = polarToCartesian(size / 2, size / 2, size / 2 - 10, startAngle);
     const end = polarToCartesian(size / 2, size / 2, size / 2 - 10, endAngle);
     const largeArcFlag = angle > 180 ? 1 : 0;
-    
+
     const d = [
       `M ${start.x} ${start.y}`,
       `A ${size / 2 - 10} ${size / 2 - 10} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`,
     ].join(' ');
-    
+
     return { ...item, d, color: item.color || Object.values(EnterpriseTokens)[i + 10] };
   });
-  
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
       <svg width={size} height={size}>
@@ -598,7 +598,7 @@ export function EnterpriseTable({ columns, data, emptyMessage = 'No data availab
       </div>
     );
   }
-  
+
   return (
     <table style={S.table}>
       <thead>
@@ -633,12 +633,12 @@ export function EnterpriseBadge({ children, variant = 'default', className }) {
     danger: { bg: EnterpriseTokens.dangerBg, color: EnterpriseTokens.danger },
     info: { bg: EnterpriseTokens.infoBg, color: EnterpriseTokens.info },
   };
-  
+
   const style = variants[variant] || variants.default;
-  
+
   return (
-    <span 
-      style={{ 
+    <span
+      style={{
         ...S.badge(style.color, style.bg),
         ...(className || {})
       }}
@@ -659,10 +659,10 @@ export function EnterpriseMetricRow({ items }) {
               {item.value}
             </span>
             {item.trend !== undefined && (
-              <span style={{ 
-                fontSize: 12, 
+              <span style={{
+                fontSize: 12,
                 fontWeight: 600,
-                color: item.trend >= 0 ? EnterpriseTokens.success : EnterpriseTokens.danger 
+                color: item.trend >= 0 ? EnterpriseTokens.success : EnterpriseTokens.danger
               }}>
                 {item.trend >= 0 ? '↑' : '↓'} {Math.abs(item.trend)}%
               </span>
@@ -698,9 +698,9 @@ export function DashboardHeader({ title, subtitle, actions }) {
 
 export function EnterpriseTabs({ tabs, activeTab, onChange }) {
   return (
-    <div style={{ 
-      display: 'flex', 
-      gap: 4, 
+    <div style={{
+      display: 'flex',
+      gap: 4,
       padding: 4,
       background: EnterpriseTokens.surface,
       borderRadius: 10,
@@ -733,7 +733,7 @@ export function EnterpriseTabs({ tabs, activeTab, onChange }) {
 
 export function EnterpriseProgress({ value, max = 100, color = EnterpriseTokens.navy, showLabel = true }) {
   const percentage = (value / max) * 100;
-  
+
   return (
     <div>
       {showLabel && (
@@ -746,16 +746,16 @@ export function EnterpriseProgress({ value, max = 100, color = EnterpriseTokens.
           </span>
         </div>
       )}
-      <div style={{ 
-        width: '100%', 
-        height: 6, 
-        background: EnterpriseTokens.surface, 
-        borderRadius: 3, 
-        overflow: 'hidden' 
+      <div style={{
+        width: '100%',
+        height: 6,
+        background: EnterpriseTokens.surface,
+        borderRadius: 3,
+        overflow: 'hidden'
       }}>
-        <div style={{ 
-          width: `${percentage}%`, 
-          height: '100%', 
+        <div style={{
+          width: `${percentage}%`,
+          height: '100%',
           background: color,
           borderRadius: 3,
           transition: 'width 0.3s ease',
@@ -790,13 +790,13 @@ export function EnterpriseQuickActions({ items }) {
 // Skeleton loader component
 export function EnterpriseSkeleton({ width = '100%', height = 20, className }) {
   return (
-    <div 
-      style={{ 
-        ...S.skeleton, 
-        width, 
+    <div
+      style={{
+        ...S.skeleton,
+        width,
         height,
         ...(className || {})
-      }} 
+      }}
     />
   );
 }

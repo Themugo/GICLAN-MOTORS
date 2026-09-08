@@ -35,7 +35,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
   const addToast = useCallback(({ type, message, duration = DEFAULT_DURATION }: Omit<Toast, 'id'>) => {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts((prev) => [...prev, { id, type, message, duration }]);
-    
+
     if (duration > 0) {
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -85,15 +85,15 @@ function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
   if (toasts.length === 0) return null;
 
   return (
-    <div 
-      style={{ 
-        position: 'fixed', 
-        bottom: 24, 
-        right: 24, 
-        zIndex: 9999, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: 10 
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 24,
+        right: 24,
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10
       }}
       role="region"
       aria-label="Notifications"

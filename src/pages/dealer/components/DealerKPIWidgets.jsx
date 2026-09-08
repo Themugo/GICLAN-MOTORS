@@ -108,15 +108,15 @@ export function RevenueKPI({ earnings = [] }) {
   const todayRevenue = earnings
     .filter(e => new Date(e.date || e.createdAt) >= todayStart)
     .reduce((sum, e) => sum + (e.amount || 0), 0);
-  
+
   const weekRevenue = earnings
     .filter(e => new Date(e.date || e.createdAt) >= weekStart)
     .reduce((sum, e) => sum + (e.amount || 0), 0);
-  
+
   const monthRevenue = earnings
     .filter(e => new Date(e.date || e.createdAt) >= monthStart)
     .reduce((sum, e) => sum + (e.amount || 0), 0);
-  
+
   const lifetimeRevenue = earnings.reduce((sum, e) => sum + (e.amount || 0), 0);
 
   return (
@@ -152,7 +152,7 @@ export function RevenueKPI({ earnings = [] }) {
 // =============================
 export function AuctionsKPI({ cars = [] }) {
   const now = new Date();
-  
+
   const liveAuctions = cars.filter(c => {
     const start = c.auctionStartTime ? new Date(c.auctionStartTime).getTime() : 0;
     const end = c.auctionEnd ? new Date(c.auctionEnd).getTime() : 0;
@@ -160,7 +160,7 @@ export function AuctionsKPI({ cars = [] }) {
   }).length;
 
   const wonAuctions = cars.filter(c => c.auctionStatus === 'won' || c.status === 'sold').length;
-  
+
   const expiredAuctions = cars.filter(c => {
     const end = c.auctionEnd ? new Date(c.auctionEnd).getTime() : 0;
     return end > 0 && end < now.getTime() && c.auctionStatus !== 'won';

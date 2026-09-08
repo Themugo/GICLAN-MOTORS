@@ -146,7 +146,7 @@ function ContactForm() {
       {touched.name && errors.name && (
         <span id="name-error">{errors.name}</span>
       )}
-      
+
       <input
         {...getFieldProps('email')}
         type="email"
@@ -155,7 +155,7 @@ function ContactForm() {
       {touched.email && errors.email && (
         <span id="email-error">{errors.email}</span>
       )}
-      
+
       <button type="submit" disabled={!isValid || isSubmitting}>
         {isSubmitting ? 'Submitting...' : 'Submit'}
       </button>

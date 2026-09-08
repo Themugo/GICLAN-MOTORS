@@ -8,16 +8,16 @@ let posthog: any = null;
 
 async function loadDependencies() {
   if (Sentry && posthog) return { Sentry, posthog };
-  
+
   try {
     const [sentryModule, posthogModule] = await Promise.allSettled([
       import('@sentry/react').catch(() => null),
       import('posthog-js').catch(() => null),
     ]);
-    
+
     Sentry = sentryModule?.status === 'fulfilled' ? sentryModule.value : null;
     posthog = posthogModule?.status === 'fulfilled' ? posthogModule.value?.default || posthogModule.value : null;
-    
+
     return { Sentry, posthog };
   } catch {
     return { Sentry: null, posthog: null };
@@ -36,7 +36,7 @@ export async function initObservability() {
  */
 export async function trackCoreWebVitals() {
   if (typeof window === 'undefined') return;
-  
+
   const { Sentry: sentry, posthog: ph } = await loadDependencies();
   if (!sentry || !ph) return;
 
@@ -133,11 +133,11 @@ export async function trackWorkflowCompletion(workflowName: string, success: boo
   if (!sentry && !ph) return;
 
   ph?.capture?.('workflow_completion', { workflow: workflowName, success, ...properties });
-  sentry?.addBreadcrumb?.({ 
-    category: 'workflow', 
-    message: `${workflowName} - ${success ? 'Completed' : 'Failed'}`, 
-    level: success ? 'info' : 'warning', 
-    data: properties 
+  sentry?.addBreadcrumb?.({
+    category: 'workflow',
+    message: `${workflowName} - ${success ? 'Completed' : 'Failed'}`,
+    level: success ? 'info' : 'warning',
+    data: properties
   });
 }
 

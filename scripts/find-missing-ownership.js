@@ -5,14 +5,14 @@ const ROOT_DIR = '.';
 
 function findMissingOwnership(dir) {
   const files = [];
-  
+
   function scan(currentDir) {
     const items = fs.readdirSync(currentDir);
-    
+
     for (const item of items) {
       const fullPath = path.join(currentDir, item);
       const stat = fs.statSync(fullPath);
-      
+
       if (stat.isDirectory()) {
         if (item === 'node_modules' || item === '.git' || item === 'dist' || item === '.bolt' || item === '.vercel') {
           continue;
@@ -26,7 +26,7 @@ function findMissingOwnership(dir) {
       }
     }
   }
-  
+
   scan(dir);
   return files;
 }

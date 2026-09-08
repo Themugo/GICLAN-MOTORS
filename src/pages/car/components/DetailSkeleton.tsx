@@ -3,7 +3,7 @@ export default function DetailSkeleton() {
     <div className="animate-pulse">
       {/* Hero image skeleton */}
       <div className="w-full aspect-video bg-cream-200 rounded-2xl mb-6" />
-      
+
       {/* Thumbnails */}
       <div className="flex gap-2 mb-8">
         {[1, 2, 3, 4].map(i => (

@@ -80,7 +80,7 @@ export default function CarCard({
             <div className="absolute inset-0 bg-cream-200 animate-pulse" />
           )}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-          
+
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-1.5">
             {isOnAuction && (

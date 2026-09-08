@@ -20,7 +20,7 @@ const CATEGORY_PATTERNS = {
 
 function categorizeFile(filename) {
   const lower = filename.toLowerCase();
-  
+
   for (const [category, patterns] of Object.entries(CATEGORY_PATTERNS)) {
     for (const pattern of patterns) {
       const regex = new RegExp(
@@ -32,26 +32,26 @@ function categorizeFile(filename) {
       }
     }
   }
-  
+
   return 'general';
 }
 
 function countByCategory(files) {
   const counts = {};
   Object.keys(CATEGORY_PATTERNS).forEach(cat => counts[cat] = 0);
-  
+
   files.forEach(file => {
     const category = categorizeFile(file);
     counts[category] = (counts[category] || 0) + 1;
   });
-  
+
   return counts;
 }
 
 function checkOwnership(files) {
   let withOwnership = 0;
   let missingOwnership = 0;
-  
+
   files.forEach(file => {
     try {
       const content = fs.readFileSync(file, 'utf8');
@@ -64,20 +64,20 @@ function checkOwnership(files) {
       missingOwnership++;
     }
   });
-  
+
   return { withOwnership, missingOwnership };
 }
 
 function scanDirectory(dir) {
   const files = [];
-  
+
   function scan(currentDir) {
     const items = fs.readdirSync(currentDir);
-    
+
     for (const item of items) {
       const fullPath = path.join(currentDir, item);
       const stat = fs.statSync(fullPath);
-      
+
       if (stat.isDirectory()) {
         if (item === 'node_modules' || item === '.git' || item === 'dist' || item === '.bolt' || item === '.vercel') {
           continue;
@@ -88,7 +88,7 @@ function scanDirectory(dir) {
       }
     }
   }
-  
+
   scan(dir);
   return files;
 }

@@ -56,7 +56,7 @@ export default function MobileBottomNav({ authUser }: MobileBottomNavProps) {
       {tabs.map(tab => {
         const active = isActive(tab.href);
         const Icon = tab.icon;
-        
+
         return (
           <Link
             key={tab.key}

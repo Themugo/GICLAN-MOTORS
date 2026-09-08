@@ -58,22 +58,22 @@ export default function EnterpriseControlCenter() {
       setLoading(true);
       const { data: dashData } = await ecpApi.getExecutiveDashboard();
       setDashboard(dashData.data);
-      
+
       const { data: healthData } = await ecpApi.getSystemHealth();
       setSystemHealth(healthData.data);
-      
+
       const { data: bizData } = await ecpApi.getBusinessHealth();
       setBusinessHealth(bizData.data);
-      
+
       const { data: incData } = await ecpApi.getIncidents();
       setIncidents(incData.data);
-      
+
       const { data: secData } = await ecpApi.getSecurityStatus();
       setSecurity(secData.data);
-      
+
       const { data: perfData } = await ecpApi.getPerformanceMetrics();
       setPerformance(perfData.data);
-      
+
       const { data: rulesData } = await ecpApi.getSelfHealingRules();
       setSelfHealingRules(rulesData.data);
     } catch (error) {
@@ -86,7 +86,7 @@ export default function EnterpriseControlCenter() {
 
   const handleAiQuestion = async () => {
     if (!aiQuestion.trim()) return;
-    
+
     try {
       const { data } = await ecpApi.askOperationsQuestion(aiQuestion);
       setAiResponse(data.data);

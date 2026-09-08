@@ -93,7 +93,7 @@ export interface AuctionSession {
 }
 
 // Re-export AuctionOrganizerType for convenience
-export type AuctionOrganizerType = 
+export type AuctionOrganizerType =
   | 'verified_dealer'
   | 'licensed_auctioneer'
   | 'commercial_bank'
@@ -269,7 +269,7 @@ export interface EscrowTransaction {
   timelineLogs?: EscrowLogEntry[];
 }
 
-export type UnifiedCommCategory = 
+export type UnifiedCommCategory =
   | 'inquiry'
   | 'purchase'
   | 'seller'
@@ -359,7 +359,7 @@ export interface UnifiedMessageItem {
   text: string;
   timestamp: string;
   readStatus: MessageReadStatus;
-  
+
   // Context links
   vehicleId?: string;
   vehicleTitle?: string;
@@ -370,7 +370,7 @@ export interface UnifiedMessageItem {
   inspectionId?: string;
   loanAppRef?: string;
   auctionId?: string;
-  
+
   // Rich media payload
   attachments?: MessageAttachment[];
 }
@@ -382,7 +382,7 @@ export interface UnifiedChatThread {
   transactionType: string;
   currentStatus: string;
   currentStage: string;
-  
+
   participantName: string;
   participantRole: string;
   participantAvatar: string;
@@ -394,7 +394,7 @@ export interface UnifiedChatThread {
   lastMessage: string;
   lastTimestamp: string;
   isArchived?: boolean;
-  
+
   // Vehicle context
   vehicleId?: string;
   vehicleTitle?: string;
@@ -403,7 +403,7 @@ export interface UnifiedChatThread {
   vehicleVin?: string;
   vehicleLocation?: string;
   vehicleMileage?: string;
-  
+
   // Transaction context refs
   escrowId?: string;
   inspectionId?: string;
@@ -432,7 +432,7 @@ export interface UnifiedChatThread {
     location: string;
     county?: string;
   };
-  
+
   // Structured live sub-summaries for context panel
   escrowSummary?: {
     vaultId: string;
@@ -614,7 +614,7 @@ export interface UserProfile {
   name: string;
   email: string;
   phone: string;
-  role: 'buyer' | 'dealer' | 'ghost_checker' | 'bank_officer' | 'admin';
+  role: 'buyer' | 'dealer' | 'mechanic' | 'bank_officer' | 'admin';
   avatar: string;
   isVerified?: boolean;
   unreadMessagesCount?: number;
@@ -647,7 +647,7 @@ export interface BankFinancingApplication {
   appRef: string;
   bankId: string;
   bankName: string;
-  
+
   // Applicant details
   applicantName: string;
   applicantPhone: string;
@@ -657,7 +657,7 @@ export interface BankFinancingApplication {
   monthlyIncome: number;
   employerName: string;
   existingLoansMonthly: number;
-  
+
   // Vehicle details
   vehicleTitle: string;
   vehiclePrice: number;
@@ -667,7 +667,7 @@ export interface BankFinancingApplication {
   vehicleConditionScore: number; // 150-point report overall score e.g. 94%
   dealerName: string;
   logbookVerified: boolean;
-  
+
   // Loan parameters
   depositAmount: number;
   loanAmount: number;
@@ -676,7 +676,7 @@ export interface BankFinancingApplication {
   monthlyInstallment: number;
   ltvRatio: number; // % Loan-to-value
   dtiRatio: number; // % Debt-to-income
-  
+
   // Status & Audit
   status: BankApplicationStatus;
   crbScore: 'Clean (Green Tier)' | 'Minor History (Amber Tier)' | 'High Risk (Red Tier)';
@@ -686,7 +686,7 @@ export interface BankFinancingApplication {
   lastUpdated: string;
   stipulations?: string[];
   rejectionReason?: string;
-  
+
   // Nested modules data
   documents: BankDocumentItem[];
   messages: BankCommunicationMessage[];

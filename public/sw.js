@@ -75,7 +75,7 @@ self.addEventListener('fetch', (event) => {
 // Check request types
 function isImageRequest(request) {
   const url = new URL(request.url);
-  return request.destination === 'image' || 
+  return request.destination === 'image' ||
          /\.(jpg|jpeg|png|gif|webp|svg|ico)$/i.test(url.pathname) ||
          url.hostname.includes('pexels.com') ||
          url.hostname.includes('images.unsplash.com');
@@ -96,7 +96,7 @@ function isStaticAsset(request) {
 // Handle image requests with cache-first strategy
 async function handleImageRequest(request) {
   const cachedResponse = await caches.match(request);
-  
+
   if (cachedResponse) {
     // Return cached image and update cache in background
     fetchAndCache(request, IMAGE_CACHE);
@@ -131,7 +131,7 @@ async function handleApiRequest(request) {
       return cachedResponse;
     }
     // Return offline API response
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: 'offline',
       message: 'You are currently offline. Showing cached data.',
       cars: [],
@@ -183,9 +183,9 @@ async function handleStaticRequest(request) {
 // Handle dynamic content with stale-while-revalidate
 async function handleDynamicRequest(request) {
   const cachedResponse = await caches.match(request);
-  
+
   const fetchPromise = fetchAndCache(request, CACHE_NAME);
-  
+
   // Return cached response immediately if available
   if (cachedResponse) {
     return cachedResponse;

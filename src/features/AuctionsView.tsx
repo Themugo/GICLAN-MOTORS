@@ -24,7 +24,7 @@ interface AuctionRecord {
   startTime: string | null;
   endTime: string | null;
   bidIncrement: number;
-  reservePrice?: number | null;
+  reservePrice: number | null;
   bidCount: number;
   allowBid: boolean;
   car: {
@@ -81,11 +81,7 @@ export const AuctionsView: React.FC<AuctionsViewProps> = ({
     setError(null);
     try {
       const result = await fetchActiveAuctions({ page: 1, limit: 100 });
-      setAuctions((result?.auctions || []).flatMap((auction) => {
-        const car = auction.car;
-        if (!car || typeof car._id !== 'string' || typeof car.title !== 'string') return [];
-        return [{ ...auction, car: car as AuctionRecord['car'] }];
-      }));
+      setAuctions((result?.auctions || []) as AuctionRecord[]);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Unable to load live auctions from KAYAD.');
       setAuctions([]);

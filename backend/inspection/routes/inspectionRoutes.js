@@ -7,7 +7,6 @@ import * as controller from '../controllers/providerController.js';
 import { requireAuth, optionalAuth } from '../../middleware/auth.js';
 import { requireRole } from '../../middleware/auth.js';
 import requireProviderOwnership from '../middleware/requireProviderOwnership.js';
-import * as digitalController from '../controllers/digitalInspectionController.js';
 
 const router = express.Router();
 
@@ -56,29 +55,6 @@ router.post('/bookings/:bookingId/cancel', requireAuth, controller.cancelBooking
 // Submit review
 router.post('/reviews', requireAuth, controller.submitReview);
 
-
-/**
- * ============================================================
- * CANONICAL DIGITAL INSPECTION WORKFORCE
- * ============================================================
- */
-
-// Assigned inspector/customer/admin workflow view
-router.get('/bookings/:bookingId/workflow', requireAuth, digitalController.getWorkflow);
-
-// Assigned inspector starts the field inspection and initializes the 150-point engine
-router.post('/bookings/:bookingId/workflow/start', requireAuth, digitalController.startWorkflow);
-
-// Inspector executes the ordered digital workflow
-router.post('/workflow/:inspectionId/stages/:stageName', requireAuth, digitalController.updateStage);
-router.post('/workflow/:inspectionId/points', requireAuth, digitalController.recordPoint);
-router.post('/workflow/points/:pointId/evidence', requireAuth, digitalController.addEvidence);
-router.post('/workflow/:inspectionId/complete', requireAuth, digitalController.completeWorkflow);
-router.post('/workflow/:inspectionId/submit', requireAuth, digitalController.submitWorkflow);
-router.post('/workflow/:inspectionId/report', requireAuth, digitalController.generateWorkflowReport);
-router.post('/workflow/:inspectionId/customer-review', requireAuth, digitalController.customerReviewWorkflow);
-router.post('/workflow/:inspectionId/sign', requireAuth, digitalController.signWorkflow);
-
 /**
  * ============================================================
  * PROVIDER ROUTES (Provider/Admin only)
@@ -123,7 +99,6 @@ router.get('/provider/:providerId/settlements', requireAuth, requireProviderOwne
 
 // Generate settlement
 router.post('/provider/:providerId/settlements', requireAuth, requireProviderOwnership, controller.generateSettlement);
-router.post('/provider/:providerId/settlements/:settlementId/pay', requireAuth, requireRole(['admin', 'superadmin']), controller.markSettlementPaid);
 
 // Get earnings summary
 router.get('/provider/:providerId/earnings', requireAuth, requireProviderOwnership, controller.getEarningsSummary);

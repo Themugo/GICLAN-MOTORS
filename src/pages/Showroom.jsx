@@ -261,7 +261,7 @@ export default function Showroom() {
       }
     } catch (error) {
       console.error('Failed to load cars:', error);
-      
+
       let errorMessage = 'Could not load vehicles. Please try again.';
       if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
         errorMessage = 'Network error. Please check your connection.';
@@ -276,7 +276,7 @@ export default function Showroom() {
       } else if (error.response?.status >= 500) {
         errorMessage = 'Server error. Please try again later.';
       }
-      
+
       toast(errorMessage, 'error');
       if (replace) {
         setCars([]);

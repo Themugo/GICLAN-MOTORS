@@ -1,9 +1,9 @@
 /**
  * VehicleCard - Premium unified vehicle card component
- * 
+ *
  * Inspired by: Porsche Finder, BMW Approved Used, Aston Martin Timeless,
  * Bring a Trailer, Collecting Cars, Airbnb, Apple
- * 
+ *
  * Features:
  * - Large immersive image with hover zoom
  * - Image overlays (badges, actions)
@@ -140,7 +140,7 @@ VehicleCardSkeleton.displayName = 'VehicleCardSkeleton';
 
 /**
  * VehicleCard - Premium vehicle display card
- * 
+ *
  * @param {Object} props
  * @param {Object} props.car - Vehicle data object
  * @param {string} props.variant - Card variant: 'default' | 'compact' | 'horizontal'
@@ -330,7 +330,7 @@ const VehicleCard = memo(({
           {!imageLoaded && !imageError && (
             <div className="vc-card__image-skeleton" />
           )}
-          
+
           {/* Main image */}
           <img
             src={imageError ? fallbackImage : primaryImage}
@@ -427,7 +427,7 @@ const VehicleCard = memo(({
               </span>
             )}
           </div>
-          
+
           {/* Price indicators */}
           <div className="vc-card__price-indicators">
             {marketComparison && (

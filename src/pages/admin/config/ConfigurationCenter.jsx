@@ -79,7 +79,7 @@ export default function ConfigurationCenter() {
   const toggleFeatureFlag = async (id) => {
     try {
       await configApi.toggleFeatureFlag(id);
-      setFeatureFlags(featureFlags.map(f => 
+      setFeatureFlags(featureFlags.map(f =>
         f.id === id ? { ...f, status: f.status === 'active' ? 'inactive' : 'active' } : f
       ));
     } catch (error) {
@@ -147,7 +147,7 @@ export default function ConfigurationCenter() {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-800">Recent Changes</h3>
-          <button 
+          <button
             onClick={() => setActiveSection('audit')}
             className="text-sm text-[#17244B] hover:underline"
           >
@@ -188,7 +188,7 @@ export default function ConfigurationCenter() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-800">Feature Flags</h2>
-        <button 
+        <button
           onClick={() => { setSelectedItem(null); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 bg-[#17244B] text-white rounded-lg hover:bg-[#1e3054]"
         >
@@ -275,7 +275,7 @@ export default function ConfigurationCenter() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-800">Vehicle Master Data</h2>
-        <button 
+        <button
           onClick={() => { setSelectedItem(null); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 bg-[#17244B] text-white rounded-lg hover:bg-[#1e3054]"
         >
@@ -371,7 +371,7 @@ export default function ConfigurationCenter() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-800">Reference Data</h2>
-        <button 
+        <button
           onClick={() => { setSelectedItem(null); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2 bg-[#17244B] text-white rounded-lg hover:bg-[#1e3054]"
         >

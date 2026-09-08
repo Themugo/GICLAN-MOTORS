@@ -57,7 +57,7 @@ class ProviderService {
 
     const result = await db.create(providersCollection, provider);
     logInfo('Inspection provider created', { providerId: result.id, companyName: provider.company_name });
-    
+
     return result;
   }
 
@@ -593,7 +593,7 @@ class ProviderService {
    */
   async getEarningsSummary(providerId, period = 'monthly') {
     let startDate = new Date();
-    
+
     if (period === 'weekly') {
       startDate.setDate(startDate.getDate() - 7);
     } else if (period === 'monthly') {

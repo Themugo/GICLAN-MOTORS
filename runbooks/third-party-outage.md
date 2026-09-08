@@ -250,12 +250,12 @@ const circuitBreaker = {
   threshold: 5,
   timeout: 60000, // 1 minute
   state: 'closed',
-  
+
   async execute(serviceCall) {
     if (this.state === 'open') {
       throw new Error('Circuit breaker is open');
     }
-    
+
     try {
       const result = await serviceCall();
       this.failures = 0;

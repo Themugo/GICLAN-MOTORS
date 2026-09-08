@@ -98,7 +98,7 @@ export const verifyDealerOtp = async (userId, otp) => {
   return { valid: true, verification: updated };
 };
 
-const listDealerVerifications = async ({ status, page = 1, limit = 20 } = {}) => {
+export const listDealerVerifications = async ({ status, page = 1, limit = 20 } = {}) => {
   const p = Math.max(1, Number(page) || 1);
   const l = Math.min(100, Math.max(1, Number(limit) || 20));
   const filters = status ? { verificationStatus: status } : {};

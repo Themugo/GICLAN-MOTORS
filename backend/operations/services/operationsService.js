@@ -23,7 +23,7 @@ class OperationsService {
    */
   async getServiceHealth() {
     const services = await db.find('service_health', { is_active: true });
-    
+
     const byCategory = {};
     services.forEach(service => {
       if (!byCategory[service.service_category]) {
@@ -44,7 +44,7 @@ class OperationsService {
    */
   calculateOverallHealth(services) {
     if (services.length === 0) return { status: 'unknown', score: 0 };
-    
+
     const statusWeights = {
       healthy: 100,
       warning: 75,
@@ -186,15 +186,15 @@ class OperationsService {
    */
   async getActiveIncidents(filters = {}) {
     const query = { status: { $nin: ['resolved', 'closed'] } };
-    
+
     if (filters.severity) query.severity = filters.severity;
     if (filters.serviceCode) query.affected_service_code = filters.serviceCode;
     if (filters.type) query.incident_type = filters.type;
 
     return db.find('incidents', query, {
-      sort: { 
-        severity: 1, 
-        created_at: -1 
+      sort: {
+        severity: 1,
+        created_at: -1
       },
     });
   }
@@ -288,7 +288,7 @@ class OperationsService {
    */
   async getActiveAlerts(filters = {}) {
     const query = { status: { $in: ['active', 'acknowledged', 'investigating'] } };
-    
+
     if (filters.severity) query.severity = filters.severity;
     if (filters.type) query.alert_type = filters.type;
 
@@ -461,7 +461,7 @@ class OperationsService {
     const satisfactionScore = this.calculateSatisfactionScore(transactions, complaints);
     const reliabilityScore = this.calculateReliabilityScore(transactions, disputes);
     const performanceScore = this.calculatePerformanceScore(transactions);
-    
+
     const healthScore = (satisfactionScore * 0.4 + reliabilityScore * 0.4 + performanceScore * 0.2);
 
     return {

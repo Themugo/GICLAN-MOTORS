@@ -171,6 +171,6 @@ export const startEscrowCron = () => {
   return _cronHandle;
 };
 
-const stopEscrowCron = () => {
+export const stopEscrowCron = () => {
   if (_cronHandle) clearInterval(_cronHandle);
 };

@@ -46,7 +46,7 @@ const SEOHead = ({ metadata }: SEOHeadProps) => {
     <Helmet>
       <title>{metadata.title}</title>
       <meta name="description" content={metadata.description} />
-      
+
       {/* OpenGraph */}
       <meta property="og:title" content={metadata.openGraph.title} />
       <meta property="og:description" content={metadata.openGraph.description} />
@@ -64,16 +64,16 @@ const SEOHead = ({ metadata }: SEOHeadProps) => {
       {metadata.openGraph.availability && (
         <meta property="og:availability" content={metadata.openGraph.availability} />
       )}
-      
+
       {/* Twitter Cards */}
       <meta name="twitter:card" content={metadata.twitter.card} />
       <meta name="twitter:title" content={metadata.twitter.title} />
       <meta name="twitter:description" content={metadata.twitter.description} />
       <meta name="twitter:image" content={metadata.twitter.image} />
-      
+
       {/* Canonical URL */}
       <link rel="canonical" href={metadata.canonical} />
-      
+
       {/* Structured Data */}
       {metadata.structuredData && (
         <script type="application/ld+json">

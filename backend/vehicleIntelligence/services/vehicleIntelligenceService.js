@@ -15,7 +15,7 @@ class VehicleIntelligenceService {
   // ============================================================
   // VEHICLE VALUATION ENGINE
   // ============================================================
-  
+
   /**
    * Calculate vehicle valuation
    */
@@ -24,14 +24,14 @@ class VehicleIntelligenceService {
 
     // Get comparable sales data
     const comparables = await this.getComparableSales(make, model, year, region);
-    
+
     if (comparables.length === 0) {
       return this.generateFallbackValuation(make, model, year, mileage);
     }
 
     // Calculate base value from comparables
     const baseValue = this.calculateBaseValue(comparables);
-    
+
     // Apply adjustments
     const adjustments = this.calculateAdjustments({
       mileage,
@@ -106,7 +106,7 @@ class VehicleIntelligenceService {
    */
   calculateBaseValue(comparables) {
     const prices = comparables.map(c => parseFloat(c.price));
-    
+
     // Use weighted average (recent sales have more weight)
     const now = Date.now();
     let weightedSum = 0;
@@ -173,7 +173,7 @@ class VehicleIntelligenceService {
       const daysOld = (Date.now() - new Date(c.recorded_at).getTime()) / (1000 * 60 * 60 * 24);
       return daysOld <= 30;
     }).length;
-    
+
     if (recentCount >= 10) {
       score += 10;
       factors.dataRecency = 'excellent';
@@ -202,7 +202,7 @@ class VehicleIntelligenceService {
    */
   calculateDepreciation(baseValue, year) {
     const age = new Date().getFullYear() - year;
-    
+
     // Typical depreciation curve: steep first year, then gradual
     let accumulatedDepreciation = 0;
     const monthlyRate = 0.015 + (0.005 * Math.max(0, age - 1)); // Increases with age
@@ -256,7 +256,7 @@ class VehicleIntelligenceService {
       'Toyota': { 'Corolla': 2800000, 'Land Cruiser': 8500000, 'Hilux': 3500000 },
       'Mercedes-Benz': { 'C-Class': 4500000, 'E-Class': 6000000 },
     };
-    
+
     return priceEstimates[make]?.[model] || 2000000; // Default 2M KES
   }
 
@@ -362,7 +362,7 @@ class VehicleIntelligenceService {
    */
   async checkDuplicateListings(entityData) {
     const { vin, registration_number, listing_id } = entityData;
-    
+
     const query = { $or: [] };
     if (vin) query.$or.push({ vin, listing_id: { $ne: listing_id } });
     if (registration_number) query.$or.push({ registration_number, listing_id: { $ne: listing_id } });
@@ -533,8 +533,8 @@ class VehicleIntelligenceService {
     ]);
 
     // Calculate change
-    const priceChange = lastMonth.avgPrice > 0 
-      ? ((currentMonth.avgPrice - lastMonth.avgPrice) / lastMonth.avgPrice) * 100 
+    const priceChange = lastMonth.avgPrice > 0
+      ? ((currentMonth.avgPrice - lastMonth.avgPrice) / lastMonth.avgPrice) * 100
       : 0;
 
     return {
@@ -647,7 +647,7 @@ class VehicleIntelligenceService {
   calculateMarketBalance(stats) {
     const demand = this.calculateDemandIndex(stats);
     const supply = this.calculateSupplyIndex(stats);
-    
+
     if (supply < 50 && demand > 50) return 'seller_market';
     if (supply > 70 && demand < 30) return 'buyer_market';
     return 'balanced';
@@ -751,8 +751,8 @@ class VehicleIntelligenceService {
       sellThroughRate: listings.length > 0 ? Math.round((sales.length / listings.length) * 100) : 0,
       avgDaysToSell: this.calculateAvgDaysToSell(sales),
       avgPriceVsMarket: await this.calculatePriceVsMarket(dealerId),
-      customerRating: reviews.length > 0 
-        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+      customerRating: reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
         : 0,
       totalReviews: reviews.length,
       inquiryRate: this.calculateInquiryRate(listings),

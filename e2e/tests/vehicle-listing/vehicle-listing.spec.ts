@@ -1,6 +1,6 @@
 /**
  * Vehicle Listing E2E Tests
- * 
+ *
  * Tests for vehicle listing workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -62,7 +62,7 @@ test.describe('Vehicle Listing Workflow', () => {
 
     test('should create vehicle listing with auction', async ({ page }) => {
       await page.click('button:has-text("Add Vehicle")');
-      
+
       // Fill vehicle details
       await page.fill('input[name="title"]', 'BMW X5 2021');
       await page.fill('input[name="make"]', 'BMW');
@@ -72,11 +72,11 @@ test.describe('Vehicle Listing Workflow', () => {
 
       // Enable auction
       await page.click('input[name="isAuction"]');
-      
+
       // Set auction parameters
       await page.fill('input[name="startingPrice"]', '7000000');
       await page.fill('input[name="reservePrice"]', '7500000');
-      
+
       // Set auction duration
       await page.selectOption('select[name="auctionDuration"]', '7');
 
@@ -126,7 +126,7 @@ test.describe('Vehicle Listing Workflow', () => {
 
       // Click delete
       await page.click('button:has-text("Delete")');
-      
+
       // Confirm deletion
       await page.click('button:has-text("Confirm")');
 
@@ -157,7 +157,7 @@ test.describe('Vehicle Listing Workflow', () => {
       // Should either succeed or show max limit error
       const errorElement = page.locator('[data-testid="image-limit-error"]');
       const successElement = page.locator('[data-testid="success-message"]');
-      
+
       await expect(errorElement.or(successElement)).toBeVisible();
     });
 

@@ -16,7 +16,7 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
 
     return (
       <div className={`form-field ${className}`}>
-        <label 
+        <label
           htmlFor={inputId}
           className="block font-sans text-sm font-semibold text-charcoal-800 mb-1.5"
         >
@@ -28,13 +28,13 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
             <span className="sr-only">(required)</span>
           )}
         </label>
-        
+
         {hint && (
           <p id={hintId} className="font-sans text-xs text-warm-500 mb-1.5">
             {hint}
           </p>
         )}
-        
+
         <input
           ref={ref}
           id={inputId}
@@ -46,19 +46,19 @@ export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
               hint ? hintId : null,
             ].filter(Boolean).join(' ') || undefined
           }
-          className={`w-full px-4 py-3 bg-white border rounded-xl font-sans text-sm text-charcoal-900 
+          className={`w-full px-4 py-3 bg-white border rounded-xl font-sans text-sm text-charcoal-900
             placeholder:text-warm-300 transition-colors duration-200
             focus:outline-none focus:ring-2 focus:ring-gold-500/30 focus:border-gold-500
-            ${error && showError 
-              ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30' 
+            ${error && showError
+              ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30'
               : 'border-cream-300 hover:border-cream-400'
             }
             disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-cream-50`}
           {...props}
         />
-        
+
         {error && showError && (
-          <p 
+          <p
             id={errorId}
             role="alert"
             className="mt-1.5 font-sans text-xs text-red-500 flex items-center gap-1"
@@ -93,7 +93,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
 
     return (
       <div className={`form-field ${className}`}>
-        <label 
+        <label
           htmlFor={inputId}
           className="block font-sans text-sm font-semibold text-charcoal-800 mb-1.5"
         >
@@ -105,13 +105,13 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
             <span className="sr-only">(required)</span>
           )}
         </label>
-        
+
         {hint && (
           <p id={hintId} className="font-sans text-xs text-warm-500 mb-1.5">
             {hint}
           </p>
         )}
-        
+
         <textarea
           ref={ref}
           id={inputId}
@@ -123,19 +123,19 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
               hint ? hintId : null,
             ].filter(Boolean).join(' ') || undefined
           }
-          className={`w-full px-4 py-3 bg-white border rounded-xl font-sans text-sm text-charcoal-900 
+          className={`w-full px-4 py-3 bg-white border rounded-xl font-sans text-sm text-charcoal-900
             placeholder:text-warm-300 transition-colors duration-200 resize-none
             focus:outline-none focus:ring-2 focus:ring-gold-500/30 focus:border-gold-500
-            ${error && showError 
-              ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30' 
+            ${error && showError
+              ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30'
               : 'border-cream-300 hover:border-cream-400'
             }
             disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-cream-50`}
           {...props}
         />
-        
+
         {error && showError && (
-          <p 
+          <p
             id={errorId}
             role="alert"
             className="mt-1.5 font-sans text-xs text-red-500 flex items-center gap-1"
@@ -172,7 +172,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
 
     return (
       <div className={`form-field ${className}`}>
-        <label 
+        <label
           htmlFor={inputId}
           className="block font-sans text-sm font-semibold text-charcoal-800 mb-1.5"
         >
@@ -184,13 +184,13 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
             <span className="sr-only">(required)</span>
           )}
         </label>
-        
+
         {hint && (
           <p id={hintId} className="font-sans text-xs text-warm-500 mb-1.5">
             {hint}
           </p>
         )}
-        
+
         <div className="relative">
           <select
             ref={ref}
@@ -203,11 +203,11 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                 hint ? hintId : null,
               ].filter(Boolean).join(' ') || undefined
             }
-            className={`w-full px-4 py-3 bg-white border rounded-xl font-sans text-sm text-charcoal-900 
+            className={`w-full px-4 py-3 bg-white border rounded-xl font-sans text-sm text-charcoal-900
               appearance-none cursor-pointer transition-colors duration-200
               focus:outline-none focus:ring-2 focus:ring-gold-500/30 focus:border-gold-500
-              ${error && showError 
-                ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30' 
+              ${error && showError
+                ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30'
                 : 'border-cream-300 hover:border-cream-400'
               }
               disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-cream-50`}
@@ -224,16 +224,16 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
               </option>
             ))}
           </select>
-          
+
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <svg className="w-5 h-5 text-warm-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
-        
+
         {error && showError && (
-          <p 
+          <p
             id={errorId}
             role="alert"
             className="mt-1.5 font-sans text-xs text-red-500 flex items-center gap-1"

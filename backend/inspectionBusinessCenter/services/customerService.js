@@ -15,7 +15,7 @@ class CustomerService {
    */
   async getCustomers(providerId, filters = {}) {
     const query = { provider_id: providerId };
-    
+
     if (filters.type) {
       query.customer_type = filters.type;
     }
@@ -106,7 +106,7 @@ class CustomerService {
    */
   async getCustomerHistory(customerId) {
     const customer = await this.getCustomerById(customerId);
-    
+
     const bookings = await db.find('inspection_bookings', {
       customer_id: customer.user_id,
     }, { sort: { created_at: -1 } });
@@ -277,7 +277,7 @@ class FinanceService {
    */
   async getTransactions(providerId, filters = {}) {
     const query = { provider_id: providerId };
-    
+
     if (filters.type) {
       query.transaction_type = filters.type;
     }

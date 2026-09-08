@@ -40,14 +40,14 @@ function MobileFilterDrawer({
   // Handle escape key
   useEffect(() => {
     if (!open) return;
-    
+
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
     };
-    
+
     document.addEventListener('keydown', handleEsc);
     document.body.style.overflow = 'hidden';
-    
+
     return () => {
       document.removeEventListener('keydown', handleEsc);
       document.body.style.overflow = '';
@@ -110,15 +110,15 @@ function MobileFilterDrawer({
 
   const panel = (
     <div className="mobile-filter-drawer" role="dialog" aria-modal="true" aria-label="Filter vehicles">
-      <div 
-        className="mobile-filter-overlay" 
+      <div
+        className="mobile-filter-overlay"
         onClick={onClose}
         aria-hidden="true"
       />
-      
+
       <div className="mobile-filter-panel">
         <div className="mobile-filter-handle" aria-hidden="true" />
-        
+
         <div className="mobile-filter-header">
           <h2 className="mobile-filter-title">
             Filters
@@ -126,7 +126,7 @@ function MobileFilterDrawer({
               <span className="mobile-filter-count">({activeFilterCount()})</span>
             )}
           </h2>
-          <button 
+          <button
             className="mobile-filter-close"
             onClick={onClose}
             aria-label="Close filters"
@@ -135,8 +135,8 @@ function MobileFilterDrawer({
           </button>
         </div>
 
-        <div 
-          className="mobile-filter-content" 
+        <div
+          className="mobile-filter-content"
           ref={contentRef}
           onScroll={(e) => {
             // Prevent body scroll when drawer is open
@@ -291,7 +291,7 @@ function MobileFilterDrawer({
                 { key: 'verifiedOnly', label: '✓ Verified Dealers', desc: 'Verified dealer listings only' },
                 { key: 'inspectedOnly', label: '🔍 Inspected Vehicles', desc: 'Vehicles with inspection reports' },
               ].map(filter => (
-                <label key={filter.key} className="mobile-form__checkbox" style={{ 
+                <label key={filter.key} className="mobile-form__checkbox" style={{
                   background: localFilters[filter.key] ? 'var(--gold-100)' : 'var(--surface)',
                   borderColor: localFilters[filter.key] ? 'var(--gold-400)' : 'var(--border)',
                   borderRadius: 'var(--mobile-radius-md)',
@@ -303,9 +303,9 @@ function MobileFilterDrawer({
                     onChange={(e) => handleChipSelect(filter.key, e.target.checked)}
                     style={{ display: 'none' }}
                   />
-                  <div 
+                  <div
                     className="mobile-form__checkbox-box"
-                    style={{ 
+                    style={{
                       background: localFilters[filter.key] ? 'var(--gold-500)' : 'transparent',
                       borderColor: localFilters[filter.key] ? 'var(--gold-500)' : 'var(--border-light)',
                     }}
@@ -325,14 +325,14 @@ function MobileFilterDrawer({
         </div>
 
         <div className="mobile-filter-footer">
-          <button 
+          <button
             className="mobile-btn mobile-btn--secondary mobile-btn--sm"
             onClick={handleReset}
             style={{ flex: 1 }}
           >
             Reset All
           </button>
-          <button 
+          <button
             className="mobile-btn mobile-btn--primary mobile-btn--sm"
             onClick={handleApply}
             style={{ flex: 2 }}

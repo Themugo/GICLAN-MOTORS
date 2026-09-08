@@ -123,7 +123,7 @@ export const uploadToSupabase = async (file, folder = "cars") => {
       if (dims.width) params.set("width", dims.width.toString());
       if (dims.height) params.set("height", dims.height.toString());
       if (name === "blur") params.set("quality", "10");
-      
+
       const queryString = params.toString();
       variants[name] = queryString ? `${baseUrl}?${queryString}` : baseUrl;
     }
@@ -185,7 +185,7 @@ export const getSupabasePublicUrl = (path) => {
 
 export const isStorageConnected = () => supabaseConnected;
 
-export const getStorageProvider = () => 
+export const getStorageProvider = () =>
   supabaseConnected ? "supabase" : "cloudinary-fallback";
 
 export default {

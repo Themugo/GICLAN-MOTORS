@@ -76,10 +76,10 @@ export const GlobalSearchSection: FC = () => {
   return (
     <section className="relative z-30 -mt-8 sm:-mt-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       <div className="bg-[#1E3063] dark:bg-[#121D33] text-white rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/20 dark:border-white/10 backdrop-blur-xl space-y-4">
-        
+
         {/* Top Search Input & Quick Filters */}
         <form onSubmit={handleSearch} className="flex flex-col lg:flex-row items-center gap-3">
-          
+
           {/* Main Keyword Search */}
           <div className="relative flex-1 w-full">
             <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[#00C9CE]" />
@@ -94,7 +94,7 @@ export const GlobalSearchSection: FC = () => {
 
           {/* Quick Dropdowns Row */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full lg:w-auto">
-            
+
             {/* Make Selector */}
             <select
               value={selectedMake}
@@ -166,7 +166,7 @@ export const GlobalSearchSection: FC = () => {
         {/* Expanded Filters Section */}
         {isExpandedFilters && (
           <div className="pt-3 border-t border-white/15 grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fadeIn">
-            
+
             <div>
               <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-300 block mb-1">
                 Location

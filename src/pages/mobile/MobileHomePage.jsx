@@ -1,13 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Search, ChevronRight, TrendingUp, Clock, 
+import {
+  Search, ChevronRight, TrendingUp, Clock,
   Shield, Zap, Car, ArrowRight, Bell, Plus,
   MapPin, Star, Award, Users
 } from 'lucide-react';
 
 // Import mobile components
-import { 
+import {
   MobileBottomNav,
   MobileSearchBar,
   MobileCarousel,
@@ -201,9 +201,9 @@ export default function MobileHomePage() {
       </MobileHeroHeader>
 
       {/* Main scrollable content */}
-      <div 
+      <div
         className="mobile-scroll-container"
-        style={{ 
+        style={{
           flex: 1,
           paddingBottom: 'calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 20px)',
         }}
@@ -229,7 +229,7 @@ export default function MobileHomePage() {
 
         {/* Live Auctions Banner */}
         <div style={{ padding: '0 16px', marginBottom: 24 }}>
-          <Link 
+          <Link
             to="/auctions"
             style={{
               display: 'flex',
@@ -256,9 +256,9 @@ export default function MobileHomePage() {
               ⚡
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ 
-                fontSize: 14, 
-                fontWeight: 700, 
+              <div style={{
+                fontSize: 14,
+                fontWeight: 700,
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
@@ -290,8 +290,8 @@ export default function MobileHomePage() {
               FEATURED_CARS.map((car, i) => (
                 <CarouselItem key={car._id}>
                   <div className="mobile-list-item" style={{ animationDelay: `${i * 0.05}s` }}>
-                    <VehicleCard 
-                      car={car} 
+                    <VehicleCard
+                      car={car}
                       variant="horizontal"
                       featured
                       onSave={handleFavorite}
@@ -305,14 +305,14 @@ export default function MobileHomePage() {
 
         {/* Trust Badges */}
         <Section title="Why KAYAD">
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(3, 1fr)', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 12,
             padding: '0 16px',
           }}>
             {TRUST_BADGES.map((badge, i) => (
-              <div 
+              <div
                 key={i}
                 className="mobile-list-item"
                 style={{
@@ -346,7 +346,7 @@ export default function MobileHomePage() {
             ) : (
               <div style={{ display: 'grid', gap: 16 }}>
                 {FEATURED_CARS.slice(0, 2).map((car, i) => (
-                  <div 
+                  <div
                     key={car._id}
                     className="mobile-list-item"
                     style={{ animationDelay: `${i * 0.05}s` }}
@@ -358,7 +358,7 @@ export default function MobileHomePage() {
             )}
           </div>
           <div style={{ padding: '16px 16px 0' }}>
-            <button 
+            <button
               className="mobile-btn mobile-btn--secondary mobile-btn--full"
               onClick={() => navigate('/browse')}
             >

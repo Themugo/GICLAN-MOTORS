@@ -20,7 +20,7 @@ class VehiclePassportService {
 
     // Check if passport exists
     let passport = await this.findPassport(vin, chassisNumber, registrationNumber);
-    
+
     if (passport) {
       // Update if new data provided
       if (this.hasNewData(passport, vehicleData)) {
@@ -392,9 +392,9 @@ class VehiclePassportService {
    * Get public documents only
    */
   async getPublicDocuments(passportId) {
-    return db.find('vehicle_documents', { 
-      passport_id: passportId, 
-      visibility: 'public' 
+    return db.find('vehicle_documents', {
+      passport_id: passportId,
+      visibility: 'public'
     }, { sort: { created_at: -1 } });
   }
 
@@ -453,7 +453,7 @@ class VehiclePassportService {
     ]);
 
     const scores = await this.calculateTrustScores(passportId, { inspections, ownership, services, documents });
-    
+
     await db.update('vehicle_passports', passportId, {
       ...scores,
       updated_at: new Date(),
@@ -477,39 +477,39 @@ class VehiclePassportService {
    */
   async updateBadges(passportId, data) {
     const { inspections, ownership, services, documents } = data;
-    
+
     const badgeCriteria = [
-      { 
-        code: 'verified_identity', 
+      {
+        code: 'verified_identity',
         name: 'Verified Identity',
-        condition: (d) => d.inspections?.some(i => i.overall_score >= 80) 
+        condition: (d) => d.inspections?.some(i => i.overall_score >= 80)
       },
-      { 
-        code: 'verified_ownership', 
+      {
+        code: 'verified_ownership',
         name: 'Verified Ownership',
         condition: (d) => d.ownership?.some(o => o.is_verified)
       },
-      { 
-        code: 'verified_inspection', 
+      {
+        code: 'verified_inspection',
         name: 'Verified Inspection',
         condition: (d) => d.inspections?.length >= 1
       },
-      { 
-        code: 'verified_service', 
+      {
+        code: 'verified_service',
         name: 'Verified Service',
         condition: (d) => d.services?.some(s => s.is_verified)
       },
-      { 
-        code: 'verified_documentation', 
+      {
+        code: 'verified_documentation',
         name: 'Verified Documentation',
         condition: (d) => d.documents?.some(d => d.is_verified)
       },
     ];
 
     for (const badge of badgeCriteria) {
-      const existing = await db.findOne('verification_badges', { 
-        passport_id: passportId, 
-        badge_code: badge.code 
+      const existing = await db.findOne('verification_badges', {
+        passport_id: passportId,
+        badge_code: badge.code
       });
 
       const qualifies = badge.condition(data);
@@ -563,7 +563,7 @@ class VehiclePassportService {
    */
   async searchPassports(query, options = {}) {
     const searchQuery = {};
-    
+
     if (query.vin) searchQuery.vin = { $regex: query.vin, $options: 'i' };
     if (query.registration) searchQuery.registration_number = { $regex: query.registration, $options: 'i' };
     if (query.make) searchQuery.make = { $regex: query.make, $options: 'i' };

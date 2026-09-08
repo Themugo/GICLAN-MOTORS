@@ -45,7 +45,7 @@ class DataExchangeService {
     // Simulated historical data
     const trends = [];
     const now = new Date();
-    
+
     for (let i = 11; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       trends.push({
@@ -603,7 +603,7 @@ class DataExchangeService {
     if (product.access_level === 'internal') return { allowed: false, reason: 'Internal access only' };
 
     if (subscription) {
-      const hasAccess = subscription.products.includes(productCode) || 
+      const hasAccess = subscription.products.includes(productCode) ||
                         subscription.access_level === product.access_level;
       return { allowed: hasAccess, reason: hasAccess ? null : 'Subscription does not include this product' };
     }

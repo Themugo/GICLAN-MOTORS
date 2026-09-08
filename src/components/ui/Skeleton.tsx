@@ -16,7 +16,7 @@ export function Skeleton({
   animation = 'pulse',
 }: SkeletonProps) {
   const baseClasses = 'bg-cream-200';
-  
+
   const animationClasses = {
     pulse: 'animate-pulse',
     wave: 'animate-shimmer',
@@ -51,22 +51,22 @@ export function CardSkeleton({ count = 1 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="bg-white rounded-2xl border border-cream-200 overflow-hidden">
           {/* Image */}
-          <Skeleton 
-            variant="rectangular" 
-            className="aspect-[16/10] w-full" 
+          <Skeleton
+            variant="rectangular"
+            className="aspect-[16/10] w-full"
             animation="wave"
           />
-          
+
           {/* Content */}
           <div className="p-4 space-y-3">
             <Skeleton variant="text" width="40%" height={14} />
             <Skeleton variant="text" width="80%" height={20} />
-            
+
             <div className="flex gap-2">
               <Skeleton variant="text" width="30%" height={14} />
               <Skeleton variant="text" width="20%" height={14} />
             </div>
-            
+
             <Skeleton variant="text" width="50%" height={16} />
           </div>
         </div>
@@ -94,11 +94,11 @@ export function ListItemSkeleton({ count = 3 }: { count?: number }) {
 }
 
 // Table skeleton
-export function TableSkeleton({ 
-  rows = 5, 
-  columns = 4 
-}: { 
-  rows?: number; 
+export function TableSkeleton({
+  rows = 5,
+  columns = 4
+}: {
+  rows?: number;
   columns?: number;
 }) {
   return (
@@ -109,18 +109,18 @@ export function TableSkeleton({
           <Skeleton key={i} variant="text" className="flex-1" height={14} />
         ))}
       </div>
-      
+
       {/* Rows */}
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div 
-          key={rowIndex} 
+        <div
+          key={rowIndex}
           className="flex items-center gap-4 p-4 border-b border-cream-100 last:border-0"
         >
           {Array.from({ length: columns }).map((_, colIndex) => (
-            <Skeleton 
-              key={colIndex} 
-              variant="text" 
-              className="flex-1" 
+            <Skeleton
+              key={colIndex}
+              variant="text"
+              className="flex-1"
               height={14}
               width={colIndex === 0 ? '80%' : '60%'}
             />
@@ -142,7 +142,7 @@ export function ProfileSkeleton() {
           <Skeleton variant="text" width={120} height={14} />
         </div>
       </div>
-      
+
       <div className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4 p-4 bg-cream-50 rounded-xl">
@@ -169,7 +169,7 @@ export function PageSkeleton() {
           <Skeleton variant="text" width={300} height={16} />
         </div>
       </div>
-      
+
       {/* Content skeleton */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Stats */}
@@ -181,7 +181,7 @@ export function PageSkeleton() {
             </div>
           ))}
         </div>
-        
+
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <CardSkeleton count={6} />
@@ -210,7 +210,7 @@ export function ChatSkeleton() {
           ))}
         </div>
       </div>
-      
+
       {/* Main */}
       <div className="flex-1 flex flex-col">
         <div className="p-4 border-b border-cream-200 bg-white">
@@ -219,9 +219,9 @@ export function ChatSkeleton() {
         <div className="flex-1 p-4 space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={`flex ${i % 2 === 0 ? '' : 'justify-end'}`}>
-              <Skeleton 
-                variant="rounded" 
-                width={200} 
+              <Skeleton
+                variant="rounded"
+                width={200}
                 height={60}
                 className={i % 2 === 0 ? '' : 'ml-auto'}
               />
@@ -258,19 +258,19 @@ export function EmptyState({
           {icon}
         </div>
       )}
-      
+
       <h3 className="font-serif text-xl text-charcoal-900 font-bold mb-2">
         {title}
       </h3>
-      
+
       {description && (
         <p className="font-sans text-sm text-warm-500 max-w-sm mb-6">
           {description}
         </p>
       )}
-      
+
       {action && <div className="mt-2">{action}</div>}
-      
+
       {secondaryAction && (
         <div className="mt-3">{secondaryAction}</div>
       )}

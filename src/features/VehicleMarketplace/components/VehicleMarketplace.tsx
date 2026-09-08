@@ -104,7 +104,7 @@ export const VehicleMarketplace: React.FC<VehicleMarketplaceProps> = ({
   const [minYear, setMinYear] = useState<number>(2005);
   const [maxYear, setMaxYear] = useState<number>(2026);
   const [maxMileage, setMaxMileage] = useState<number>(250000);
-  
+
   // Boolean Feature Toggles
   const [onlyAuction, setOnlyAuction] = useState<boolean>(false);
 
@@ -246,8 +246,8 @@ export const VehicleMarketplace: React.FC<VehicleMarketplaceProps> = ({
   }, [serverVehicles]);
 
   const models = useMemo(() => {
-    const source = selectedMake === 'All' 
-      ? serverVehicles 
+    const source = selectedMake === 'All'
+      ? serverVehicles
       : serverVehicles.filter((v) => v.make.toLowerCase() === selectedMake.toLowerCase());
     const list = Array.from(new Set(source.map((v) => v.model).filter(Boolean))).sort();
     return ['All', ...list];
@@ -335,8 +335,8 @@ export const VehicleMarketplace: React.FC<VehicleMarketplaceProps> = ({
     if (onlyAuction) list.push({ id: 'auction', label: 'Live Auction', onClear: () => setOnlyAuction(false) });
     return list;
   }, [
-    searchQuery, selectedCounty, selectedMake, selectedModel, selectedBodyStyle, 
-    selectedFuel, selectedTransmission, selectedSellerType, selectedCondition, 
+    searchQuery, selectedCounty, selectedMake, selectedModel, selectedBodyStyle,
+    selectedFuel, selectedTransmission, selectedSellerType, selectedCondition,
     maxPrice, minYear, maxYear, onlyAuction, onSearchChange, onCountyChange
   ]);
 

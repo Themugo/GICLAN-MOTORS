@@ -98,7 +98,7 @@ Minimum raised from 6 → 8 characters across all three enforcement points. 6 ch
 **After:** Global timeout 15s. Payment `initiate` has a 45s override.
 
 ### 22. Email verification not implemented (authController.js, models/User.js, email.service.js)
-**After:** 
+**After:**
 - `emailVerified`, `emailVerifyToken`, `emailVerifyExpire` fields added to User schema
 - `verifyEmail` and `resendVerification` handlers added to authController
 - `sendVerificationEmail` and `sendVerificationReminderEmail` added to email.service.js

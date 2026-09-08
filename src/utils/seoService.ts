@@ -99,10 +99,10 @@ export const generateVehicleMetadata = (car: Car): Metadata => {
   if (!car) return getDefaultMetadata();
 
   const title = `${car.year} ${car.brand} ${car.model} - ${car.price ? `KES ${car.price.toLocaleString()}` : 'For Sale'} | Kayad`;
-  const description = car.description 
+  const description = car.description
     ? `${car.description.substring(0, 160)}...`
     : `${car.year} ${car.brand} ${car.model} ${car.bodyType || ''} in ${car.location?.city || 'Kenya'}. ${car.transmission} transmission, ${car.fuel} fuel. ${car.mileage ? `${car.mileage.toLocaleString()} km` : ''}. View details and bid on Kayad.`;
-  
+
   const imageUrl = typeof car.images?.[0] === 'string' ? car.images[0] : car.images?.[0]?.url || `${BASE_URL}/icon-512.png`;
   const url = `${BASE_URL}/cars/${car._id}`;
 
@@ -174,10 +174,10 @@ export const generateDealerMetadata = (dealer: Dealer): Metadata => {
   if (!dealer) return getDefaultMetadata();
 
   const title = `${dealer.businessName || dealer.name} - Car Dealer in ${dealer.location?.city || 'Kenya'} | Kayad`;
-  const description = dealer.description 
+  const description = dealer.description
     ? `${dealer.description.substring(0, 160)}...`
     : `View ${dealer.businessName || dealer.name}'s car listings on Kayad. ${dealer.listingsCount || 0} vehicles available. ${dealer.location?.city || 'Kenya'}. Contact: ${dealer.phone || dealer.email}.`;
-  
+
   const imageUrl = dealer.logo || dealer.avatar || `${BASE_URL}/icon-512.png`;
   const url = `${BASE_URL}/dealer/${dealer._id}`;
 
@@ -254,7 +254,7 @@ export const generateAuctionMetadata = (auction: Auction): Metadata => {
   const description = car?.description
     ? `Live Auction: ${car.description.substring(0, 140)}...`
     : `Live auction for ${car?.year || ''} ${car?.brand || ''} ${car?.model || ''}. Current bid: KES ${bidAmount.toLocaleString()}. Ends ${auction.endTime ? new Date(auction.endTime).toLocaleString() : 'soon'}. Bid now on Kayad.`;
-  
+
   const imageUrl = typeof car?.images?.[0] === 'string' ? car.images[0] : car?.images?.[0]?.url || `${BASE_URL}/icon-512.png`;
   const url = `${BASE_URL}/auctions/${auction._id}`;
 

@@ -5,13 +5,13 @@
 // ─────────────────────────────────────────────────────────────
 
 import { logInfo, logWarn, logError } from "../utils/logger.js";
-import { findAll, findById, create, count, aggregate } from "../db/index.js";
+import { findAll, findById, create, count } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
 
 // =============================
 // 📝 LOG ESCROW ACTION
 // =============================
-const logEscrowAction = async (escrowId, action, userId, req, options = {}) => {
+export const logEscrowAction = async (escrowId, action, userId, req, options = {}) => {
   try {
     // Get IP address from request
     const ipAddress = getClientIp(req);

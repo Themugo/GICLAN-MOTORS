@@ -1,13 +1,13 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { 
-  Search, SlidersHorizontal, Grid3X3, List, 
+import {
+  Search, SlidersHorizontal, Grid3X3, List,
   ChevronDown, X, Clock, MapPin, Calendar,
   Gauge, Fuel, Zap, Filter, ArrowUpDown, Check
 } from 'lucide-react';
 
 // Import mobile components
-import { 
+import {
   MobileBottomNav,
   MobileSearchBar,
   MobileCarousel,
@@ -52,7 +52,7 @@ export default function MobileBrowsePage() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  
+
   const [filters, setFilters] = useState({
     brand: searchParams.get('brand') || 'All',
     fuel: 'All',
@@ -251,16 +251,16 @@ export default function MobileBrowsePage() {
           </div>
 
           {/* Sort and view controls */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
             marginTop: 12,
           }}>
             <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
               {isLoading ? 'Loading...' : `${total} vehicles`}
             </div>
-            
+
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {/* Sort dropdown */}
               <div style={{ position: 'relative' }}>
@@ -282,16 +282,16 @@ export default function MobileBrowsePage() {
                     <option key={s.id} value={s.id}>{s.label}</option>
                   ))}
                 </select>
-                <ChevronDown 
-                  size={14} 
-                  style={{ 
-                    position: 'absolute', 
-                    right: 10, 
-                    top: '50%', 
+                <ChevronDown
+                  size={14}
+                  style={{
+                    position: 'absolute',
+                    right: 10,
+                    top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'var(--text-muted)',
                     pointerEvents: 'none',
-                  }} 
+                  }}
                 />
               </div>
 
@@ -391,9 +391,9 @@ export default function MobileBrowsePage() {
       </header>
 
       {/* Main content */}
-      <div 
+      <div
         className="mobile-scroll-container"
-        style={{ 
+        style={{
           flex: 1,
           paddingTop: 'var(--mobile-space-4)',
           paddingBottom: 'calc(var(--bottom-nav-height) + var(--safe-area-bottom) + 20px)',
@@ -415,12 +415,12 @@ export default function MobileBrowsePage() {
         ) : (
           // Car grid/list
           <>
-            <div 
+            <div
               className={viewMode === 'grid' ? 'mobile-card-grid' : 'mobile-list-view'}
               style={viewMode === 'list' ? { padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 16 } : {}}
             >
               {cars.map((car, i) => (
-                <div 
+                <div
                   key={car._id}
                   className="mobile-list-item"
                   style={{ animationDelay: `${Math.min(i, 8) * 0.05}s` }}
@@ -432,10 +432,10 @@ export default function MobileBrowsePage() {
 
             {/* Load more sentinel */}
             {hasMore && (
-              <div 
+              <div
                 id="load-more-sentinel"
-                style={{ 
-                  padding: 24, 
+                style={{
+                  padding: 24,
                   textAlign: 'center',
                   display: 'flex',
                   justifyContent: 'center',
@@ -449,8 +449,8 @@ export default function MobileBrowsePage() {
 
             {/* End of results */}
             {!hasMore && cars.length > 0 && (
-              <div style={{ 
-                padding: 24, 
+              <div style={{
+                padding: 24,
                 textAlign: 'center',
                 color: 'var(--text-muted)',
                 fontSize: 13,

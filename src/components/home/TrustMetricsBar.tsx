@@ -64,7 +64,7 @@ export const TrustMetricsBar: FC = () => {
   return (
     <section className="py-10 bg-[#0B1628] dark:bg-[#080E1A] text-white border-y border-white/10 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header Label */}
         <div className="text-center mb-6">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300 text-[11px] font-mono font-bold uppercase tracking-widest">

@@ -10,7 +10,7 @@ export const PartnerEcosystem: FC = () => {
   return (
     <section className="py-10 bg-[#F6F1E8] dark:bg-[#080E1A] border-b border-[#E8E1D5] dark:border-white/10 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        
+
         {/* Header Label */}
         <div className="text-center">
           <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#6B7A99] dark:text-slate-400">

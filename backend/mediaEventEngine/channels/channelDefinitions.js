@@ -137,7 +137,7 @@ export const EventChannelMapping = {
   'auction.resumed': [ChannelType.PUBLIC_BROADCAST, ChannelType.BIDDER_ROOM, ChannelType.ORGANIZER_CONSUMLE],
   'auction.closed': [ChannelType.PUBLIC_BROADCAST, ChannelType.BIDDER_ROOM, ChannelType.NOTIFICATIONS, ChannelType.REPLAY_SERVICE],
   'auction.completed': [ChannelType.PUBLIC_BROADCAST, ChannelType.BIDDER_ROOM, ChannelType.ORGANIZER_CONSOLE, ChannelType.REPLAY_SERVICE],
-  
+
   // Bidding channels
   'bid.new_highest': [
     ChannelType.PUBLIC_BROADCAST,
@@ -149,7 +149,7 @@ export const EventChannelMapping = {
   ],
   'reserve.met': [ChannelType.PUBLIC_BROADCAST, ChannelType.NOTIFICATIONS, ChannelType.REPLAY_SERVICE],
   'reserve.not_met': [ChannelType.PUBLIC_BROADCAST, ChannelType.BIDDER_ROOM],
-  
+
   // Time events
   'auction.final_five_minutes': [
     ChannelType.PUBLIC_BROADCAST,
@@ -168,17 +168,17 @@ export const EventChannelMapping = {
     ChannelType.BIDDER_ROOM,
     ChannelType.VIDEO_LAYER,
   ],
-  
+
   // Registration
   'registration.opened': [ChannelType.PUBLIC_BROADCAST, ChannelType.NOTIFICATIONS],
   'registration.closed': [ChannelType.PUBLIC_BROADCAST, ChannelType.ANALYTICS],
-  
+
   // Viewing
   'viewing.started': [ChannelType.PUBLIC_BROADCAST],
   'viewing.closed': [ChannelType.PUBLIC_BROADCAST],
   'inspection.booked': [ChannelType.BIDDER_ROOM],
   'inspection.completed': [ChannelType.BIDDER_ROOM, ChannelType.ANALYTICS],
-  
+
   // Outcome
   'winner.confirmed': [
     ChannelType.BIDDER_ROOM,
@@ -187,12 +187,12 @@ export const EventChannelMapping = {
     ChannelType.REPLAY_SERVICE,
   ],
   'certificate.issued': [ChannelType.BIDDER_ROOM, ChannelType.ORGANIZER_CONSOLE],
-  
+
   // Payment
   'payment.pending': [ChannelType.BIDDER_ROOM, ChannelType.ORGANIZER_CONSOLE, ChannelType.NOTIFICATIONS],
   'payment.received': [ChannelType.BIDDER_ROOM, ChannelType.ORGANIZER_CONSOLE, ChannelType.NOTIFICATIONS],
   'vehicle.collected': [ChannelType.BIDDER_ROOM, ChannelType.ORGANIZER_CONSOLE, ChannelType.ANALYTICS],
-  
+
   // Administrative
   'auction.cancelled': [
     ChannelType.PUBLIC_BROADCAST,

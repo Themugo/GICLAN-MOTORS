@@ -1,6 +1,6 @@
 /**
  * Escrow Release E2E Tests
- * 
+ *
  * Tests for escrow release workflow
  * Covers: happy paths, edge cases, failure scenarios
  */
@@ -18,7 +18,7 @@ test.describe('Escrow Release Workflow', () => {
     // Login as dealer
     const dealerCredentials = AuthHelper.getTestUser('dealer');
     dealerToken = await ApiHelper.loginApi(request, dealerCredentials.email, dealerCredentials.password);
-    
+
     // Create funded escrow
     const escrow = await ApiHelper.createEscrow(request, dealerToken, {
       vehicleId: 'test-vehicle-id',
@@ -42,7 +42,7 @@ test.describe('Escrow Release Workflow', () => {
 
       // Confirm delivery
       await page.click('button:has-text("Confirm Delivery")');
-      
+
       // Confirm release
       await page.click('button:has-text("Release Funds")');
       await page.click('button:has-text("Confirm Release")');

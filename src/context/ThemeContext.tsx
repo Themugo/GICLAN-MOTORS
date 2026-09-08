@@ -47,7 +47,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Apply theme to document
   const applyTheme = useCallback((darkMode: boolean) => {
     if (typeof document === 'undefined') return;
-    
+
     if (darkMode) {
       document.documentElement.classList.add('dark');
       document.documentElement.setAttribute('data-theme', 'dark');
@@ -83,7 +83,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = () => applyTheme(calculateDarkMode('system'));
-    
+
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
   }, [theme, applyTheme, calculateDarkMode]);

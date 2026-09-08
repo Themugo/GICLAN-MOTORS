@@ -12,7 +12,6 @@ import { getIO } from "../utils/io.js";
 import { addNotificationJob } from "../queues/notificationQueue.js";
 import { addEmailJob } from "../queues/emailQueue.js";
 import { findAll, findById, create, update } from "../db/index.js";
-import { isSupabaseConnected } from "../utils/supabase.js";
 
 let cronEmailService = {};
 try {
@@ -146,6 +145,6 @@ export const startAuctionReminderCron = () => {
   return _cronHandle;
 };
 
-const stopAuctionReminderCron = () => {
+export const stopAuctionReminderCron = () => {
   if (_cronHandle) clearInterval(_cronHandle);
 };

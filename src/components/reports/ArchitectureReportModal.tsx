@@ -25,7 +25,7 @@ export const ArchitectureReportModal: React.FC<ArchitectureReportModalProps> = (
             <span>Executive Architecture Declaration</span>
           </div>
           <p className="text-sm leading-relaxed text-slate-700 dark:text-[#94A3B8]">
-            This application represents the complete <strong>KAYAD Automotive Marketplace</strong>. 
+            This application represents the complete <strong>KAYAD Automotive Marketplace</strong>.
             All core functional modules—including M-Pesa escrow state engines, live auction timers, 150-Point Ghost Check audits, dealer permission systems, and buyer/seller workspaces—are fully integrated and operational.
           </p>
         </div>

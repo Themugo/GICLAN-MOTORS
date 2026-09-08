@@ -23,7 +23,7 @@ const migration = read('supabase/migrations/20260907070000_inspection_marketplac
 
 pass('inspection services use the real DB adapter',
   [provider, booking, report, settlement].every((s) => s.includes("from './dbAdapter.js'")));
-pass('canonical singular inspection API is mounted', server.includes('app.use("/api/inspection", inspectionMarketplaceRoutes);'));
+pass('canonical singular inspection API is mounted', server.includes('app.use("/api/inspection", inspectionRoutes);'));
 pass('plural inspection API remains backward compatible', server.includes('app.use("/api/inspections", inspectionRoutes);'));
 pass('provider routes enforce ownership',
   (routes.match(/requireProviderOwnership/g) || []).length >= 14);

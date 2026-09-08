@@ -52,7 +52,7 @@ export async function getTemplates(req, res) {
 
 export async function getTemplateDetails(req, res) {
   const { templateId } = req.params;
-  
+
   const template = {
     id: templateId,
     name: 'Vehicle Marketplace',
@@ -121,7 +121,7 @@ export async function generateProduct(req, res) {
 
 export async function getGenerationStatus(req, res) {
   const { productId } = req.params;
-  
+
   const status = {
     productId,
     status: 'generating',
@@ -159,7 +159,7 @@ export async function getProducts(req, res) {
 
 export async function getProductDetails(req, res) {
   const { productId } = req.params;
-  
+
   const product = {
     id: productId,
     name: 'KAYAD Cars',
@@ -215,7 +215,7 @@ export async function deleteProduct(req, res) {
 
 export async function getComponents(req, res) {
   const { category } = req.query;
-  
+
   const components = [
     // Marketplace Components
     { id: '1', name: 'Vehicle Card', category: 'marketplace', type: 'card', usage: 95, popularity: 98 },
@@ -310,7 +310,7 @@ export async function getBrands(req, res) {
 
 export async function getBrandDetails(req, res) {
   const { brandId } = req.params;
-  
+
   const brand = {
     id: brandId,
     name: 'KAYAD Cars',
@@ -359,7 +359,7 @@ export async function updateBrand(req, res) {
 
 export async function getDeployments(req, res) {
   const { productId } = req.query;
-  
+
   const deployments = [
     { id: '1', productId, environment: 'development', status: 'active', url: 'dev.kayad.co.ke', lastDeploy: new Date().toISOString() },
     { id: '2', productId, environment: 'staging', status: 'active', url: 'staging.kayad.co.ke', lastDeploy: new Date(Date.now() - 86400000).toISOString() },
@@ -431,7 +431,7 @@ export async function installApp(req, res) {
 
 export async function designProduct(req, res) {
   const { description } = req.body;
-  
+
   const design = {
     id: 'design_' + Date.now(),
     description,
@@ -452,7 +452,7 @@ export async function designProduct(req, res) {
 
 export async function getDesignStatus(req, res) {
   const { designId } = req.params;
-  
+
   const status = {
     designId,
     status: 'completed',

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Bell, 
-  X, 
-  TrendingDown, 
-  Tag, 
-  CheckCircle2, 
-  Sparkles, 
-  Smartphone, 
-  Mail, 
-  Zap, 
+import {
+  Bell,
+  X,
+  TrendingDown,
+  Tag,
+  CheckCircle2,
+  Sparkles,
+  Smartphone,
+  Mail,
+  Zap,
   AlertCircle,
   Trash2,
   BellRing
@@ -142,7 +142,7 @@ export const PriceAlertModal: FC<PriceAlertModalProps> = ({
           </div>
 
           <form onSubmit={handleSaveAlert} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-            
+
             {/* Vehicle Summary Banner */}
             <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-[#F6F1E8] border border-[#E2D8C7]">
               <img

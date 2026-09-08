@@ -14,7 +14,7 @@ export const BuyerProtectionNotice: React.FC<BuyerProtectionNoticeProps> = ({
   showReadMore = false,
 }) => {
   const baseText = `This auction is conducted independently by the verified organizer shown above.`;
-  
+
   const fullText = `This auction is conducted independently by the verified organizer shown above. KAYAD provides the digital marketplace and auction technology but does not receive auction bid security deposits or vehicle purchase payments. All financial transactions are handled directly between the buyer and the auction organizer.`;
 
   // Compact variant - for use in headers
@@ -102,8 +102,8 @@ export const CompactProtectionNotice: React.FC = () => (
 );
 
 // Trust statement footer for pages
-export const TrustFooter: React.FC<{ organizerName?: string }> = ({ 
-  organizerName = 'the auction organizer' 
+export const TrustFooter: React.FC<{ organizerName?: string }> = ({
+  organizerName = 'the auction organizer'
 }) => (
   <div className="flex items-center justify-center gap-6 py-4 border-t border-slate-200 bg-slate-50">
     <div className="flex items-center gap-2 text-xs text-slate-600">

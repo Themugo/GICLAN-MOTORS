@@ -15,7 +15,7 @@ function TestComp({ options }) {
 class MockIntersectionObserver {
   static instances = [];
   static lastCallback = null;
-  
+
   constructor(callback, options = {}) {
     this.callback = callback;
     this.options = options;
@@ -27,7 +27,7 @@ class MockIntersectionObserver {
   unobserve() {}
   disconnect() {}
   takeRecords() { return []; }
-  
+
   // Helper to trigger callback for testing
   triggerCallback(entries) {
     this.callback(entries, this);

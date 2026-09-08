@@ -1,6 +1,6 @@
 /**
  * VehicleCard - Premium Vehicle Card Styles
- * 
+ *
  * Design principles:
  * - Luxury is subtle, never flashy
  * - Clear visual hierarchy
@@ -19,7 +19,7 @@
   --vc-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --vc-card-shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.12);
   --vc-card-shadow-lift: 0 6px 24px rgba(0, 0, 0, 0.1);
-  
+
   /* Typography */
   --vc-card-title-size: 15px;
   --vc-card-title-weight: 600;
@@ -27,7 +27,7 @@
   --vc-card-price-weight: 700;
   --vc-card-meta-size: 12px;
   --vc-card-spec-size: 11px;
-  
+
   /* Colors */
   --vc-card-bg: var(--color-bg-elevated, #ffffff);
   --vc-card-border: var(--color-border, rgba(0, 0, 0, 0.08));
@@ -37,7 +37,7 @@
   --vc-card-brand: var(--color-brand, #16C4A4);
   --vc-card-brand-light: var(--color-brand-light, #80EDD8);
   --vc-card-brand-subtle: var(--color-brand-subtle, rgba(22, 196, 164, 0.1));
-  
+
   /* Spacing */
   --vc-card-padding: 16px;
   --vc-card-gap: 8px;
@@ -732,15 +732,15 @@
     opacity: 1;
     transform: translateY(0);
   }
-  
+
   .vc-card--horizontal {
     flex-direction: column;
   }
-  
+
   .vc-card--horizontal .vc-card__image-link {
     width: 100%;
   }
-  
+
   .vc-card--horizontal .vc-card__image-wrap {
     aspect-ratio: 16 / 10;
   }
@@ -798,11 +798,11 @@
     transition: none;
     animation: none;
   }
-  
+
   .vc-card:hover {
     transform: none;
   }
-  
+
   .vc-card:hover .vc-card__image {
     transform: none;
   }

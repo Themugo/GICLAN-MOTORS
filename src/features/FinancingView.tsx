@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Vehicle } from '../types';
-import { 
-  CreditCard, 
-  Calculator, 
-  ArrowRight, 
-  Landmark, 
-  CheckCircle2, 
-  Percent, 
-  FileCheck, 
-  Sparkles, 
-  ShieldCheck, 
+import {
+  CreditCard,
+  Calculator,
+  ArrowRight,
+  Landmark,
+  CheckCircle2,
+  Percent,
+  FileCheck,
+  Sparkles,
+  ShieldCheck,
   Building2,
   Clock,
   ChevronDown,
@@ -46,7 +46,7 @@ interface FinancingViewProps {
   onQuickViewVehicle?: (vehicle: Vehicle) => void;
 }
 
-export type ApplicationStatus = 
+export type ApplicationStatus =
   | 'Draft'
   | 'Submitted'
   | 'Documents Requested'
@@ -90,7 +90,7 @@ export const FinancingView: React.FC<FinancingViewProps> = ({
 
   // Comparison State
   const [selectedBankIds, setSelectedBankIds] = useState<string[]>([]);
-  
+
   // Application Form State
   const [activeTab, setActiveTab] = useState<'calculator' | 'lenders' | 'comparison' | 'tracker' | 'eligibility'>('calculator');
   const [selectedBankForApply, setSelectedBankForApply] = useState<PartnerBank | null>(null);
@@ -126,7 +126,7 @@ export const FinancingView: React.FC<FinancingViewProps> = ({
   const depositAmount = (vehiclePrice * depositPercent) / 100;
   const loanAmount = Math.max(0, vehiclePrice - depositAmount);
   const monthlyInterestRate = (annualInterestRate / 100) / 12;
-  
+
   const estimatedMonthly = useMemo(() => {
     if (loanAmount <= 0) return 0;
     if (monthlyInterestRate === 0) return loanAmount / tenureMonths;
@@ -364,10 +364,10 @@ export const FinancingView: React.FC<FinancingViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Controls Card (7 Cols) */}
           <Card className="lg:col-span-7 p-6 space-y-6 bg-white border-slate-200 shadow-xs">
-            
+
             {/* Employment Type Selector */}
             <div className="space-y-2">
               <label className="text-xs font-extrabold text-[#1E3063] uppercase tracking-wider font-display">
@@ -671,7 +671,7 @@ export const FinancingView: React.FC<FinancingViewProps> = ({
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-          
+
           <Card className="p-5 space-y-3 bg-white border-slate-200">
             <div className="flex items-center gap-2 font-extrabold text-[#1E3063] text-sm font-display">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -831,8 +831,8 @@ export const FinancingView: React.FC<FinancingViewProps> = ({
                 </Button>
               </div>
             ) : (
-              <form 
-                onSubmit={submitFinancingRequest} 
+              <form
+                onSubmit={submitFinancingRequest}
                 className="space-y-4 text-xs"
               >
                 {/* Summary Box */}

@@ -21,7 +21,7 @@ class CMSService {
    */
   async getWebsiteSettings() {
     let settings = await db.findOne('website_settings', { is_active: true });
-    
+
     if (!settings) {
       // Create default settings
       settings = await db.create('website_settings', {
@@ -44,7 +44,7 @@ class CMSService {
         updated_at: new Date(),
       });
     }
-    
+
     return settings;
   }
 
@@ -53,19 +53,19 @@ class CMSService {
    */
   async updateWebsiteSettings(settingsData, userId, userName) {
     let settings = await db.findOne('website_settings', { is_active: true });
-    
+
     // Create version before update
     if (settings) {
       await this.createContentVersion('settings', settings.id, settings, 'Website settings updated', userId, userName);
-      
+
       await db.update('website_settings', settings.id, {
         ...settingsData,
         updated_at: new Date(),
       });
-      
+
       settings = await db.findOne('website_settings', { is_active: true });
     }
-    
+
     // Log the change
     await this.logAudit({
       userId,
@@ -75,7 +75,7 @@ class CMSService {
       contentId: settings?.id,
       changeSummary: 'Website settings updated',
     });
-    
+
     return settings;
   }
 
@@ -91,9 +91,9 @@ class CMSService {
     if (!page) return null;
 
     // Get page sections (check visibility rules)
-    const allSections = await db.find('cms_page_sections', { 
-      page_id: page.id, 
-      is_active: true 
+    const allSections = await db.find('cms_page_sections', {
+      page_id: page.id,
+      is_active: true
     }, { sort: { ordering: 1 } });
 
     // Filter sections by visibility
@@ -102,11 +102,11 @@ class CMSService {
       // Check mobile/desktop visibility
       if (s.show_on_mobile === false) return false;
       if (s.show_on_desktop === false) return false;
-      
+
       // Check scheduling
       if (s.schedule_start && new Date(s.schedule_start) > now) return false;
       if (s.schedule_end && new Date(s.schedule_end) < now) return false;
-      
+
       return true;
     });
 
@@ -433,8 +433,8 @@ class CMSService {
    * Get car card config
    */
   async getCarCardConfig(configCode = 'default') {
-    const config = await db.findOne('cms_car_card_configs', { 
-      config_code: configCode 
+    const config = await db.findOne('cms_car_card_configs', {
+      config_code: configCode
     });
     if (!config) {
       // Return default config
@@ -449,8 +449,8 @@ class CMSService {
     }
     return {
       ...config,
-      fields_to_show: typeof config.fields_to_show === 'string' 
-        ? JSON.parse(config.fields_to_show) 
+      fields_to_show: typeof config.fields_to_show === 'string'
+        ? JSON.parse(config.fields_to_show)
         : config.fields_to_show,
       fields_order: typeof config.fields_order === 'string'
         ? JSON.parse(config.fields_order)
@@ -482,7 +482,7 @@ class CMSService {
    */
   async getActivePopup() {
     const now = new Date();
-    
+
     const popup = await db.findOne('cms_popups', {
       status: 'active',
       start_date: { $lte: now },
@@ -642,7 +642,7 @@ class CMSService {
    */
   async getActiveAnnouncement() {
     const now = new Date();
-    
+
     return db.findOne('cms_announcements', {
       status: 'active',
       start_date: { $lte: now },
@@ -659,7 +659,7 @@ class CMSService {
    */
   async getActivePromotions(userRole = 'all', countryCode = 'KE') {
     const now = new Date();
-    
+
     const promotions = await db.find('cms_promotions', {
       status: 'active',
       start_date: { $lte: now },
@@ -896,12 +896,12 @@ class CMSService {
     if (config) {
       // Create version
       await this.createContentVersion('seo', config.id, config, 'SEO config updated', userId, userName);
-      
+
       await db.update('cms_seo_configs', config.id, {
         ...configData,
         updated_at: new Date(),
       });
-      
+
       config = await db.findOne('cms_seo_configs', { is_active: true });
     } else {
       config = await db.create('cms_seo_configs', {
@@ -965,7 +965,7 @@ class CMSService {
    */
   async getUserPermissions(userId) {
     let permissions = await db.findOne('cms_user_permissions', { user_id: userId, is_active: true });
-    
+
     if (!permissions) {
       // Return default viewer permissions
       permissions = {
@@ -982,7 +982,7 @@ class CMSService {
         can_manage_seo: false,
       };
     }
-    
+
     return permissions;
   }
 
@@ -991,7 +991,7 @@ class CMSService {
    */
   async updateUserPermissions(userId, permissionsData) {
     let permissions = await db.findOne('cms_user_permissions', { user_id: userId });
-    
+
     if (permissions) {
       await db.update('cms_user_permissions', permissions.id, {
         ...permissionsData,
@@ -1009,7 +1009,7 @@ class CMSService {
         updated_at: new Date(),
       });
     }
-    
+
     return permissions;
   }
 
@@ -1061,8 +1061,8 @@ class CMSService {
     const version = await db.findById('cms_content_versions', versionId);
     if (!version) throw new Error('Version not found');
 
-    const snapshot = typeof version.snapshot === 'string' 
-      ? JSON.parse(version.snapshot) 
+    const snapshot = typeof version.snapshot === 'string'
+      ? JSON.parse(version.snapshot)
       : version.snapshot;
 
     // Restore based on content type
@@ -1080,7 +1080,7 @@ class CMSService {
         });
         break;
       case 'navigation':
-        await db.update('cms_navigations', version.content_id, {
+        await db.update('cms_navigation', version.content_id, {
           ...snapshot,
           updated_at: new Date(),
         });
@@ -1139,17 +1139,17 @@ class CMSService {
       a = ((a << 5) - a) + b.charCodeAt(0);
       return a & a;
     }, 0);
-    
+
     const random = Math.abs(hash) % 100;
     let cumulative = 0;
-    
+
     for (const variant of test.variants) {
       cumulative += variant.weight || 50;
       if (random < cumulative) {
         return variant;
       }
     }
-    
+
     return test.variants[0];
   }
 
@@ -1193,9 +1193,9 @@ class CMSService {
     }
 
     // Create default navigation
-    const existingNav = await db.findOne('cms_navigations', { nav_code: 'main' });
+    const existingNav = await db.findOne('cms_navigation', { nav_code: 'main' });
     if (!existingNav) {
-      const nav = await db.create('cms_navigations', {
+      const nav = await db.create('cms_navigation', {
         nav_code: 'main',
         nav_name: 'Main Navigation',
         settings: JSON.stringify({ sticky: true, transparent: false }),

@@ -13,17 +13,17 @@ interface UseApiOptions<T> {
   // Cache configuration
   ttl?: number; // Time to live in milliseconds (default: 30000 = 30s)
   staleTime?: number; // Time before data is considered stale (default: 60000 = 1m)
-  
+
   // Request configuration
   enabled?: boolean;
   revalidateOnFocus?: boolean;
   revalidateOnReconnect?: boolean;
   revalidateOnMount?: boolean;
-  
+
   // Optimistic updates
   optimisticUpdate?: (currentData: T | undefined, variables: any) => T;
   onOptimisticUpdate?: (data: T) => void;
-  
+
   // Callbacks
   onSuccess?: (data: T) => void;
   onError?: (error: Error) => void;
@@ -148,21 +148,21 @@ export function useApi<T>(
     const fetchPromise = fetcher()
       .then((result) => {
         if (!mountedRef.current) return undefined;
-        
+
         setCachedData(cacheKey.current, result);
         setData(result);
         setError(null);
         setIsStale(false);
         onSuccess?.(result);
-        
+
         return result;
       })
       .catch((err) => {
         if (!mountedRef.current || err.name === 'AbortError') return undefined;
-        
+
         setError(err);
         onError?.(err);
-        
+
         return undefined;
       })
       .finally(() => {
@@ -173,7 +173,7 @@ export function useApi<T>(
       });
 
     inflightRequests.set(cacheKey.current, fetchPromise as Promise<any>);
-    
+
     return fetchPromise;
   }, [fetcher, enabled, getCachedData, setCachedData, checkStale, onSuccess, onError]);
 
@@ -182,13 +182,13 @@ export function useApi<T>(
     if (!enabled) return;
 
     mountedRef.current = true;
-    
+
     // Check if we have cached data
     const cachedData = getCachedData(cacheKey.current);
     if (cachedData !== null) {
       setData(cachedData);
       setIsStale(checkStale(cacheKey.current));
-      
+
       // Revalidate if stale or on mount
       if (revalidateOnMount || checkStale(cacheKey.current)) {
         setIsLoading(true);
@@ -207,7 +207,7 @@ export function useApi<T>(
         }
       };
       window.addEventListener('focus', handleFocus);
-      
+
       return () => {
         window.removeEventListener('focus', handleFocus);
       };
@@ -243,10 +243,10 @@ export function useApi<T>(
 
   // Mutate function (optimistic updates)
   const mutate = useCallback((newData: T | ((prev: T | undefined) => T)) => {
-    const resolvedData = typeof newData === 'function' 
-      ? (newData as (prev: T | undefined) => T)(data) 
+    const resolvedData = typeof newData === 'function'
+      ? (newData as (prev: T | undefined) => T)(data)
       : newData;
-    
+
     setData(resolvedData);
     setCachedData(cacheKey.current, resolvedData);
   }, [data, setCachedData]);
@@ -334,7 +334,7 @@ export function preloadApi<T>(
 ): void {
   const cacheKey = getCacheKey(fetcher.toString().slice(0, 100), undefined);
   const cachedData = globalCache.get(cacheKey);
-  
+
   if (!cachedData || Date.now() - cachedData.timestamp > (options.ttl || 30000)) {
     fetcher().then((data) => {
       globalCache.set(cacheKey, { data, timestamp: Date.now() });
@@ -350,7 +350,7 @@ export function clearApiCache(pattern?: string): void {
     globalCache.clear();
     return;
   }
-  
+
   for (const key of globalCache.keys()) {
     if (key.includes(pattern)) {
       globalCache.delete(key);

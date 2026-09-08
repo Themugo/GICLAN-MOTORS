@@ -33,7 +33,7 @@ export const FeaturedVehicles: FC<FeaturedVehiclesProps> = ({ isLoading: propsIs
     // Quick search text match
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         v.title.toLowerCase().includes(q) ||
         v.make.toLowerCase().includes(q) ||
         v.model.toLowerCase().includes(q) ||
@@ -50,7 +50,7 @@ export const FeaturedVehicles: FC<FeaturedVehiclesProps> = ({ isLoading: propsIs
   return (
     <section className="bg-[#FCF9F4] pt-4 sm:pt-6 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 border-b border-[#E8E1D5] transition-colors">
       <div className="max-w-7xl mx-auto space-y-6">
-        
+
         {/* Section Header & Search Bar Row */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-[#E8E1D5]">
           <div>

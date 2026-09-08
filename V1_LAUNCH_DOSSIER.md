@@ -1,11 +1,11 @@
 # KAYAD Version 1.0 Launch Dossier
 ## Enterprise Platform Governance & Operations Manual
 
-**Document Version**: 1.0.0  
-**Platform Version**: KAYAD v1.0  
-**Release Date**: 2026-08-01  
-**Classification**: CONFIDENTIAL - Internal  
-**Status**: APPROVED FOR LAUNCH  
+**Document Version**: 1.0.0
+**Platform Version**: KAYAD v1.0
+**Release Date**: 2026-08-01
+**Classification**: CONFIDENTIAL - Internal
+**Status**: APPROVED FOR LAUNCH
 
 ---
 
@@ -292,28 +292,28 @@ const PERMISSION_CATEGORIES = {
   'users.edit': 'Edit user profiles',
   'users.delete': 'Delete users',
   'users.ban': 'Ban/unban users',
-  
+
   // Dealers
   'dealers.view': 'View dealer profiles',
   'dealers.approve': 'Approve dealers',
   'dealers.suspend': 'Suspend dealers',
-  
+
   // Listings
   'listings.create': 'Create listings',
   'listings.edit': 'Edit listings',
   'listings.delete': 'Delete listings',
   'listings.moderate': 'Moderate listings',
-  
+
   // Auctions
   'auctions.create': 'Create auctions',
   'auctions.bid': 'Place bids',
   'auctions.manage': 'Manage auctions',
-  
+
   // Finance
   'finance.view': 'View financial data',
   'finance.approve': 'Approve transactions',
   'finance.refund': 'Process refunds',
-  
+
   // Admin
   'admin.config': 'Configure platform',
   'admin.users': 'Manage admin users',
@@ -350,17 +350,17 @@ const FEATURE_FLAGS = {
   'escrow.enabled': true,
   'inspections.enabled': true,
   'financing.enabled': true,
-  
+
   // Beta Features
   'ai.recommendations': false,
   'ai.valuations': false,
   'website_builder.enabled': false,
-  
+
   // Regional
   'kenya.mpesa': true,
   'kenya.ntsa': true,
   'uganda.sales': false,
-  
+
   // Business Rules
   'escrow.auto_release': false,
   'auctions.reserve_required': true,
@@ -521,7 +521,7 @@ describe('POST /api/v1/auth/login', () => {
     const res = await request(app)
       .post('/api/v1/auth/login')
       .send({ email: 'test@example.com', password: 'password123' });
-    
+
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
   });
@@ -932,9 +932,9 @@ v1.2.3
 
 ### v1.0 → v1.1
 
-**Breaking Changes**: None  
-**Database Migrations**: 3 minor migrations  
-**Estimated Time**: 30 minutes  
+**Breaking Changes**: None
+**Database Migrations**: 3 minor migrations
+**Estimated Time**: 30 minutes
 
 ```bash
 # 1. Backup current state
@@ -956,12 +956,12 @@ npm run health-check
 
 ### v1.2 → v2.0
 
-**Breaking Changes**: 
+**Breaking Changes**:
 - JWT token format change
 - API response format standardization
 - Database schema normalization
 
-**Database Migrations**: 15 migrations  
+**Database Migrations**: 15 migrations
 **Estimated Time**: 2 hours (maintenance window required)
 
 ```bash

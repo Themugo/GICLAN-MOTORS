@@ -16,10 +16,10 @@ interface InternalNotesProps {
   onAddNote?: (content: string, isPrivate: boolean) => void;
 }
 
-export default function InternalNotes({ 
-  disputeId, 
-  initialNotes = [], 
-  onAddNote 
+export default function InternalNotes({
+  disputeId,
+  initialNotes = [],
+  onAddNote
 }: InternalNotesProps) {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [newNote, setNewNote] = useState('');
@@ -56,7 +56,7 @@ export default function InternalNotes({
           />
           <MessageSquare className="absolute right-3 top-3 h-5 w-5 text-gray-400" />
         </div>
-        
+
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <input
@@ -68,7 +68,7 @@ export default function InternalNotes({
             <Lock className="h-4 w-4" />
             Private note
           </label>
-          
+
           <button
             type="submit"
             disabled={!newNote.trim()}
@@ -98,7 +98,7 @@ export default function InternalNotes({
             <p className="text-sm text-gray-700">{note.content}</p>
           </div>
         ))}
-        
+
         {notes.length === 0 && (
           <p className="text-center text-sm text-gray-500 py-4">
             No internal notes yet

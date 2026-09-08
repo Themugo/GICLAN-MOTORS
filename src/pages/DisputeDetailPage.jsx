@@ -7,12 +7,12 @@ import { useSocket } from '../context/SocketContext';
 import { timeAgo, formatDate } from '../utils/helpers';
 import { ArrowLeft, Shield, Clock, User, AlertTriangle, Gavel, RotateCcw, Activity } from 'lucide-react';
 import { LoadingPage } from '../components/features/common/LoadingPage';
-import EvidenceUpload from '../components/EvidenceUpload';
+import EvidenceUpload from '../components/features/common/EvidenceUpload';
 import EvidenceTimeline from '../components/features/common/EvidenceTimeline';
 import InternalNotes from '../components/features/common/InternalNotes';
-import MediationPanel from '../components/MediationPanel';
-import ResolutionPanel from '../components/ResolutionPanel';
-import AppealPanel from '../components/AppealPanel';
+import MediationPanel from '../components/features/common/MediationPanel';
+import ResolutionPanel from '../components/features/common/ResolutionPanel';
+import AppealPanel from '../components/features/common/AppealPanel';
 
 const STATUS_META = {
   open:          { label: 'Open',           color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', icon: '🆕' },

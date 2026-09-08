@@ -147,18 +147,6 @@ export async function addNote({ escrowId, actorId, note, isPrivate = true }) {
   return toDispute(updated);
 }
 
-export async function assignDispute({ escrowId, actorId, assigneeId }) {
-  const escrow = await findById("escrows", escrowId);
-  if (!escrow || escrow.status !== "disputed") throw new Error("Dispute not found or inactive");
-  if (!assigneeId) throw new Error("Assignee is required");
-  const entry = { action: "Dispute assigned", actor: actorId, at: nowIso(), note: assigneeId };
-  const updated = await update("escrows", escrowId, {
-    disputeAssignedTo: assigneeId,
-    disputeTimeline: [...(escrow.disputeTimeline || []), entry],
-  });
-  return toDispute(updated);
-}
-
 export async function startMediation({ escrowId, actorId, mediatorId, scheduledAt }) {
   const dispute = await transitionWorkflow({ escrowId, actorId, role: "admin", nextStatus: STATES.MEDIATION, reason: "Mediation started" });
   const escrow = await findById("escrows", escrowId);

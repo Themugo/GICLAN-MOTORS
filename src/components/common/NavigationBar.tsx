@@ -24,8 +24,8 @@ const pageTitles: Record<PageView, string> = {
   about: 'About KAYAD'
 };
 
-export const NavigationBar: FC<NavigationBarProps> = ({ 
-  currentTitle, 
+export const NavigationBar: FC<NavigationBarProps> = ({
+  currentTitle,
   showBreadcrumbs = true,
   className = ''
 }) => {

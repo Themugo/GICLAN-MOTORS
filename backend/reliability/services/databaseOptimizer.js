@@ -28,41 +28,41 @@ class DatabaseOptimizer {
       { columns: ['vin'], name: 'idx_vehicles_vin', unique: true },
       { columns: ['listing_type', 'status'], name: 'idx_vehicles_type_status', unique: false },
     ],
-    
+
     // Users
     users: [
       { columns: ['email'], name: 'idx_users_email', unique: true },
       { columns: ['status', 'created_at'], name: 'idx_users_status_created', unique: false },
       { columns: ['dealer_id'], name: 'idx_users_dealer', unique: false },
     ],
-    
+
     // Dealers
     dealers: [
       { columns: ['status', 'verification_status'], name: 'idx_dealers_status_verification', unique: false },
       { columns: ['country', 'status'], name: 'idx_dealers_country_status', unique: false },
     ],
-    
+
     // Listings
     listings: [
       { columns: ['vehicle_id'], name: 'idx_listings_vehicle', unique: true },
       { columns: ['dealer_id', 'status'], name: 'idx_listings_dealer_status', unique: false },
       { columns: ['status', 'featured'], name: 'idx_listings_featured', unique: false },
     ],
-    
+
     // Auctions
     auctions: [
       { columns: ['status', 'start_time'], name: 'idx_auctions_status_start', unique: false },
       { columns: ['dealer_id', 'status'], name: 'idx_auctions_dealer_status', unique: false },
       { columns: ['status', 'end_time'], name: 'idx_auctions_active', unique: false },
     ],
-    
+
     // Inspections
     inspections: [
       { columns: ['vehicle_id'], name: 'idx_inspections_vehicle', unique: false },
       { columns: ['engineer_id', 'status'], name: 'idx_inspections_engineer_status', unique: false },
       { columns: ['status', 'completed_at'], name: 'idx_inspections_completed', unique: false },
     ],
-    
+
     // Transactions
     transactions: [
       { columns: ['listing_id'], name: 'idx_transactions_listing', unique: false },
@@ -77,7 +77,7 @@ class DatabaseOptimizer {
    */
   generateIndexStatements() {
     const statements = [];
-    
+
     for (const [table, indexes] of Object.entries(this.RECOMMENDED_INDEXES)) {
       for (const idx of indexes) {
         statements.push({
@@ -86,7 +86,7 @@ class DatabaseOptimizer {
         });
       }
     }
-    
+
     return statements;
   }
 
@@ -363,7 +363,7 @@ class DatabaseOptimizer {
     const batches = [];
     for (let i = 0; i < data.length; i += batchSize) {
       const batch = data.slice(i, i + batchSize);
-      
+
       const columns = Object.keys(batch[0]);
       const placeholders = [];
       const values = [];

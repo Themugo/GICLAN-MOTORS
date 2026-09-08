@@ -169,9 +169,9 @@ export default function ReliabilityDashboard() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div style={{ color: KAYAD_COLORS.softBlue }}>{slo.icon}</div>
-                    <span 
+                    <span
                       className="px-2 py-0.5 rounded-full text-xs font-medium"
-                      style={{ 
+                      style={{
                         backgroundColor: slo.status === 'healthy' ? `${KAYAD_COLORS.emerald}20` : `${KAYAD_COLORS.amber}20`,
                         color: slo.status === 'healthy' ? KAYAD_COLORS.emerald : KAYAD_COLORS.amber
                       }}
@@ -197,7 +197,7 @@ export default function ReliabilityDashboard() {
                 {SERVICE_HEALTH.map((service) => (
                   <div key={service.name} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: KAYAD_COLORS.warmBeige }}>
                     <div className="flex items-center gap-3">
-                      <div 
+                      <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: service.status === 'healthy' ? KAYAD_COLORS.emerald : KAYAD_COLORS.amber }}
                       />
@@ -224,13 +224,13 @@ export default function ReliabilityDashboard() {
               <div className="space-y-3">
                 {ALERTS.map((alert) => (
                   <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: KAYAD_COLORS.warmBeige }}>
-                    <AlertTriangle 
-                      size={18} 
-                      style={{ 
-                        color: alert.severity === 'warning' ? KAYAD_COLORS.amber : 
+                    <AlertTriangle
+                      size={18}
+                      style={{
+                        color: alert.severity === 'warning' ? KAYAD_COLORS.amber :
                                alert.severity === 'success' ? KAYAD_COLORS.emerald : KAYAD_COLORS.softBlue,
-                        marginTop: 2 
-                      }} 
+                        marginTop: 2
+                      }}
                     />
                     <div className="flex-1">
                       <p style={{ color: KAYAD_COLORS.lightNavy }}>{alert.message}</p>
@@ -305,11 +305,11 @@ export default function ReliabilityDashboard() {
                   <p className="text-sm mb-2" style={{ color: KAYAD_COLORS.softBlue }}>{resource.label}</p>
                   <p className="text-2xl font-bold" style={{ color: KAYAD_COLORS.lightNavy }}>{resource.value}%</p>
                   <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ backgroundColor: KAYAD_COLORS.warmBeige }}>
-                    <div 
+                    <div
                       className="h-full rounded-full"
-                      style={{ 
-                        width: `${resource.value}%`, 
-                        backgroundColor: resource.value > 80 ? KAYAD_COLORS.red : resource.value > 60 ? KAYAD_COLORS.amber : KAYAD_COLORS.emerald 
+                      style={{
+                        width: `${resource.value}%`,
+                        backgroundColor: resource.value > 80 ? KAYAD_COLORS.red : resource.value > 60 ? KAYAD_COLORS.amber : KAYAD_COLORS.emerald
                       }}
                     />
                   </div>

@@ -3,25 +3,25 @@ info:
   title: KAYAD API
   description: |
     KAYAD - Kenya's Premium Car Marketplace API
-    
+
     This API provides endpoints for managing car listings, auctions, bids, escrow transactions, and user accounts.
-    
+
     ## Authentication
-    
+
     Most endpoints require authentication using JWT tokens. Include the token in the Authorization header:
-    
+
     `Authorization: Bearer <token>`
-    
+
     ## Rate Limiting
-    
+
     API requests are rate limited. Standard limits are 100 requests per minute per user.
-    
+
     ## Versioning
-    
+
     The API is versioned using URL path versioning (e.g., /api/v1/cars). Current version is v1.
-    
+
     ## Deprecation Policy
-    
+
     Deprecated endpoints will be supported for at least 6 months before removal.
   version: 1.0.0
   contact:

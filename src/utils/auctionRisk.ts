@@ -11,7 +11,7 @@ import type { AuctionSession, Vehicle } from '../types';
 
 export type RiskSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
-export type RiskCategory = 
+export type RiskCategory =
   | 'auction_configuration'
   | 'vehicle_integrity'
   | 'organizer_compliance'
@@ -77,8 +77,8 @@ export interface RiskDashboardMetrics {
 // Category Definitions
 // ============================================================
 
-export const RISK_CATEGORIES: Record<RiskCategory, { 
-  label: string; 
+export const RISK_CATEGORIES: Record<RiskCategory, {
+  label: string;
   icon: string;
   color: string;
 }> = {
@@ -599,7 +599,7 @@ export function detectSchedulingRisks(ctx: RiskCheckContext): RiskItem[] {
   if (session.startsAt) {
     const startDate = new Date(session.startsAt);
     const daysUntilStart = Math.floor((startDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    
+
     if (daysUntilStart > 0 && daysUntilStart < 3) {
       risks.push(createRisk({
         code: 'SCH-002',
@@ -647,7 +647,7 @@ export function detectInspectionRisks(ctx: RiskCheckContext): RiskItem[] {
   if (vehicle.inspection?.inspectedAt) {
     const inspectionDate = new Date(vehicle.inspection.inspectedAt);
     const monthsSinceInspection = (Date.now() - inspectionDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    
+
     if (monthsSinceInspection > 3) {
       risks.push(createRisk({
         code: 'INS-002',
@@ -756,7 +756,7 @@ export function detectFraudRisks(ctx: RiskCheckContext): RiskItem[] {
   if (ctx.session.bidSecurityAmount) {
     const startingPrice = ctx.session.startingPrice || 1;
     const securityRatio = ctx.session.bidSecurityAmount / startingPrice;
-    
+
     if (securityRatio > 0.5) {
       risks.push(createRisk({
         code: 'FRD-003',
@@ -804,7 +804,7 @@ export function detectAllRisks(ctx: RiskCheckContext): RiskItem[] {
 
 export function calculateRiskMetrics(risks: RiskItem[]): RiskDashboardMetrics {
   const activeRisks = risks.filter(r => r.status === 'active');
-  
+
   return {
     totalActive: activeRisks.length,
     critical: activeRisks.filter(r => r.severity === 'critical').length,
@@ -826,11 +826,11 @@ export function calculateRiskMetrics(risks: RiskItem[]): RiskDashboardMetrics {
 
 export function canPublishAuction(risks: RiskItem[]): { canPublish: boolean; blockingRisks: RiskItem[] } {
   const blockingRisks = risks.filter(
-    r => r.status === 'active' && 
+    r => r.status === 'active' &&
     (r.severity === 'critical' || r.severity === 'high') &&
     SEVERITY_STYLES[r.severity].blocksPublication
   );
-  
+
   return {
     canPublish: blockingRisks.length === 0,
     blockingRisks,
@@ -854,21 +854,21 @@ function createRisk(partial: Partial<RiskItem>): RiskItem {
 
 export function getRisksByCategory(risks: RiskItem[]): Record<RiskCategory, RiskItem[]> {
   const grouped: Record<RiskCategory, RiskItem[]> = {} as Record<RiskCategory, RiskItem[]>;
-  
+
   for (const category of Object.keys(RISK_CATEGORIES) as RiskCategory[]) {
     grouped[category] = risks.filter(r => r.category === category);
   }
-  
+
   return grouped;
 }
 
 export function getRisksBySeverity(risks: RiskItem[]): Record<RiskSeverity, RiskItem[]> {
   const grouped: Record<RiskSeverity, RiskItem[]> = {} as Record<RiskSeverity, RiskItem[]>;
-  
+
   for (const severity of Object.keys(SEVERITY_STYLES) as RiskSeverity[]) {
     grouped[severity] = risks.filter(r => r.severity === severity);
   }
-  
+
   return grouped;
 }
 
@@ -880,7 +880,7 @@ export function sortRisksByPriority(risks: RiskItem[]): RiskItem[] {
     low: 3,
     info: 4,
   };
-  
+
   return [...risks].sort((a, b) => {
     // Active risks first
     if (a.status !== b.status) {

@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  ShieldCheck, 
-  Award, 
-  Building2, 
-  Landmark, 
+import {
+  ShieldCheck,
+  Award,
+  Building2,
+  Landmark,
   MapPin,
   Phone,
   Mail,
@@ -94,9 +94,9 @@ const TrustIndicatorItem: React.FC<{
 );
 
 // Trust metrics display
-const TrustMetricsGrid: React.FC<{ metrics: TrustMetrics; compact?: boolean }> = ({ 
-  metrics, 
-  compact = false 
+const TrustMetricsGrid: React.FC<{ metrics: TrustMetrics; compact?: boolean }> = ({
+  metrics,
+  compact = false
 }) => {
   if (compact) {
     return (
@@ -276,7 +276,7 @@ export const OrganizerTrustCenter: React.FC<OrganizerTrustCenterProps> = ({
         {/* Payment Details */}
         {showPaymentDetails && organizer.paymentDetails && (
           <div className="pt-3 border-t border-slate-100">
-            <PaymentTransparency 
+            <PaymentTransparency
               organizerName={organizer.name}
               organizerType={organizer.type}
               paymentDetails={organizer.paymentDetails}
@@ -293,7 +293,7 @@ export const OrganizerTrustCenter: React.FC<OrganizerTrustCenterProps> = ({
 
         {/* View Profile Link */}
         {organizer.profileUrl && (
-          <a 
+          <a
             href={organizer.profileUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -404,7 +404,7 @@ export const OrganizerTrustCenter: React.FC<OrganizerTrustCenterProps> = ({
 
         {/* View Profile Link */}
         {organizer.profileUrl && (
-          <a 
+          <a
             href={organizer.profileUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -418,7 +418,7 @@ export const OrganizerTrustCenter: React.FC<OrganizerTrustCenterProps> = ({
 
       {/* Payment Details */}
       {showPaymentDetails && organizer.paymentDetails && (
-        <PaymentTransparency 
+        <PaymentTransparency
           organizerName={organizer.name}
           organizerType={organizer.type}
           paymentDetails={organizer.paymentDetails}

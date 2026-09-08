@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Car, 
-  PlusCircle, 
-  Menu, 
-  X, 
-  MapPin, 
-  ShieldCheck, 
-  User, 
+import {
+  Car,
+  PlusCircle,
+  Menu,
+  X,
+  MapPin,
+  ShieldCheck,
+  User,
   ChevronDown,
   Gavel,
   CreditCard,
@@ -124,7 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right: Region Selector & Account/Alerts */}
           <div className="flex items-center space-x-3 shrink-0">
             <div className="relative hidden md:block" ref={countyRef}>
-              <button 
+              <button
                 onClick={() => setShowCountyDropdown(!showCountyDropdown)}
                 className="flex items-center gap-1.5 hover:text-white transition-colors py-0.5 px-2.5 rounded bg-slate-800/80 border border-slate-700/60"
                 id="county-selector-top"
@@ -186,11 +186,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Main Navigation Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-18 gap-4">
-          
+
           {/* LEFT SECTION: Logo, Marketplace, Auctions */}
           <div className="flex items-center space-x-6 md:space-x-8">
             {/* KAYAD Logo */}
-            <button 
+            <button
               onClick={() => handleNavSelect('marketplace')}
               className="flex items-center gap-2.5 group focus:outline-none shrink-0"
               id="brand-logo"
@@ -353,9 +353,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   id="user-profile-menu-button"
                 >
                   <div className="relative">
-                    <img 
-                      src={user.avatar} 
-                      alt={user.name} 
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
                       className="w-7 h-7 rounded-full object-cover border border-[#1E3063]/30 shadow-2xs"
                     />
                     {hasNotifications && (
@@ -379,7 +379,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <p className="font-bold text-slate-900 truncate">{user.name}</p>
                         <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
                         <span className="inline-block mt-1 px-2 py-0.5 bg-[#1E3063] text-white font-semibold text-[9px] rounded uppercase">
-                          {user.role === 'dealer' ? 'Verified Dealer' : user.role === 'ghost_checker' ? 'Vehicle Inspector' : user.role === 'admin' ? 'Administrator' : 'Private Seller / Buyer'}
+                          {user.role === 'dealer' ? 'Verified Dealer' : user.role === 'mechanic' ? 'NTSA Mechanic' : user.role === 'admin' ? 'Administrator' : 'Private Seller / Buyer'}
                         </span>
                       </div>
                     </div>
@@ -509,7 +509,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                     )}
 
-                    {user.role === 'ghost_checker' && (
+                    {user.role === 'mechanic' && (
                       <div className="border-t border-slate-100 pt-1.5 mt-1.5 bg-emerald-50/50 pb-1">
                         <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
                           Pre-Purchase Inspection Portal
@@ -625,7 +625,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* MOBILE DRAWER NAVIGATION */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-[#101935] text-white border-t border-slate-800 px-4 pt-4 pb-8 space-y-4 animate-fade-in max-h-[calc(100vh-80px)] overflow-y-auto">
-          
+
           {/* User Account Banner or Login Prompt */}
           {user ? (
             <div className="p-3 bg-slate-800/90 rounded-2xl border border-slate-700 flex items-center justify-between">
@@ -777,7 +777,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               )}
 
-              {user.role === 'ghost_checker' && (
+              {user.role === 'mechanic' && (
                 <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/30 rounded-xl space-y-1 mt-2">
                   <span className="text-[9px] font-bold text-emerald-400 uppercase block">Mechanic Tools</span>
                   <button onClick={() => handleNavSelect('inspections')} className="text-xs font-bold text-emerald-200 flex items-center gap-1.5 py-1">

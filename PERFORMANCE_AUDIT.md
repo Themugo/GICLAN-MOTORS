@@ -159,7 +159,7 @@ blurDataURL={generateBlurPlaceholder(image)}
 // API responses: NetworkFirst, 1 minute TTL
 { urlPattern: /\/api\/.*/i, handler: 'NetworkFirst' }
 
-// Cars data: NetworkFirst, 5 minutes TTL  
+// Cars data: NetworkFirst, 5 minutes TTL
 { urlPattern: /\/api\/cars.*/i, handler: 'NetworkFirst' }
 
 // Images: CacheFirst, 30 days TTL
