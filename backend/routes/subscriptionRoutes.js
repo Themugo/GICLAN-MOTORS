@@ -2,6 +2,8 @@ import express from "express";
 import asyncHandler from "../middleware/asyncHandler.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 import { validateQuery, subscriptionAdminQuerySchema } from "../middleware/validate.js";
+import { createLimiter } from "../middleware/rateLimiter.js";
+import { idempotencyCheck } from "../middleware/idempotency.js";
 import {
   getPlans,
   getSubscription,
@@ -30,13 +32,13 @@ router.get("/plans", asyncHandler(getPlans));
 router.get("/my-subscription", protect, asyncHandler(getSubscription));
 
 // Upgrade subscription
-router.post("/upgrade", protect, asyncHandler(upgradeSubscription));
+router.post("/upgrade", protect, createLimiter, idempotencyCheck, asyncHandler(upgradeSubscription));
 
 // Cancel subscription
-router.post("/cancel", protect, asyncHandler(cancelSubscription));
+router.post("/cancel", protect, createLimiter, idempotencyCheck, asyncHandler(cancelSubscription));
 
 // Reactivate subscription
-router.post("/reactivate", protect, asyncHandler(reactivateSubscription));
+router.post("/reactivate", protect, createLimiter, idempotencyCheck, asyncHandler(reactivateSubscription));
 
 // Check usage limits
 router.get("/usage-limits", protect, asyncHandler(checkUsageLimits));

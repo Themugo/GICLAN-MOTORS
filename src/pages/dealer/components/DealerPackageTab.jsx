@@ -50,9 +50,9 @@ export default function DealerPackageTab({ user, listingsCount }) {
     }
   };
 
-  const currentPlan = entitlement?.planId || user?.dealerPackage;
+  const currentPlan = entitlement?.planId || null;
   const currentLimit = entitlement?.listingMax ?? 0;
-  const currentUsed = entitlement?.listingsUsed ?? listingsCount ?? 0;
+  const currentUsed = entitlement?.listingsUsed ?? 0;
 
   return (
     <div>
@@ -90,7 +90,7 @@ export default function DealerPackageTab({ user, listingsCount }) {
               )}
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Listings used</div>
               <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 900, fontSize: '1.4rem', color: '#fff' }}>
-                {currentUsed} / {currentLimit || 0}
+                {currentUsed} / {entitlement?.unlimitedListings ? "Unlimited" : (currentLimit || 0)}
               </div>
             </div>
           </div>

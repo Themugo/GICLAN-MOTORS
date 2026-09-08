@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { getSupabase } from "../utils/supabase.js";
 import { findById } from "../db/index.js";
+import Car from "../models/Car.js";
 
 const normalizePlan = (plan) => ({
   id: String(plan?.id || "").trim(),
@@ -60,11 +61,15 @@ export async function getDealerEntitlement(dealerId) {
 
   const usable = Boolean(subscription && ["active", "cancelled"].includes(subscription.effective_status));
   const sb = getSupabase();
-  const { count: listingsUsed, error } = await sb
-    .from("cars").select("id", { count: "exact", head: true }).eq("dealer", dealerId);
-  if (error) throw error;
-
-  const used = listingsUsed || 0;
+  // Listing capacity is a commercial entitlement over live inventory, not a
+  // historical count. Deleted and sold vehicles must not permanently consume
+  // a dealer's plan capacity. Keep this query in the entitlement service so
+  // every caller uses the same definition.
+  const used = await Car.countDocuments({
+    dealer: dealerId,
+    deletedAt: null,
+    status: { $in: ["available", "pending"] },
+  });
   const listingMax = usable ? Number(subscription.listing_max || 0) : 0;
   return {
     subscription,
@@ -75,7 +80,7 @@ export async function getDealerEntitlement(dealerId) {
     expiresAt: usable ? subscription.expires_at : null,
     listingMax,
     listingsUsed: used,
-    listingsRemaining: listingMax === 0 ? 0 : Math.max(0, listingMax - used),
+    listingsRemaining: listingMax === 0 ? null : Math.max(0, listingMax - used),
     unlimitedListings: usable && listingMax === 0,
     features: usable && Array.isArray(subscription.features) ? subscription.features : [],
     locked: Boolean(user.listingsLocked),
@@ -156,4 +161,39 @@ export async function reactivateDealerSubscription(dealerId) {
   const { data, error } = await sb.rpc("kayad_reactivate_dealer_subscription_atomic", { p_dealer: dealerId });
   if (error) throw error;
   return data;
+}
+
+
+/**
+ * Authoritative pre-create commercial gate for dealer inventory.
+ * Controllers should call this immediately before creating a new listing;
+ * the database entitlement remains the source of truth for plan state.
+ */
+export async function assertDealerCanCreateListing(dealerId) {
+  const entitlement = await getDealerEntitlement(dealerId);
+  if (entitlement.status === "none") {
+    const error = new Error("An active dealer subscription is required to list vehicles.");
+    error.code = "SUBSCRIPTION_REQUIRED";
+    error.status = 402;
+    throw error;
+  }
+  if (entitlement.locked) {
+    const error = new Error("Dealer listings are currently locked. Contact platform support.");
+    error.code = "LISTINGS_LOCKED";
+    error.status = 403;
+    throw error;
+  }
+  if (entitlement.expiresAt && new Date(entitlement.expiresAt) <= new Date()) {
+    const error = new Error("Your dealer subscription has expired. Renew your plan to continue listing.");
+    error.code = "SUBSCRIPTION_EXPIRED";
+    error.status = 402;
+    throw error;
+  }
+  if (entitlement.listingMax > 0 && entitlement.listingsUsed >= entitlement.listingMax) {
+    const error = new Error(`You've reached your plan limit of ${entitlement.listingMax} listings. Upgrade to list more.`);
+    error.code = "LISTING_LIMIT_REACHED";
+    error.status = 402;
+    throw error;
+  }
+  return entitlement;
 }

@@ -10,7 +10,7 @@ import * as path from "path";
 import { STAFF_ROLES, SELLER_ROLES } from "../config/roles.js";
 import { detectDuplicates, flagDuplicate } from "../services/duplicateVehicleService.js";
 import { logVehicleCreated, logVehicleEdited, logVehicleDeleted } from "../services/auditService.js";
-import { getDealerEntitlement } from "../services/dealerSubscription.service.js";
+import { getDealerEntitlement, assertDealerCanCreateListing } from "../services/dealerSubscription.service.js";
 
 const DEALER_ROLES = SELLER_ROLES; // backward compat
 
@@ -310,58 +310,26 @@ export const createCar = async (req, res) => {
     // ── PACKAGE / TRIAL ENFORCEMENT ─────────────────────────
     const config = await PlatformConfig.findOne().lean();
     const pkgs = config?.packages || [];
-    const pkg = pkgs.find((p) => p.id === seller.dealerPackage) || null;
-
-    // Monetisation master switch (admin-controlled, no code change to flip):
-    // free unless an admin has explicitly turned freeMarket OFF. Absent config
-    // (fresh DB) therefore means free — listings are unlimited and free.
-    const monetisationOff = config?.freeMarket !== false || config?.waivePayments === true;
-
     const isDealer = seller.role === "dealer";
     const isSeller = seller.role === "individual_seller";
+
+    // The platform free-market switch applies only to private sellers.
+    // Dealer commercial access is always determined by the authoritative
+    // dealer_subscriptions entitlement service; a missing configuration must
+    // never accidentally turn dealer inventory into a free unlimited plan.
+    const monetisationOff = config?.freeMarket !== false || config?.waivePayments === true;
     const currentListingCount = await Car.countDocuments({ dealer: req.user.id });
 
     // Determine if user is allowed to create a listing (without incrementing yet)
     let shouldIncrementListingCount = false;
 
-    if (monetisationOff) {
-      // Free-for-all launch mode — allow the listing, still track count for analytics.
+    if (isDealer) {
+      // Dealer monetisation never bypasses the entitlement contract, even
+      // while the public/private-seller market switch is in free mode.
+      await assertDealerCanCreateListing(req.user.id);
       shouldIncrementListingCount = true;
-    } else if (isDealer) {
-      const entitlement = await getDealerEntitlement(req.user.id);
-
-      if (entitlement.status === "none") {
-        return res.status(402).json({
-          success: false,
-          message: "An active dealer subscription is required to list vehicles. Choose a plan and complete M-Pesa payment.",
-          code: "SUBSCRIPTION_REQUIRED",
-        });
-      }
-
-      if (entitlement.locked) {
-        return res.status(403).json({
-          success: false,
-          message: "Dealer listings are currently locked. Contact platform support.",
-          code: "LISTINGS_LOCKED",
-        });
-      }
-
-      if (entitlement.expiresAt && new Date(entitlement.expiresAt) <= new Date()) {
-        return res.status(402).json({
-          success: false,
-          message: "Your dealer subscription has expired. Renew your plan to continue listing.",
-          code: "SUBSCRIPTION_EXPIRED",
-        });
-      }
-
-      if (entitlement.listingMax > 0 && entitlement.listingsUsed >= entitlement.listingMax) {
-        return res.status(402).json({
-          success: false,
-          message: `You've reached your plan limit of ${entitlement.listingMax} listings. Upgrade to list more.`,
-          code: "LISTING_LIMIT_REACHED",
-        });
-      }
-
+    } else if (monetisationOff) {
+      // Free-market mode is intentionally limited to individual sellers.
       shouldIncrementListingCount = true;
     }
 
