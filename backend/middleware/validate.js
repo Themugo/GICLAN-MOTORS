@@ -91,6 +91,7 @@ import {
   inspectionListQuerySchema,
   escrowListQuerySchema,
   disputeListQuerySchema,
+  subscriptionAdminQuerySchema,
 } from "../validation/query.schema.js";
 import {
   successResponseSchema,
@@ -362,6 +363,7 @@ export {
   inspectionListQuerySchema,
   escrowListQuerySchema,
   disputeListQuerySchema,
+  subscriptionAdminQuerySchema,
   // Response Schemas
   successResponseSchema,
   paginatedResponseSchema,

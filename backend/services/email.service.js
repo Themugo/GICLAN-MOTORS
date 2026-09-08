@@ -178,6 +178,9 @@ export const sendRawEmail = async ({ to, subject, html, text, from = FROM }) => 
   }
 };
 
+// Canonical public email sender; retained as a compatibility alias for existing services.
+export const sendEmail = sendRawEmail;
+
 export const sendWelcomeEmail = (user) =>
   sendEmail({
     to: user.email,
