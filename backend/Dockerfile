@@ -5,7 +5,6 @@ WORKDIR /app
 
 # Copy all backend files
 COPY backend/package*.json ./
-COPY backend/package-lock.json ./
 COPY backend/server.js ./
 COPY backend/ecosystem.config.cjs ./
 COPY backend/config ./config
@@ -37,7 +36,6 @@ COPY backend/ownership ./ownership
 COPY backend/partnerPlatform ./partnerPlatform
 COPY backend/platform ./platform
 COPY backend/queues ./queues
-COPY backend/realtime ./realtime
 COPY backend/reliability ./reliability
 COPY backend/revenue ./revenue
 COPY backend/socket ./socket

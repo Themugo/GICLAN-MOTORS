@@ -43,7 +43,8 @@
     "validate:governance": "node scripts/validate-governance-lifecycle.mjs",
     "validate:runtime-integrity": "node scripts/validate-runtime-integrity.mjs",
     "verify:production": "node scripts/verify-production-deployment.mjs",
-    "validate:backend-runtime-contracts": "node scripts/validate-backend-runtime-contracts.mjs"
+    "validate:backend-runtime-contracts": "node scripts/validate-backend-runtime-contracts.mjs",
+    "validate:production-backend": "node scripts/validate-production-backend.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",

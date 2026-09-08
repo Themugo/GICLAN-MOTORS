@@ -1,34 +1,37 @@
-# KAYAD Backend Runtime Recovery & Deep Contract Audit
+# KAYAD Backend Runtime & Production Deployment Recovery
 
-## Incident reproduced
-Render backend startup failed before binding a port because `backend/inspection/controllers/providerController.js` imported a named `response` export that `backend/utils/response.js` did not provide.
+## Scope
 
-## Root cause and consolidated fixes
-- Added the shared `response` compatibility facade without removing existing named response helpers.
-- Added the missing HTTP 201 `created()` helper used by inspection controllers.
-- Added `requireAuth` and `requireRole` compatibility middleware aliases in the canonical auth middleware. `requireRole` accepts both variadic and array role declarations and preserves superadmin/webhoist bypass behavior.
-- Added the missing `sendEmail` compatibility export as an alias of the canonical `sendRawEmail` sender.
-- Added missing atomic auction start/extend adapters backed by the already-authoritative `kayad_start_auction_atomic` and `kayad_extend_auction_atomic` PostgreSQL functions.
-- Re-exported the existing `subscriptionAdminQuerySchema` from the canonical validation boundary.
+This initiative hardens the production runtime path from GitHub source through Render startup and `/health`, while preserving the existing KAYAD domain architecture. It does not delete feature surfaces merely because an older domain validator expects a different historical architecture.
 
-## Static deep-audit findings
-The backend was scanned for local named-import/export contract mismatches. The actionable runtime mismatches were the contracts above; role constants and route-controller imports that appeared in the first heuristic scan were verified as valid exports or parser false positives caused by comments/re-export blocks.
+## Production-critical fixes
 
-## Placeholder audit
-No backend HTTP 501 response remains. Explicit configuration errors such as `MPESA_B2C_NOT_CONFIGURED` remain intentional and do not fabricate successful payouts.
+- Restored the shared `response` compatibility facade and `created()` HTTP 201 helper.
+- Preserved individual response helper exports for existing consumers.
+- Preserved authentication compatibility aliases (`requireAuth`, `requireRole`).
+- Preserved canonical atomic auction adapters and existing RPC-backed lifecycle.
+- Removed the stale Docker `COPY backend/realtime` source that no longer exists.
+- Corrected `.dockerignore` so it no longer excludes the backend source from a root-context Docker build.
+- Aligned `render.yaml` with the observed production runtime: native Node.js, `backend/` root, deterministic `npm ci --omit=dev`, `npm start`, `/health` health check, and persistent upload path for native Node.
+- Kept the Dockerfile valid as a supported alternate deployment path.
+- Retained the production frontend runtime hardening: canonical TypeScript Supabase client, explicit production API fallback, and no duplicate `.js` Supabase client.
+- Retained deployment-truth verification: Vercel production deployment is required and post-deployment verification is mandatory.
 
 ## Verification
-- Backend runtime contract validator: 16/16 PASS
-- All backend JavaScript syntax checks: PASS
-- Runtime integrity: 7/7 PASS
-- Deployment readiness: 16/16 PASS
-- Governance lifecycle: 53/53 PASS
-- Inspection workforce/digital lifecycle: PASS (18/18 stages, 150/150 points)
-- Service export surface: PASS
-- Inspection marketplace activation: 14/14 PASS
-- Dispute canonical lifecycle: PASS
-- Communications/support lifecycle: 10/10 PASS
-- `git diff --check`: must be run in the user's Git checkout before commit
 
-## Deployment expectation
-The frontend has already reached a Ready Vercel Production deployment, while Render currently fails during Node module instantiation. This package fixes the Render startup contracts that caused the observed 503.
+- Production backend validation: **19/19 PASS**
+- Runtime integrity: **7/7 PASS**
+- Deployment readiness: **16/16 PASS**
+- Backend runtime contracts: **16/16 PASS**
+- Backend JavaScript syntax: **all backend JS/MJS files pass `node --check`**
+- Backend HTTP 501 placeholder scan: **0 remaining**
+- Local relative module resolution audit: **no unresolved production relative modules detected** (template-string generated SDK imports excluded from runtime import analysis).
+- Default-import/default-export audit: **no mismatches detected**.
+
+## Deployment truth
+
+The production frontend is already confirmed live on Vercel. The remaining production blocker observed from Render was a backend ESM startup failure caused by a missing named `response` export. The deployment path must not be considered healthy until `https://api.kayad.space/health` returns a successful health response after the next Render deployment.
+
+## Important validation boundary
+
+The repository contains a large number of historical domain validators. Some older validators still encode superseded architectural expectations in areas such as auction UI convergence, legacy CMS/team surfaces, finance, ownership, and lead CRM. Those failures were not silently converted into passes or used as justification to delete working production code. The production recovery gate above is intentionally limited to runtime, deployment, module-contract, and infrastructure correctness.
