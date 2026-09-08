@@ -47,7 +47,7 @@ jobs:
           retention-days: 30
 
   smoke-test:
-    name: Smoke Test
+    name: Build Artifact Smoke Test
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -69,59 +69,84 @@ jobs:
           echo "Critical file check passed"
 
   deploy-vercel:
-    name: Deploy to Vercel
+    name: Deploy and Verify Production
     needs: validate
     if: needs.validate.outputs.build_available == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Fixed: this job previously ran vercel pull/build/deploy
-      # unconditionally on every push to main, with no check for
-      # whether VERCEL_TOKEN is actually set. When it isn't (confirmed
-      # directly against this project's own, real, live deployment -
-      # PRODUCTION_DEPLOYMENT_CERTIFICATION.md found Vercel returning
-      # DEPLOYMENT_NOT_FOUND), `vercel pull --token=` fails immediately
-      # with an authentication error, failing this job on every single
-      # push. This does not fix the underlying problem - a real,
-      # valid VERCEL_TOKEN still needs to be set as a GitHub secret by
-      # the repository owner, which no code change can do - but it
-      # stops every push to main from reporting a hard failure for a
-      # credential gap the workflow already knows how to detect, and
-      # gives a clear, actionable message instead of a Vercel CLI
-      # authentication error.
-      - name: Check if Vercel token is configured
-        id: vercel-check
+      - name: Require Vercel production credentials
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
-            echo "configured=true" >> $GITHUB_OUTPUT
-          else
-            echo "configured=false" >> $GITHUB_OUTPUT
-            echo "::warning::VERCEL_TOKEN is not set as a repository secret - skipping the Vercel deploy step. Set it under Settings > Secrets and variables > Actions to enable automatic deployment."
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "ERROR: VERCEL_TOKEN is not configured. Production deployment cannot be certified." >&2
+            echo "Set VERCEL_TOKEN under Settings > Secrets and variables > Actions before pushing to main." >&2
+            exit 1
           fi
+          echo "Vercel production credentials detected."
 
       - name: Setup Node.js
-        if: steps.vercel-check.outputs.configured == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22.22.2'
           cache: 'npm'
 
       - name: Install Vercel CLI
-        if: steps.vercel-check.outputs.configured == 'true'
-        run: npm install -g vercel
+        run: npm install --global vercel@54.17.2
 
-      - name: Pull Vercel Project Information
-        if: steps.vercel-check.outputs.configured == 'true'
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Report Vercel CLI version
+        run: vercel --version
 
-      - name: Build Project for Production (with secrets)
-        if: steps.vercel-check.outputs.configured == 'true'
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Pull Vercel production project information
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
-      - name: Deploy to Vercel (Production)
-        if: steps.vercel-check.outputs.configured == 'true'
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build Vercel production artifact
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy to Vercel production
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          DEPLOYMENT_URL="$(vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN")"
+          if [ -z "$DEPLOYMENT_URL" ]; then
+            echo "ERROR: Vercel returned an empty deployment URL." >&2
+            exit 1
+          fi
+          case "$DEPLOYMENT_URL" in
+            https://*) ;;
+            *) echo "ERROR: unexpected deployment URL: $DEPLOYMENT_URL" >&2; exit 1 ;;
+          esac
+          echo "Deployment URL: $DEPLOYMENT_URL"
+          echo "deployment_url=$DEPLOYMENT_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Verify deployment and public production health
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment_url }}
+          PUBLIC_URL: https://kayad.space
+          API_URL: https://api.kayad.space
+        run: npm run verify:production
+
+      - name: Record production certification
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment_url }}
+        run: |
+          {
+            echo "## Production Deployment Certification"
+            echo ""
+            echo "- Commit: \\`${GITHUB_SHA}\\`"
+            echo "- Vercel deployment: ${DEPLOYMENT_URL}"
+            echo "- Public domain: https://kayad.space"
+            echo "- API health: https://api.kayad.space/health"
+            echo "- Result: PASSED"
+          } >> "$GITHUB_STEP_SUMMARY"

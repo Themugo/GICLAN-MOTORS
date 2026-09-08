@@ -41,7 +41,8 @@
     "validate:dispute-canonical-lifecycle": "node scripts/validate-dispute-canonical-lifecycle.mjs",
     "validate:deployment-readiness": "node scripts/validate-deployment-readiness.mjs",
     "validate:governance": "node scripts/validate-governance-lifecycle.mjs",
-    "validate:runtime-integrity": "node scripts/validate-runtime-integrity.mjs"
+    "validate:runtime-integrity": "node scripts/validate-runtime-integrity.mjs",
+    "verify:production": "node scripts/verify-production-deployment.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",
