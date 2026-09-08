@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { logInfo, logWarn, logError } from "../utils/logger.js";
-import { findAll, findById, create, count } from "../db/index.js";
+import { findAll, findById, create, count, aggregate } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
 
 // =============================

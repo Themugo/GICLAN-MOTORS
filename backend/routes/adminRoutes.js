@@ -1,5 +1,6 @@
 import express from "express";
 import { protect, adminOnly } from "../middleware/auth.js";
+import protectAccount from "../middleware/protectAccount.js";
 import { authorize } from "../middleware/role.js";
 import { ASSIGNABLE_PERMISSIONS, PERM_LABELS, ROLE_PERMISSIONS, getEffectivePermissions } from "../config/roles.js";
 import asyncHandler from "../middleware/asyncHandler.js";
@@ -1644,6 +1645,7 @@ router.get(
       .limit(Math.min(Number(limit), 50))
       .lean();
 
+    let userIds = [];
     if (search) {
       const safeSearch = escapeRegex(search);
       const users = await User.find({
@@ -1651,7 +1653,7 @@ router.get(
       })
         .select("_id")
         .lean();
-      const userIds = users.map((u) => u._id);
+      userIds = users.map((u) => u._id);
       query = Chat.find({ participants: { $in: userIds }, ...filter })
         .populate("participants", "name email")
         .populate("car", "title brand model")

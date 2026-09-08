@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { addTimelineEvent, getLeadTimeline } from "./leadTimelineService.js";
+import Lead from "../models/Lead.js";
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { findAll, findById, findOne, create, count, aggregate } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";

@@ -1,4 +1,4 @@
-import { findOne, create, update } from "../db/index.js";
+import { findAll, findOne, create, update } from "../db/index.js";
 import asyncHandler from "../middleware/asyncHandler.js";
 
 const defaults = {

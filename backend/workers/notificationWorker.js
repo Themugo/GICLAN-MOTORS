@@ -82,7 +82,8 @@ const sendEmailNotification = async (email, title, message, data) => {
   try {
     // Import email service dynamically to avoid circular dependency
     const emailService = await import("../services/email.service.js");
-    await emailService.sendGenericEmail(email, title, message, data);
+    const sendGenericEmail = emailService.sendGenericEmail || emailService.sendEmail || emailService.sendRawEmail;
+    await sendGenericEmail({ to: email, subject: title, html: message, text: message, data });
     logInfo("Email notification sent", { email });
   } catch (err) {
     logError("Failed to send email notification", err, { email });

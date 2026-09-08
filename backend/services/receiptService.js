@@ -1,4 +1,5 @@
 import { sendRawEmail } from "./email.service.js";
+const sendEmail = sendRawEmail;
 import { sendSMS } from "../utils/sms.js";
 import { logInfo } from "../utils/logger.js";
 import { create } from "../db/index.js";

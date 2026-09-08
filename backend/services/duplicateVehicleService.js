@@ -7,6 +7,7 @@
 
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { findAll, findById, create, update } from "../db/index.js";
+import DuplicateVehicleLog from "../models/DuplicateVehicleLog.js";
 
 // =============================
 // 🔍 DETECT DUPLICATES

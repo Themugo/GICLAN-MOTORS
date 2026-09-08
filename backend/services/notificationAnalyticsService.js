@@ -6,6 +6,7 @@
 
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { findById, aggregate } from "../db/index.js";
+import NotificationAudit from "../models/NotificationAudit.js";
 import { getSupabase } from "../utils/supabase.js";
 
 // =============================

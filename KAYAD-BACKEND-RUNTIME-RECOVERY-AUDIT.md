@@ -17,9 +17,26 @@ This initiative hardens the production runtime path from GitHub source through R
 - Retained the production frontend runtime hardening: canonical TypeScript Supabase client, explicit production API fallback, and no duplicate `.js` Supabase client.
 - Retained deployment-truth verification: Vercel production deployment is required and post-deployment verification is mandatory.
 
+## Additional startup-surface hardening
+
+The first real Render deployment after the environment-secret correction exposed a second class of latent module/runtime defects. These were repaired together rather than serially patching individual Render failures:
+
+- Imported the existing `protectAccount` middleware into `adminRoutes.js`; the middleware already existed and exports the named/default contract.
+- Restored the missing `findAll` import used by user-preference statistics.
+- Restored the `isSupabaseConnected` dependency used by the auction-reminder startup path.
+- Fixed a dead-letter-queue warning to use the queue-local DLQ name instead of an out-of-scope variable.
+- Kept `userIds` in scope for the admin chat search/count path.
+- Removed unreachable SMS-bidding code after the explicit payment-unavailable return; that block also referenced an undefined `previousHighestBidder`.
+- Restored the missing escrow reconciliation result initialization and routed the existing escrow-vault branch through the canonical payment/escrow reconciler.
+- Added required model imports to services that referenced their canonical model adapters without importing them.
+- Bound the receipt service's `sendEmail` call to the canonical `sendRawEmail` implementation.
+- Added a compatibility fallback for notification-worker email delivery.
+
+A repository-wide JavaScript syntax sweep still passes. A production-source static undefined-name sweep found no remaining non-test undefined identifiers after excluding known Node globals and generated SDK template code.
+
 ## Verification
 
-- Production backend validation: **19/19 PASS**
+- Production backend validation: **27/27 PASS**
 - Runtime integrity: **7/7 PASS**
 - Deployment readiness: **16/16 PASS**
 - Backend runtime contracts: **16/16 PASS**

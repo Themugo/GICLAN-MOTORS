@@ -213,7 +213,7 @@ export const getQueue = (queueName) => {
         // Alert if DLQ size exceeds threshold
         const dlqCount = await dlq.getJobCountByTypes("waiting");
         if (dlqCount > 100) {
-          logError(`⚠️ Dead letter queue size warning: ${dlqName}`, { count: dlqCount });
+          logError(`⚠️ Dead letter queue size warning: ${queueName}:dlq`, { count: dlqCount });
         }
       } catch (dlqError) {
         logError(`Failed to move job to DLQ: ${queueName}`, dlqError, { jobId: job.id });

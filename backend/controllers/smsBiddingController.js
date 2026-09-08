@@ -87,41 +87,6 @@ export const handleInboundSms = async (req, res) => {
     await sendSMS(cleanedPhone, "SMS bidding is temporarily unavailable. Please place the bid through KAYAD with M-Pesa payment.");
     return res.json({ success: false, message: "SMS bidding payment integration unavailable" });
 
-    // Sniping protection — canonical implementation (env-configured
-    // window/extension, extension caps, realtime notify).
-    await applySnipingProtection(car);
-
-    // Socket events
-    if (getIO()) {
-      getIO().to(`car_${car._id}`).emit("auctionUpdate", {
-        carId: car._id.toString(),
-        currentBid: amount,
-      });
-    }
-    emitListingUpdate(car._id.toString(), { currentBid: amount, bidsCount: car.bidsCount });
-
-    // Notify bidder
-    await sendSMS(
-      cleanedPhone,
-      `✅ Bid of KES ${amount.toLocaleString("en-KE")} placed on ${car.title || "vehicle"}. Track it live on KAYAD.`,
-    );
-
-    // Notify outbid user
-    if (previousHighestBidder && String(previousHighestBidder) !== String(smsBidder.user)) {
-      const prevUser = await User.findById(previousHighestBidder).select("phone name");
-      if (prevUser?.phone) {
-        await sendSMS(
-          prevUser.phone,
-          `You've been outbid on ${car.title || "vehicle"} — KES ${amount.toLocaleString("en-KE")}. Bid higher now on KAYAD.`,
-        );
-      }
-    }
-
-    smsBidder.lastBidAt = new Date();
-    smsBidder.totalSmsBids = (smsBidder.totalSmsBids || 0) + 1;
-    await smsBidder.save();
-
-    res.json({ success: true, message: "Bid placed via SMS" });
   } catch (err) {
     logError("❌ SMS BID WEBHOOK ERROR", err);
     res.status(500).json({ success: false, message: "SMS bid processing failed" });

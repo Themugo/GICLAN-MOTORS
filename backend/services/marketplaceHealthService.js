@@ -5,7 +5,8 @@
 // ─────────────────────────────────────────────────────────────
 
 import { logInfo, logError, logWarn } from "../utils/logger.js";
-import { findAll, update, count, upsert } from "../db/index.js";
+import { findAll, findOne, create, update, count, upsert } from "../db/index.js";
+import MarketplaceHealth from "../models/MarketplaceHealth.js";
 
 // =============================
 // 👥 CALCULATE ACTIVE DEALERS

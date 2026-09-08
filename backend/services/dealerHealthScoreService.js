@@ -6,6 +6,7 @@
 
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { findAll, findById, findOne, create, update, upsert } from "../db/index.js";
+import DealerHealthScore from "../models/DealerHealthScore.js";
 
 // =============================
 // 📊 CALCULATE HEALTH SCORE

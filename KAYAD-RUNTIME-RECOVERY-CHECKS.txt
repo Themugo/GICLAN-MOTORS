@@ -1,0 +1,72 @@
+PASS backend package declares Node 22.22.2+
+PASS Render Blueprint uses native Node runtime
+PASS Render Blueprint anchors service at backend/
+PASS Render Blueprint uses deterministic npm ci
+PASS Render Blueprint starts the canonical backend package
+PASS Render health check is /health
+PASS Render persistent upload path matches native Node source tree
+PASS Dockerfile has no stale backend/realtime copy
+PASS Dockerfile copies every declared source directory
+PASS Dockerignore does not exclude backend source
+PASS shared response facade exists
+PASS shared response facade exposes created()
+PASS auth compatibility aliases exist
+PASS auction atomic adapters exist
+PASS admin routes import protectAccount
+PASS user preference stats imports findAll
+PASS auction reminder imports Supabase health guard
+PASS queue DLQ warning uses queue-local name
+PASS admin chat search keeps userIds in scope
+PASS reconciliation escrow branch initializes result
+PASS receipt service binds sendEmail to canonical sender
+PASS notification worker has email compatibility fallback
+PASS all backend JavaScript modules pass node --check
+PASS no backend HTTP 501 placeholders remain
+PASS obsolete duplicate Supabase JS client remains absent
+PASS canonical Supabase TS client remains
+PASS production API fallback remains explicit
+
+Production backend validation: 27/27 PASS
+PASS obsolete Supabase JS client removed
+PASS SocketContext uses canonical Supabase client module
+PASS production API fallback is explicit
+PASS user preference stats no longer returns 501
+PASS src/main.tsx exists
+PASS src/App.tsx exists
+PASS src/api/httpRequest.ts exists
+Runtime integrity validation passed: 7/7
+PASS response facade export exists
+PASS response facade includes created
+PASS response facade preserves existing named helpers
+PASS requireAuth compatibility alias exists
+PASS requireRole compatibility middleware exists
+PASS requireRole normalizes array role declarations
+PASS email compatibility sender export exists
+PASS atomic auction start adapter exists
+PASS atomic auction extend adapter exists
+PASS auction start RPC exists
+PASS auction extend RPC exists
+PASS subscription admin query schema is re-exported
+PASS inspection routes have auth compatibility dependency
+PASS media event routes have role compatibility dependency
+PASS no backend HTTP 501 placeholder responses remain
+PASS obsolete Supabase JS duplicate remains absent
+
+Backend runtime contract validation: 16/16 passed.
+PASS Node engine matches CI runner
+PASS CI lint command exists
+PASS Production build no longer hard-fails on optional Supabase Realtime config
+PASS Vercel production credentials are required for deployment certification
+PASS Production deployment uses the prebuilt artifact after Vercel build
+PASS Production verification runs after deployment
+PASS Production verification script is registered
+PASS Supabase frontend client is build-safe when Realtime config is absent
+PASS Production environment template exists
+PASS Chat compatibility facade exports all legacy methods
+PASS httpRequest compatibility export exists
+PASS Inspection marketplace API has typed payment responses
+PASS Auction self-recursion removed
+PASS Chat message id is defined from atomic append result
+PASS Legacy Supabase JS duplicate removed
+PASS Inspection marketplace callback prop is destructured
+Deployment readiness validation: 16/16 PASS

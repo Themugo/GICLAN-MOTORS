@@ -40,6 +40,18 @@ check('auth compatibility aliases exist', /export const requireAuth\s*=\s*protec
 const atomic = read('backend/utils/atomicTransactions.js');
 check('auction atomic adapters exist', /export async function atomicStartAuction\b/.test(atomic) && /export async function atomicExtendAuction\b/.test(atomic));
 
+const startupContracts = [
+  ['admin routes import protectAccount', read('backend/routes/adminRoutes.js'), /import protectAccount from \"\.\.\/middleware\/protectAccount\.js\";/],
+  ['user preference stats imports findAll', read('backend/controllers/userPreferenceController.js'), /import \{ findAll, findOne, create, update \}/],
+  ['auction reminder imports Supabase health guard', read('backend/services/auctionReminderCron.js'), /import \{ isSupabaseConnected \} from \"\.\.\/utils\/supabase\.js\";/],
+  ['queue DLQ warning uses queue-local name', read('backend/config/queue.js').includes('Dead letter queue size warning: ${queueName}:dlq')],
+  ['admin chat search keeps userIds in scope', read('backend/routes/adminRoutes.js'), /let userIds = \[\];/],
+  ['reconciliation escrow branch initializes result', read('backend/services/reconciliationService.js'), /if \(runType\(\"escrow_vault\"\)\) \{\s*const r = await reconcilePaymentEscrow/s],
+  ['receipt service binds sendEmail to canonical sender', read('backend/services/receiptService.js'), /const sendEmail = sendRawEmail;/],
+  ['notification worker has email compatibility fallback', read('backend/workers/notificationWorker.js'), /emailService\.sendGenericEmail \|\| emailService\.sendEmail \|\| emailService\.sendRawEmail/],
+];
+for (const item of startupContracts) check(item[0], item.length === 2 ? item[1] : item[2].test(item[1]));
+
 const backendFiles = [];
 const walk = (dir) => {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
