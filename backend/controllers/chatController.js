@@ -1,6 +1,5 @@
 // backend/controllers/chatController.js
 
-import crypto from "node:crypto";
 import { findById, create, update, remove } from "../db/index.js";
 import { getSupabase } from "../utils/supabase.js";
 import { getIO } from "../utils/io.js";
@@ -157,17 +156,22 @@ export const sendMessage = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not authorized" });
     }
 
-    const messageId = crypto.randomUUID();
-    const messageData = { id: messageId, sender: req.user.id, text: msgText, createdAt: new Date().toISOString(), seenBy: [] };
-    if (attachments && Array.isArray(attachments)) {
-      messageData.attachments = attachments.map((a) => ({
-        url: a.url,
-        type: a.type || "image",
-      }));
-    }
+    const normalizedAttachments = Array.isArray(attachments)
+      ? attachments.map((a) => ({ url: a.url, type: a.type || "image" }))
+      : [];
 
-    const messages = [...(chat.messages || []), messageData];
-    await update("chats", chatId, { messages });
+    // Atomic append: the database locks the chat row so concurrent sends
+    // cannot overwrite each other's JSONB message array.
+    const { data: messageData, error: appendError } = await getSupabase().rpc("kayad_append_chat_message", {
+      p_chat_id: chatId,
+      p_sender_id: req.user.id,
+      p_text: msgText,
+      p_attachments: normalizedAttachments,
+    });
+    if (appendError) {
+      const code = appendError.message?.includes("CHAT_BLOCKED") ? 423 : appendError.message?.includes("CHAT_FORBIDDEN") ? 403 : 500;
+      return res.status(code).json({ success: false, message: appendError.message || "Failed to send message" });
+    }
 
     // Add lead activity for message sent
     try {
@@ -274,14 +278,14 @@ export const markAsSeen = async (req, res) => {
 
     if (!chat.participants.some((p) => String(p) === String(req.user.id))) return res.status(403).json({ success: false, message: "Not authorized" });
 
-    const messages = (chat.messages || []).map((m) => {
-      if (m.sender !== req.user.id && (!m.seenBy || !m.seenBy.includes(req.user.id))) {
-        return { ...m, seenBy: [...(m.seenBy || []), req.user.id] };
-      }
-      return m;
+    const { error: seenError } = await getSupabase().rpc("kayad_mark_chat_seen", {
+      p_chat_id: chatId,
+      p_user_id: req.user.id,
     });
-
-    await update("chats", chatId, { messages });
+    if (seenError) {
+      const code = seenError.message?.includes("CHAT_FORBIDDEN") ? 403 : 500;
+      return res.status(code).json({ success: false, message: seenError.message || "Failed to mark as seen" });
+    }
 
     if (getIO()) {
       getIO().to(`chat_${chatId}`).emit("messagesSeen", { chatId, userId: req.user.id });
