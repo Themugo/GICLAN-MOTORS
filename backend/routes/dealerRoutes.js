@@ -484,19 +484,51 @@ router.put(
   asyncHandler(async (req, res) => {
     const { mpesaBusiness, mpesaBusinessName, paymentDetails, bankName, bankAccount } = req.body;
 
-    const update = {};
-    if (mpesaBusiness !== undefined) update.mpesaBusiness = mpesaBusiness;
-    if (mpesaBusinessName !== undefined) update.mpesaBusinessName = mpesaBusinessName;
-    if (bankName !== undefined) update.bankName = bankName;
-    if (bankAccount !== undefined) update.bankAccount = bankAccount;
-    if (paymentDetails !== undefined) update.paymentDetails = paymentDetails;
-    const user = await update("users", req.user.id, update);
+    const settlementUpdate = {};
+    if (mpesaBusiness !== undefined) settlementUpdate.mpesaBusiness = mpesaBusiness;
+    if (mpesaBusinessName !== undefined) settlementUpdate.mpesaBusinessName = mpesaBusinessName;
+    if (bankName !== undefined) settlementUpdate.bankName = bankName;
+    if (bankAccount !== undefined) settlementUpdate.bankAccount = bankAccount;
+    if (paymentDetails !== undefined) settlementUpdate.paymentDetails = paymentDetails;
+    const user = await update("users", req.user.id, settlementUpdate);
     await logActionFromReq(req, "update_settlement", {
-      details: { fields: Object.keys(update) },
+      details: { fields: Object.keys(settlementUpdate) },
     });
     res.json({ success: true, settlement: user });
   }),
 );
+
+// =============================
+// 💸 DEALER PAYOUTS (CANONICAL RELEASED-ESCROW LEDGER)
+// =============================
+router.get("/payouts", cacheDealerData, asyncHandler(async (req, res) => {
+  const sb = getSupabase();
+  const { data, error } = await sb.from("dealer_payouts").select("*").eq("dealer", req.user.id).order("created_at", { ascending: false }).limit(100);
+  if (error) throw error;
+  res.json({ success: true, payouts: data || [] });
+}));
+
+router.post("/payouts/:escrowId", invalidateCache("dealer"), asyncHandler(async (req, res) => {
+  const dealer = await findById("users", req.user.id, "phone mpesaBusiness");
+  const phone = String(req.body?.phone || dealer?.mpesaBusiness || dealer?.phone || "").trim();
+  if (!phone) return res.status(400).json({ success: false, message: "A registered M-Pesa payout number is required" });
+  const sb = getSupabase();
+  const prepared = await sb.rpc("kayad_prepare_dealer_payout_atomic", { p_escrow: req.params.escrowId, p_dealer: req.user.id, p_phone: phone });
+  if (prepared.error) throw prepared.error;
+  const payout = prepared.data?.payout;
+  if (!payout) return res.status(500).json({ success: false, message: "Payout preparation failed" });
+  if (payout.status === "paid") return res.json({ success: true, payout, idempotent: true });
+  const { disburseB2C } = await import("../services/mpesaB2C.service.js");
+  await sb.rpc("kayad_mark_dealer_payout_atomic", { p_payout: payout.id, p_status: "processing" });
+  try {
+    const result = await disburseB2C({ phone, amount: Number(payout.net_amount), escrowId: payout.escrow, sellerName: req.user.name, idempotencyKey: `dealer_payout:${payout.id}` });
+    const updated = await sb.rpc("kayad_mark_dealer_payout_atomic", { p_payout: payout.id, p_status: "processing", p_conversation_id: result.conversationID });
+    res.status(202).json({ success: true, payout: updated.data || payout, provider: result });
+  } catch (err) {
+    await sb.rpc("kayad_mark_dealer_payout_atomic", { p_payout: payout.id, p_status: "failed", p_failure_reason: err.message });
+    throw err;
+  }
+}));
 
 // =============================
 // 👤 DEALER PROFILE + CACHED

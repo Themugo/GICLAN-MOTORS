@@ -149,6 +149,7 @@ import { startAuctionReminderCron } from "./services/auctionReminderCron.js";
 import { startSavedSearchCron } from "./services/savedSearchCron.js";
 import { startPriceAlertCron } from "./services/priceAlertCron.js";
 import { startScheduler as startHealthScoreScheduler } from "./services/dealerHealthScoreScheduler.js";
+import { startDealerSubscriptionExpiryCron } from "./services/dealerSubscriptionExpiryCron.js";
 import { startScheduler as startMarketTrendScheduler } from "./services/marketTrendScheduler.js";
 import { startScheduler as startMarketplaceHealthScheduler } from "./services/marketplaceHealthScheduler.js";
 import { startSliScheduler } from "./services/sliScheduler.js";
@@ -875,6 +876,8 @@ const startBackgroundServices = async (io) => {
     (async () => {
       try { startHealthScoreScheduler(); console.log("✅ Health score scheduler started"); }
       catch (err) { logError("Failed to start health score scheduler", err); console.log("❌ Failed to start health score scheduler:", err); }
+      try { startDealerSubscriptionExpiryCron(); console.log("✅ Dealer subscription expiry cron started"); }
+      catch (err) { logError("Failed to start dealer subscription expiry cron", err); console.log("❌ Failed to start dealer subscription expiry cron:", err); }
     })(),
     (async () => {
       try { startMarketTrendScheduler(); console.log("✅ Market trend scheduler started"); }
