@@ -8,12 +8,14 @@ import {
   CheckCircle2,
   FileCheck,
   History,
+  Send,
   RefreshCw,
   Search,
   ShieldCheck,
   Users,
 } from 'lucide-react';
 import { Badge, Button, Card, Input, PageHeader, StatWidget, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import AdminCommunications from '../pages/admin/AdminCommunications';
 
 interface AdminViewProps {
   vehicles: Vehicle[];
@@ -61,7 +63,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ vehicles, onQuickViewVehic
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [cars, setCars] = useState<AdminCar[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditRecord[]>([]);
-  const [module, setModule] = useState<'overview' | 'users' | 'cars' | 'audit'>('overview');
+  const [module, setModule] = useState<'overview' | 'users' | 'cars' | 'audit' | 'communications'>('overview');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,12 +160,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ vehicles, onQuickViewVehic
       )}
 
       <div className="flex flex-wrap gap-2">
-        {(['overview', 'users', 'cars', 'audit'] as const).map((item) => (
+        {(['overview', 'users', 'cars', 'audit', 'communications'] as const).map((item) => (
           <Button key={item} variant={module === item ? 'primary' : 'outline'} size="sm" onClick={() => setModule(item)}>
             {item === 'overview' && <ShieldCheck className="w-4 h-4" />}
             {item === 'users' && <Users className="w-4 h-4" />}
             {item === 'cars' && <Car className="w-4 h-4" />}
             {item === 'audit' && <History className="w-4 h-4" />}
+            {item === 'communications' && <Send className="w-4 h-4" />}
             {item[0].toUpperCase() + item.slice(1)}
           </Button>
         ))}
@@ -231,6 +234,8 @@ export const AdminView: React.FC<AdminViewProps> = ({ vehicles, onQuickViewVehic
           </Table>
         </Card>
       )}
+
+      {module === 'communications' && <AdminCommunications />}
 
       {module === 'audit' && (
         <Card className="overflow-hidden">

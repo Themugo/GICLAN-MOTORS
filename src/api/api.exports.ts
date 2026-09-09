@@ -164,6 +164,13 @@ export const dealerAPI = {
   generateApiKey:  () => api.post('/dealer/api-key').then(unwrap),
 };
 
+// ── COMMUNICATIONS ─────────────────────────────────────
+export const communicationsAPI = {
+  history: (params?: any) => api.get("/communications/history", { params }).then(unwrap),
+  preferences: () => api.get("/communications/preferences").then(unwrap),
+  updatePreferences: (body: any) => api.patch("/communications/preferences", body).then(unwrap),
+};
+
 // ── ADMIN ─────────────────────────────────────────────
 export const adminAPI = {
   stats:         ()          => api.get('/admin/stats').then(unwrap),
@@ -250,6 +257,13 @@ export const adminAPI = {
   integrityRiskProfiles: (p: any) => api.get('/new-admin/auction-integrity/risk-profiles', { params: p }).then(unwrap),
   escrowApprove: (userId: string) => api.put(`/admin/users/${userId}/escrow-approve`).then(unwrap),
   escrowForce:   (userId: string) => api.put(`/admin/users/${userId}/escrow-force`).then(unwrap),
+  communicationTemplates: (params?: any) => api.get("/communications/admin/templates", { params }).then(unwrap),
+  createCommunicationTemplate: (body: any) => api.post("/communications/admin/templates", body).then(unwrap),
+  updateCommunicationTemplate: (id: string, body: any) => api.patch(`/communications/admin/templates/${id}`, body).then(unwrap),
+  communicationAnalytics: (params?: any) => api.get("/communications/admin/analytics", { params }).then(unwrap),
+  communicationProviderHealth: () => api.get("/communications/admin/provider-health").then(unwrap),
+  communicationHistory: (params?: any) => api.get("/communications/admin/history", { params }).then(unwrap),
+  retryCommunication: (id: string) => api.post(`/communications/admin/deliveries/${id}/retry`).then(unwrap),
 };
 
 // ── DISPUTE ───────────────────────────────────────────

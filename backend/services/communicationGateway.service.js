@@ -84,10 +84,23 @@ const sendWhatsApp = async (phone, body) => {
   });
 };
 
+const preferenceAllows = async (userId, channel, category) => {
+  if (!userId || channel === "in_app" || category === "otp" || category === "system") return true;
+  try {
+    const prefs = await findOne("communication_preferences", { userId });
+    if (!prefs) return category !== "marketing";
+    const key = `${channel}${category === "marketing" ? "Marketing" : "Transactional"}`;
+    return prefs[key] !== false;
+  } catch {
+    return category !== "marketing";
+  }
+};
+
 export const deliver = async ({
   userId = null,
   channel,
   eventType = "transactional",
+  category = "transactional",
   templateCode = null,
   recipient,
   subject,
@@ -98,6 +111,7 @@ export const deliver = async ({
 }) => {
   if (!CHANNELS.has(channel)) throw new Error(`Unsupported communication channel: ${channel}`);
   if (!recipient && channel !== "in_app") throw new Error(`Missing ${channel} recipient`);
+  if (!(await preferenceAllows(userId, channel, category))) throw new Error(`Communication channel ${channel} is disabled for ${category} messages`);
 
   const provider = channel === "email"
     ? (process.env.SENDGRID_API_KEY ? "sendgrid" : "smtp")
@@ -115,7 +129,8 @@ export const deliver = async ({
     recipient: recipient || String(userId || ""),
     provider,
     status: channel === "in_app" ? "delivered" : "queued",
-    metadata,
+    metadata: { ...metadata, subject, message, text, html },
+    category,
   });
 
   try {
@@ -154,7 +169,16 @@ export const deliver = async ({
     return updated;
   } catch (error) {
     logError("Communication delivery failed", error, { deliveryId: delivery.id, channel, provider });
-    return updateDelivery(delivery.id, { status: "failed", lastError: error.message });
+    const retryCount = Number(delivery.retryCount || 0) + 1;
+    const retryable = retryCount <= 3;
+    const delayMs = Math.min(60 * 60 * 1000, Math.pow(2, retryCount) * 60 * 1000);
+    return updateDelivery(delivery.id, {
+      status: "failed",
+      lastError: error.message,
+      failedAt: new Date().toISOString(),
+      retryCount,
+      nextRetryAt: retryable ? new Date(Date.now() + delayMs).toISOString() : null,
+    });
   }
 };
 
@@ -162,6 +186,7 @@ export const sendUserCommunication = async ({
   userId,
   channels = ["in_app"],
   eventType,
+  category = "transactional",
   templateCode,
   title,
   message,
@@ -174,11 +199,11 @@ export const sendUserCommunication = async ({
   const results = [];
   for (const channel of channels) {
     if (channel === "in_app") {
-      results.push(await deliver({ userId, channel, eventType, templateCode, subject: title, message, metadata }));
+      results.push(await deliver({ userId, channel, eventType, category, templateCode, subject: title, message, metadata }));
     } else if (channel === "email" && user.email) {
-      results.push(await deliver({ userId, channel, eventType, templateCode, recipient: user.email, subject, html: html || `<p>${message}</p>`, text: message, metadata }));
+      results.push(await deliver({ userId, channel, eventType, category, templateCode, recipient: user.email, subject, html: html || `<p>${message}</p>`, text: message, metadata }));
     } else if ((channel === "sms" || channel === "whatsapp") && user.phone) {
-      results.push(await deliver({ userId, channel, eventType, templateCode, recipient: user.phone, message, text: message, metadata }));
+      results.push(await deliver({ userId, channel, eventType, category, templateCode, recipient: user.phone, message, text: message, metadata }));
     }
   }
   return results;

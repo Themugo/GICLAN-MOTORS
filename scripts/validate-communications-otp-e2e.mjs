@@ -17,6 +17,12 @@ const checks = [
   ["unknown SMS provider fails closed", read("backend/utils/sms.js").includes("Unsupported SMS provider")],
   ["notification service converges channels", read("backend/services/notification.service.js").includes("sendUserCommunication")],
   ["communication webhook mounted", read("backend/server.js").includes("communicationWebhookRoutes") && read("backend/server.js").includes("/api/communications/webhooks")],
+  ["communication control plane exists", fs.existsSync(path.join(root,"backend/services/communicationControl.service.js")) && fs.existsSync(path.join(root,"backend/routes/communicationControlRoutes.js"))],
+  ["template storage and consent migration exists", fs.existsSync(path.join(root,"supabase/migrations/20260909150000_communications_control_plane.sql"))],
+  ["transactional versus marketing preferences enforced", read("backend/services/communicationGateway.service.js").includes("preferenceAllows") && read("backend/services/communicationGateway.service.js").includes("category")],
+  ["admin communications control UI exists", fs.existsSync(path.join(root,"src/pages/admin/AdminCommunications.jsx")) && read("src/features/AdminView.tsx").includes("AdminCommunications")],
+  ["automatic communication retry cron exists", fs.existsSync(path.join(root,"backend/services/communicationRetryCron.js")) && read("backend/server.js").includes("startCommunicationRetryCron")],
+  ["OTP abuse windows enforced", read("backend/services/otpService.js").includes("15 * 60 * 1000") && read("backend/services/otpService.js").includes("24 * 60 * 60 * 1000")],
 ];
 let failed=0;
 for (const [name, ok] of checks) { console.log(`${ok?'PASS':'FAIL'} ${name}`); if(!ok) failed++; }

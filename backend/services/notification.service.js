@@ -26,7 +26,7 @@ export const sendNotification = async ({ userId, title, message, type = "info", 
     if (emailEnabled && email) channels.push("email");
     if (smsEnabled && phone) channels.push("sms");
     if (channels.length > 1) {
-      sendUserCommunication({ userId, channels: channels.slice(1), eventType: normalizedType, title, message, metadata: { link, data } })
+      sendUserCommunication({ userId, channels: channels.slice(1), eventType: normalizedType, category: "transactional", title, message, metadata: { link, data } })
         .catch((e) => console.warn("Notification channel delivery failed:", e.message));
     }
     return notification;

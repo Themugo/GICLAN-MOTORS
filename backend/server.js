@@ -50,6 +50,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 import favoriteRoutes from "./routes/favoriteRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import communicationWebhookRoutes from "./routes/communicationWebhookRoutes.js";
+import communicationControlRoutes from "./routes/communicationControlRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import auctionAdminRoutes from "./routes/auctionAdminRoutes.js";
@@ -149,6 +150,7 @@ import { startEscrowCron } from "./services/escrowCron.js";
 import { startAuctionReminderCron } from "./services/auctionReminderCron.js";
 import { startSavedSearchCron } from "./services/savedSearchCron.js";
 import { startPriceAlertCron } from "./services/priceAlertCron.js";
+import { startCommunicationRetryCron } from "./services/communicationRetryCron.js";
 import { startScheduler as startHealthScoreScheduler } from "./services/dealerHealthScoreScheduler.js";
 import { startScheduler as startMarketTrendScheduler } from "./services/marketTrendScheduler.js";
 import { startScheduler as startMarketplaceHealthScheduler } from "./services/marketplaceHealthScheduler.js";
@@ -729,6 +731,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/favorites", csrfProtection, favoriteRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/communications/webhooks", communicationWebhookRoutes);
+app.use("/api/communications", communicationControlRoutes);
 app.use("/api/reviews", csrfProtection, reviewRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/auction-admin", auctionAdminRoutes);
@@ -862,6 +865,10 @@ const startBackgroundServices = async (io) => {
     (async () => {
       try { startPriceAlertCron(); console.log("✅ Price alert cron started"); }
       catch (err) { logError("Failed to start price alert cron", err); console.log("❌ Failed to start price alert cron:", err); }
+    })(),
+    (async () => {
+      try { startCommunicationRetryCron(); console.log("✅ Communication retry cron started"); }
+      catch (err) { logError("Failed to start communication retry cron", err); console.log("❌ Failed to start communication retry cron:", err); }
     })(),
     (async () => {
       try { startHealthScoreScheduler(); console.log("✅ Health score scheduler started"); }
