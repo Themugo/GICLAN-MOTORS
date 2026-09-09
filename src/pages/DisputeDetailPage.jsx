@@ -35,7 +35,7 @@ export default function DisputeDetailPage() {
   const { id } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { on } = useSocket();
+  const { on, joinDispute, leaveChannel } = useSocket();
   const [dispute, setDispute] = useState(null);
   const [evidence, setEvidence] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,13 +57,14 @@ export default function DisputeDetailPage() {
   useEffect(() => { load(); }, [id]);
 
   useEffect(() => {
+    const channel = joinDispute?.(id, { onUpdate: (data) => { if (data.disputeId === id || data.escrowId === id) load(); } });
     const offDispute = on?.('disputeUpdate', (data) => {
-      if (data.disputeId === id) load();
+      if (data.disputeId === id || data.escrowId === id) load();
     });
     const offEvidence = on?.('evidenceUploaded', (data) => {
       if (data.disputeId === id) load();
     });
-    return () => { offDispute?.(); offEvidence?.(); };
+    return () => { offDispute?.(); offEvidence?.(); if (channel) leaveChannel(channel); };
   }, [on, id]);
 
   if (loading) return <LoadingPage />;

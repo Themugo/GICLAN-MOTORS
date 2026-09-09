@@ -4,7 +4,7 @@
 
 import crypto from "node:crypto";
 import { findById, findAll, update, count } from "../db/index.js";
-import { atomicTransitionEscrow, atomicResolveDispute } from "../utils/atomicTransactions.js";
+import { atomicTransitionEscrow, atomicResolveDispute, atomicOpenDispute, atomicTransitionDispute, atomicAppendDisputeEvidence } from "../utils/atomicTransactions.js";
 import { STATES, validateTransition } from "./disputeStateMachine.js";
 
 const ADMIN_ROLES = new Set(["admin", "superadmin", "escrow_officer"]);
@@ -51,70 +51,19 @@ export async function getEscrowDispute(escrowId, actorId, role) {
 }
 
 export async function openDispute({ escrowId, actorId, role, title, description, category, priority, reason, idempotencyKey }) {
-  const escrow = await findById("escrows", escrowId);
-  if (!escrow) throw new Error("Escrow not found");
-  if (!ADMIN_ROLES.has(role) && !isParty(escrow, actorId)) throw new Error("You are not involved in this escrow");
-  if (escrow.status === "disputed" && escrow.disputeWorkflowStatus) return toDispute(escrow);
-
-  const partyRole = ADMIN_ROLES.has(role) ? "admin" : String(escrow.buyer) === String(actorId) ? "buyer" : "seller";
-  await atomicTransitionEscrow({
-    escrowId,
-    nextStatus: "disputed",
-    actorId,
-    role: partyRole,
-    idempotencyKey: idempotencyKey || `dispute-open:${escrowId}:${actorId}`,
-    reason: reason || description || title,
-  });
-
-  const openedAt = nowIso();
-  const timeline = [{ action: "Dispute opened", actor: actorId, at: openedAt, note: title || reason || "" }];
-  const updated = await update("escrows", escrowId, {
-    disputeTitle: title || "Escrow dispute",
-    disputeDescription: description || reason || "",
-    disputeCategory: category || "other",
-    disputePriority: priority || "medium",
-    disputeWorkflowStatus: STATES.OPEN,
-    disputeAssignedTo: null,
-    disputeTimeline: timeline,
-    disputeEvidence: [],
-    disputeInternalNotes: [],
-    disputeMediation: null,
-    disputeResolution: null,
-    disputeAppeal: null,
-    disputeLastActionKey: idempotencyKey || null,
-  });
-  return toDispute(updated);
+  const result = await atomicOpenDispute({ escrowId, actorId, role, title, description, category, priority, idempotencyKey: idempotencyKey || `dispute-open:${escrowId}:${actorId}` });
+  return toDispute(result.escrow);
 }
 
 export async function transitionWorkflow({ escrowId, actorId, role, nextStatus, reason }) {
-  const escrow = await findById("escrows", escrowId);
-  if (!escrow) throw new Error("Dispute not found");
-  if (!ADMIN_ROLES.has(role)) throw new Error("Only dispute staff can transition workflow state");
-  if (escrow.status !== "disputed") throw new Error("Escrow is not currently disputed");
-  const current = escrow.disputeWorkflowStatus || STATES.OPEN;
-  const validation = validateTransition(current, nextStatus, role, {
-    ...(escrow.disputeAppeal ? { appeal: escrow.disputeAppeal } : {}),
-  });
-  if (!validation.allowed) throw new Error(validation.reason);
-  const entry = { action: `Status: ${current} → ${nextStatus}`, actor: actorId, fromStatus: current, toStatus: nextStatus, note: reason || "", at: nowIso() };
-  const updated = await update("escrows", escrowId, {
-    disputeWorkflowStatus: nextStatus,
-    disputeTimeline: [...(escrow.disputeTimeline || []), entry],
-  });
-  return toDispute(updated);
+  const row = await atomicTransitionDispute({ escrowId, actorId, role, nextStatus, reason });
+  return toDispute(row);
 }
 
 export async function addEvidence({ escrowId, actorId, role, evidence }) {
+  const result = await atomicAppendDisputeEvidence({ escrowId, actorId, role, item: evidence });
   const escrow = await findById("escrows", escrowId);
-  if (!escrow) throw new Error("Dispute not found");
-  if (!ADMIN_ROLES.has(role) && !isParty(escrow, actorId)) throw new Error("Access denied");
-  if (escrow.status !== "disputed") throw new Error("Evidence can only be added to an active dispute");
-  const item = { _id: id(), ...evidence, uploadedBy: actorId, uploadedByRole: role, createdAt: nowIso(), verified: false };
-  const updated = await update("escrows", escrowId, {
-    disputeEvidence: [...(escrow.disputeEvidence || []), item],
-    disputeTimeline: [...(escrow.disputeTimeline || []), { action: `Evidence uploaded: ${item.type}`, actor: actorId, at: item.createdAt, note: item.fileName || "" }],
-  });
-  return { item, dispute: toDispute(updated) };
+  return { item: result.item, dispute: toDispute(escrow) };
 }
 
 export async function deleteEvidence({ escrowId, actorId, role, evidenceId }) {
@@ -144,6 +93,16 @@ export async function addNote({ escrowId, actorId, note, isPrivate = true }) {
   if (!escrow) throw new Error("Dispute not found");
   const item = { _id: id(), content: note, author: actorId, createdAt: nowIso(), isPrivate };
   const updated = await update("escrows", escrowId, { disputeInternalNotes: [item, ...(escrow.disputeInternalNotes || [])] });
+  return toDispute(updated);
+}
+
+export async function assignDispute({ escrowId, actorId, assigneeId }) {
+  const escrow = await findById("escrows", escrowId);
+  if (!escrow || escrow.status !== "disputed") throw new Error("Dispute not found");
+  const updated = await update("escrows", escrowId, {
+    disputeAssignedTo: assigneeId,
+    disputeTimeline: [...(escrow.disputeTimeline || []), { action: `Assigned to admin ${assigneeId}`, actor: actorId, at: nowIso() }],
+  });
   return toDispute(updated);
 }
 

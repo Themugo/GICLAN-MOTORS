@@ -665,6 +665,20 @@ io.on("connection", (socket) => {
       logWarn("Socket inspection room authorization failed", { inspectionId, userId, error: error?.message });
     }
   });
+  socket.on("joinDispute", async (escrowId) => {
+    if (!socket.user || isRateLimited("joinDispute") || !isValidId(escrowId)) return;
+    const userId = String(socket.user.id || socket.user._id);
+    try {
+      const { getSupabase } = await import("./utils/supabase.js");
+      const { data: escrow } = await getSupabase().from("escrows").select("id,buyer,seller,status,disputeChatId,disputeInspectionId,disputeWorkflowStatus").eq("id", escrowId).maybeSingle();
+      if (!escrow || escrow.status !== "disputed") return;
+      const allowed = [escrow.buyer, escrow.seller].map(String).includes(userId) || ["admin","superadmin","escrow_officer"].includes(socket.user.role);
+      if (!allowed) return;
+      socket.join(`dispute_${escrowId}`);
+      socket.emit("disputeResync", escrow);
+    } catch (error) { logWarn("Socket dispute room authorization failed", { escrowId, userId, error: error?.message }); }
+  });
+  socket.on("leaveDispute", (escrowId) => { if (!isRateLimited("leaveDispute") && isValidId(escrowId)) socket.leave(`dispute_${escrowId}`); });
   socket.on("leaveInspection", (inspectionId) => {
     if (!isRateLimited("leaveInspection") && isValidId(inspectionId)) socket.leave(`inspection_${inspectionId}`);
   });

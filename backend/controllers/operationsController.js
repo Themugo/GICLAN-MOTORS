@@ -2,7 +2,6 @@ import Escrow from "../models/Escrow.js";
 import Car from "../models/Car.js";
 import InspectionOrder from "../models/InspectionOrder.js";
 import User from "../models/User.js";
-import Dispute from "../models/Dispute.js";
 import Payment from "../models/Payment.js";
 import { logError } from '../infrastructure/logging/index.js';
 
@@ -47,15 +46,7 @@ export const getOperationsDashboard = async (req, res) => {
           },
         },
       ]),
-      Dispute.aggregate([
-        {
-          $facet: {
-            open: [{ $match: { status: "open", createdAt: { $gte: today } } }, { $count: "count" }],
-            urgent: [{ $match: { status: "open", severity: "critical", createdAt: { $gte: today } } }, { $count: "count" }],
-            escalated: [{ $match: { status: "appealed", createdAt: { $gte: today } } }, { $count: "count" }],
-          },
-        },
-      ]),
+      Escrow.aggregate([{ $facet: { open: [{ $match: { status: "disputed", disputeWorkflowStatus: "open", createdAt: { $gte: today } } }, { $count: "count" }], urgent: [{ $match: { status: "disputed", disputePriority: { $in: ["urgent", "high"] }, createdAt: { $gte: today } } }, { $count: "count" }], escalated: [{ $match: { status: "disputed", disputeWorkflowStatus: "appealed", createdAt: { $gte: today } } }, { $count: "count" }] } }]),
       Payment.aggregate([
         {
           $facet: {
@@ -294,17 +285,10 @@ export const getSupportQueue = async (req, res) => {
 
     const skip = (Math.max(Number(page), 1) - 1) * Math.min(Number(limit), 100);
 
-    const [disputes, total] = await Promise.all([
-      Dispute.find(filter)
-        .populate("openedBy", "name email phone")
-        .populate("openedAgainst", "name email")
-        .populate("relatedEscrow", "amount status buyer seller")
-        .select("openedBy openedAgainst relatedEscrow status severity subject description createdAt")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Math.min(Number(limit), 100)),
-      Dispute.countDocuments(filter),
-    ]);
+    const rows = await Escrow.find({ status: "disputed", ...(status ? { disputeWorkflowStatus: status } : {}), ...(severity ? { disputePriority: severity } : {}) })
+      .sort({ disputedAt: -1 }).skip(skip).limit(Math.min(Number(limit),100)).lean();
+    const disputes = rows.map(e => ({ _id:e.id, openedBy:e.disputedBy, openedAgainst:String(e.disputedBy)===String(e.buyer)?e.seller:e.buyer, relatedEscrow:e.id, status:e.disputeWorkflowStatus || "open", severity:e.disputePriority || "medium", subject:e.disputeTitle, description:e.disputeDescription, createdAt:e.disputedAt, amountInDispute:e.amount }));
+    const total = await Escrow.countDocuments({ status: "disputed", ...(status ? { disputeWorkflowStatus: status } : {}), ...(severity ? { disputePriority: severity } : {}) });
 
     res.json({
       success: true,

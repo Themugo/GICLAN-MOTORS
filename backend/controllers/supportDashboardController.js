@@ -4,7 +4,6 @@
 import Ticket from "../models/SupportTicket.js";
 import Chat from "../models/Chat.js";
 import User from "../models/User.js";
-import Dispute from "../models/Dispute.js";
 import { protect } from "../middleware/auth.js";
 import { logInfo, logError } from "../utils/logger.js";
 

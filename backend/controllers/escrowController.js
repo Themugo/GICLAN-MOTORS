@@ -20,10 +20,10 @@ import {
   deliverEscrow,
   releaseEscrow as serviceRelease,
   refundEscrow as serviceRefund,
-  disputeEscrow as serviceDispute,
   closeEscrow as serviceClose,
 } from "../services/escrow.service.js";
 import { STATES, getAllowedTransitions } from "../services/escrowStateMachine.js";
+import { openDispute as openDisputeWorkflow } from "../services/dispute.service.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 
 // =============================
@@ -308,15 +308,25 @@ export const disputeEscrow = async (req, res) => {
     const isStaff = ["admin", "superadmin", "moderator"].includes(req.user.role);
     if (!isParty && !isStaff) return res.status(403).json({ success: false, message: "Not authorized" });
 
-    const role = isStaff ? "admin" : "buyer";
-    const updated = await serviceDispute(escrow._id, userId, role, reason, { req });
-
-    if (getIO()) {
-      getIO().to(`user_${escrow.buyer}`).emit("escrowDisputed", { escrowId: escrow._id });
-      getIO().to(`user_${escrow.seller}`).emit("escrowDisputed", { escrowId: escrow._id });
+    const role = isStaff ? "admin" : (String(escrow.buyer) === userId ? "buyer" : "seller");
+    const dispute = await openDisputeWorkflow({
+      escrowId: escrow._id,
+      actorId: userId,
+      role,
+      title: "Escrow dispute",
+      description: reason,
+      category: "other",
+      priority: "medium",
+      reason,
+      idempotencyKey: req.idempotencyKey,
+    });
+    const io = getIO();
+    if (io) {
+      io.to(`user_${escrow.buyer}`).emit("escrowDisputed", { escrowId: escrow._id, disputeId: dispute.id, status: dispute.status });
+      io.to(`user_${escrow.seller}`).emit("escrowDisputed", { escrowId: escrow._id, disputeId: dispute.id, status: dispute.status });
+      io.to("admins").emit("newDispute", { escrowId: escrow._id, disputeId: dispute.id, title: dispute.title });
     }
-
-    res.json({ success: true, message: "Dispute raised", data: updated });
+    res.json({ success: true, message: "Dispute raised", data: dispute });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message || "Dispute failed" });
   }

@@ -20,7 +20,6 @@ import Escrow from "../models/Escrow.js";
 import Ad from "../models/Ad.js";
 import AdminAlert from "../models/AdminAlert.js";
 import GlobalSettings from "../models/GlobalSettings.js";
-import Dispute from "../models/Dispute.js";
 import Referral from "../models/Referral.js";
 import { listAdminReviews, moderateReview, deleteReview as deleteDealerReview } from "../services/review.service.js";
 import Transaction from "../models/Transaction.js";
@@ -165,7 +164,7 @@ router.get(
       AdminAlert.countDocuments({ read: false }),                                      // activeAlerts
       User.countDocuments({ role: "individual_seller" }),                              // individualSellers
       Car.countDocuments({ status: "sold" }),                                          // carsSold
-      Dispute.countDocuments({ status: { $in: ["open", "investigating"] } }),          // pendingReports
+      Escrow.countDocuments({ status: "disputed", disputeWorkflowStatus: { $in: ["open", "under_review", "mediation", "appealed"] } }),          // pendingReports
       DealerVerification.countDocuments({ verificationStatus: { $in: ["pending", "under_review"] } }), // verificationQueue
       SupportTicket.countDocuments({ status: { $in: ["open", "in_progress", "waiting_on_user", "waiting_on_internal", "escalated"] } }), // supportQueue
       FraudDetection.countDocuments({ severity: { $in: ["critical", "high"] }, status: { $nin: ["dismissed", "action_taken"] } }), // fraudAlerts
