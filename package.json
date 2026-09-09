@@ -82,7 +82,7 @@
     "vitest": "4.1.11"
   },
   "engines": {
-    "node": ">=22.22.2"
+    "node": "22.22.2"
   },
   "overrides": {
     "undici": "8.10.2"
