@@ -2,6 +2,8 @@ import crypto from "crypto";
 import { create, update, findById, findOne } from "../db/index.js";
 import { sendRawEmail } from "./email.service.js";
 import { sendSMS } from "../utils/sms.js";
+import { sendTwilioWhatsApp } from "./whatsappProvider.service.js";
+import { isCommunicationEnabled } from "./communicationRollout.service.js";
 import { logError, logInfo } from "../utils/logger.js";
 import { getIO } from "../utils/io.js";
 
@@ -70,21 +72,7 @@ export const updateDelivery = async (id, patch) => {
   return delivery;
 };
 
-const sendWhatsApp = async (phone, body) => {
-  const to = normalizePhone(phone);
-  if (!to) throw new Error("Invalid Kenyan WhatsApp number");
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_WHATSAPP_NUMBER) {
-    throw new Error("WhatsApp provider is not configured");
-  }
-  const { default: twilio } = await import("twilio");
-  const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  return client.messages.create({
-    from: String(process.env.TWILIO_WHATSAPP_NUMBER).startsWith("whatsapp:") ? process.env.TWILIO_WHATSAPP_NUMBER : `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-    to: `whatsapp:${to}`,
-    body,
-    statusCallback: process.env.TWILIO_STATUS_CALLBACK_URL || undefined,
-  });
-};
+const sendWhatsApp = async (phone, body) => sendTwilioWhatsApp({ phone, message: body });
 
 const preferenceAllows = async (userId, channel, category) => {
   if (!userId || channel === "in_app" || category === "otp" || category === "system") return true;
@@ -115,11 +103,15 @@ export const deliver = async ({
   if (!CHANNELS.has(channel)) throw new Error(`Unsupported communication channel: ${channel}`);
   if (!recipient && channel !== "in_app") throw new Error(`Missing ${channel} recipient`);
   if (!(await preferenceAllows(userId, channel, category))) throw new Error(`Communication channel ${channel} is disabled for ${category} messages`);
+  if (!(await isCommunicationEnabled({ eventType, channel, category }))) {
+    logInfo("Communication suppressed by admin rollout control", { eventType, channel, category });
+    return null;
+  }
 
   const provider = channel === "email"
-    ? (process.env.SENDGRID_API_KEY ? "sendgrid" : "smtp")
+    ? "resend"
     : channel === "sms"
-      ? (process.env.SMS_PROVIDER || "disabled")
+      ? "africastalking"
       : channel === "whatsapp"
         ? "twilio_whatsapp"
         : "socket";

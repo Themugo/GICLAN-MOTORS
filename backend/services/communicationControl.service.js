@@ -85,8 +85,7 @@ export const getDeliveryHistory = async ({ userId, channel, category, status, li
 
 export const getProviderHealth = async () => {
   const configured = {
-    sendgrid: Boolean(process.env.SENDGRID_API_KEY),
-    smtp: Boolean(process.env.EMAIL_HOST),
+    resend: Boolean(process.env.RESEND_API_KEY),
     africastalking: Boolean(process.env.AT_API_KEY),
     twilio_whatsapp: Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_WHATSAPP_NUMBER),
   };
@@ -134,4 +133,23 @@ export const retryDelivery = async (id) => {
 export const recordOtpAttempt = async ({ userId, purpose, code, ip, userAgent }) => {
   const recent = await findAll("otp_challenges", { filters: { userId, purpose }, orderBy: "createdAt", ascending: false, limit: 1 });
   return { recent: recent[0] || null, ipHash: hash(ip), userAgentHash: hash(userAgent), codeHash: hash(code) };
+};
+
+export const getRolloutControls = async () => {
+  const { getRolloutState } = await import("./communicationRollout.service.js");
+  return getRolloutState();
+};
+
+export const updateChannelControl = async (actor, channel, enabled) => {
+  if (!STAFF.has(actor?.role)) throw new Error("Admin access required");
+  const row = await findOne("communication_channel_controls", { channel });
+  if (!row) throw new Error(`Unknown communication channel: ${channel}`);
+  return update("communication_channel_controls", row.id, { enabled: Boolean(enabled), updatedBy: actor.id, updatedAt: new Date().toISOString() });
+};
+
+export const updateEventControl = async (actor, eventType, channel, enabled) => {
+  if (!STAFF.has(actor?.role)) throw new Error("Admin access required");
+  const row = await findOne("communication_event_controls", { eventType, channel });
+  if (!row) throw new Error(`Unknown communication event/channel: ${eventType}/${channel}`);
+  return update("communication_event_controls", row.id, { enabled: Boolean(enabled), updatedBy: actor.id, updatedAt: new Date().toISOString() });
 };

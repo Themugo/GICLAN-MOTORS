@@ -69,8 +69,8 @@ const FEATURE_GROUPS = [
     vars: ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"],
   },
   {
-    label: "SendGrid (email)",
-    vars: ["SENDGRID_API_KEY"],
+    label: "Resend (email)",
+    vars: ["RESEND_API_KEY", "RESEND_FROM_EMAIL"],
   },
   {
     label: "Redis (caching)",

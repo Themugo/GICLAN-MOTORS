@@ -16,15 +16,6 @@ import { invalidateUserCache } from "../middleware/auth.js";
 import { recordFailedAttempt, recordSuccessfulAttempt } from "../middleware/accountLockout.js";
 import { logError } from '../infrastructure/logging/index.js';
 
-// Email service — imported once at module level. Functions are no-ops
-// if the email transport isn't configured (EMAIL_HOST not set).
-let emailService = {};
-try {
-  emailService = await import("../services/email.service.js");
-} catch (e) {
-  console.warn("⚠️  Email service unavailable:", e.message);
-}
-
 const WEBHOIST_EMAIL = process.env.WEBHOIST_EMAIL || "";
 const OWNER_EMAILS = WEBHOIST_EMAIL.split(",").map(e => e.trim()).filter(Boolean);
 const STAFF_ROLES = [
@@ -232,7 +223,7 @@ export const register = async (req, res) => {
 
     // Email verification token — only the SHA-256 hash is stored; the raw
     // token goes out in the verification email. Login/API access stays open
-    // unless verification is enforced (EMAIL_HOST configured or
+    // unless verification is enforced (Resend configured or
     // REQUIRE_EMAIL_VERIFICATION=true), matching the login gate.
     const verifyToken = crypto.randomBytes(32).toString("hex");
 
@@ -360,10 +351,10 @@ export const login = async (req, res) => {
 
     // ─── Email verification gate ────────────────────────────────
     // Only enforce when verification can actually be completed. If SMTP
-    // isn't configured (no EMAIL_HOST) there's no way to receive the
+    // isn't configured there is no way to receive the
     // verification link, so blocking login would lock everyone out.
     // Override explicitly with REQUIRE_EMAIL_VERIFICATION=true|false.
-    const emailConfigured = !!process.env.EMAIL_HOST;
+    const emailConfigured = !!process.env.RESEND_API_KEY;
     const requireVerification = process.env.REQUIRE_EMAIL_VERIFICATION
       ? process.env.REQUIRE_EMAIL_VERIFICATION === "true"
       : emailConfigured;
@@ -711,13 +702,20 @@ export const resendVerification = async (req, res) => {
     userAuth.emailVerifyExpire = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
     await userAuth.save();
 
-    // Send verification email
-    const { sendVerificationReminderEmail } = emailService;
-    if (typeof sendVerificationReminderEmail === "function") {
-      sendVerificationReminderEmail(user.email, user.name, verifyToken).catch((e) =>
-        console.warn("⚠️  Resend verification email failed:", e.message),
-      );
-    }
+    try {
+      const verifyUrl = `${process.env.FRONTEND_URL || "https://www.kayad.space"}/verify-email?token=${verifyToken}`;
+      await deliver({
+        userId: user.id || user._id,
+        channel: "email",
+        eventType: COMMUNICATION_EVENTS.EMAIL_VERIFICATION,
+        templateCode: "account_verification_email",
+        recipient: user.email,
+        subject: "Verify Your Email — KAYAD",
+        text: `Hi ${user.name || "there"}, verify your KAYAD email: ${verifyUrl}`,
+        html: `<p>Hi ${user.name || "there"},</p><p>Your new KAYAD verification link is ready.</p><p><a href="${verifyUrl}">Verify my email</a></p>`,
+        metadata: { verification: true, resend: true },
+      });
+    } catch (e) { console.warn("⚠️ Verification email failed:", e.message); }
 
     res.json({ success: true, message: "If that email exists and is unverified, a link has been sent." });
   } catch (err) {
@@ -745,10 +743,19 @@ export const forgotPassword = async (req, res) => {
     userAuth.resetTokenExpire = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await userAuth.save();
 
-    const { sendPasswordResetEmail } = emailService;
-    if (typeof sendPasswordResetEmail === "function") {
-      sendPasswordResetEmail(user, token).catch((e) => console.warn("⚠️  Reset email failed:", e.message));
-    }
+    try {
+      const resetUrl = `${process.env.FRONTEND_URL || "https://www.kayad.space"}/reset-password?token=${token}`;
+      await deliver({
+        userId: user.id || user._id,
+        channel: "email",
+        eventType: COMMUNICATION_EVENTS.PASSWORD_RESET,
+        recipient: user.email,
+        subject: "Reset Your KAYAD Password",
+        text: `Reset your KAYAD password: ${resetUrl}. This link expires in 1 hour.`,
+        html: `<p>We received a request to reset your KAYAD password.</p><p><a href="${resetUrl}">Reset my password</a></p><p>This link expires in 1 hour.</p>`,
+        metadata: { passwordReset: true },
+      });
+    } catch (e) { console.warn("⚠️ Reset email failed:", e.message); }
 
     res.json({ success: true, message: "If that email is registered, a reset link has been sent." });
   } catch (err) {

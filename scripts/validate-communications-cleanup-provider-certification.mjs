@@ -18,6 +18,9 @@ const walk = (dir) => {
 walk(path.join(root, 'backend'));
 const canonical = new Set([
   path.join(root, 'backend/services/communicationGateway.service.js'),
+  path.join(root, 'backend/services/emailProvider.service.js'),
+  path.join(root, 'backend/services/smsProvider.service.js'),
+  path.join(root, 'backend/services/whatsappProvider.service.js'),
   path.join(root, 'backend/services/email.service.js'),
   path.join(root, 'backend/utils/sms.js'),
   path.join(root, 'backend/services/sms.service.js'),
@@ -41,7 +44,7 @@ const required = [
   ['backend/services/auctionReminderCron.js', ['COMMUNICATION_EVENTS.AUCTION_ENDING_SOON', 'emitCommunication']],
   ['backend/services/savedSearchCron.js', ['COMMUNICATION_EVENTS.SAVED_SEARCH_MATCH', 'category: "marketing"']],
   ['backend/services/reminderAutomationService.js', ['COMMUNICATION_EVENTS.REMINDER', 'emitCommunication']],
-  ['backend/routes/communicationWebhookRoutes.js', ['/twilio/status', '/sendgrid/events', '/africastalking/status']],
+  ['backend/routes/communicationWebhookRoutes.js', ['/twilio/status', '/sendgrid/events', '/africastalking/status', '/resend/events']],
   ['backend/services/communicationControl.service.js', ['getProviderHealth', 'retryDelivery']],
   ['backend/services/communicationGateway.service.js', ['handleProviderStatus', 'communicationDeliveryUpdated']],
 ];
@@ -53,7 +56,7 @@ for (const [file, needles] of required) {
 console.log('PASS no direct provider calls outside canonical adapters');
 console.log('PASS scheduled communications use canonical event gateway');
 console.log('PASS provider callbacks and retry reconciliation are wired');
-console.log(`Provider configuration: SendGrid=${Boolean(process.env.SENDGRID_API_KEY)}, SMTP=${Boolean(process.env.EMAIL_HOST)}, AfricaTalking=${Boolean(process.env.AT_API_KEY)}, TwilioWhatsApp=${Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_WHATSAPP_NUMBER)}`);
-if (!process.env.SENDGRID_API_KEY && !process.env.EMAIL_HOST && !process.env.AT_API_KEY && !process.env.TWILIO_ACCOUNT_SID) {
+console.log(`Provider configuration: Resend=${Boolean(process.env.RESEND_API_KEY)}, AfricaTalking=${Boolean(process.env.AT_API_KEY && process.env.AT_USERNAME)}, TwilioWhatsApp=${Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_WHATSAPP_NUMBER)}`);
+if (!process.env.RESEND_API_KEY && !process.env.AT_API_KEY && !process.env.TWILIO_ACCOUNT_SID) {
   console.log('INFO live provider credential certification skipped: no provider secrets are available in this runtime');
 }

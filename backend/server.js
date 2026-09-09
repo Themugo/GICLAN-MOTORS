@@ -401,6 +401,7 @@ app.use(csrfToken);
 import apiVersionMiddleware from "./middleware/apiVersion.js";
 app.use(apiVersionMiddleware);
 app.use(bodyGuard());
+app.use("/api/communications/webhooks/resend", express.raw({ type: "application/json", limit: "1mb" }));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 

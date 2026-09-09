@@ -262,6 +262,9 @@ export const adminAPI = {
   updateCommunicationTemplate: (id: string, body: any) => api.patch(`/communications/admin/templates/${id}`, body).then(unwrap),
   communicationAnalytics: (params?: any) => api.get("/communications/admin/analytics", { params }).then(unwrap),
   communicationProviderHealth: () => api.get("/communications/admin/provider-health").then(unwrap),
+  communicationRollout: () => api.get("/communications/admin/rollout").then(unwrap),
+  updateCommunicationChannelControl: (channel: string, enabled: boolean) => api.patch(`/communications/admin/rollout/channels/${channel}`, { enabled }).then(unwrap),
+  updateCommunicationEventControl: (eventType: string, channel: string, enabled: boolean) => api.patch(`/communications/admin/rollout/events/${encodeURIComponent(eventType)}/${channel}`, { enabled }).then(unwrap),
   communicationHistory: (params?: any) => api.get("/communications/admin/history", { params }).then(unwrap),
   retryCommunication: (id: string) => api.post(`/communications/admin/deliveries/${id}/retry`).then(unwrap),
 };

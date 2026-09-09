@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, RotateCcw, Activity, FileText, ShieldCheck, Send } from 'lucide-react';
+import { RefreshCw, RotateCcw, Activity, FileText, ShieldCheck, Send, Mail, MessageSquare, Smartphone, Power, CheckCircle2 } from 'lucide-react';
 import { adminAPI } from '../../api/api.exports';
 
 const unwrap = (x) => x?.data ?? x;
@@ -13,21 +13,38 @@ export default function AdminCommunications() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');
+  const [rollout, setRollout] = useState({ channels: [], events: [] });
+  const [tab, setTab] = useState('email');
 
   const load = async () => {
     setLoading(true); setError('');
     try {
-      const [t, a, h, r] = await Promise.all([
+      const [t, a, h, r, ro] = await Promise.all([
         adminAPI.communicationTemplates(),
         adminAPI.communicationAnalytics({ hours: 24 }),
         adminAPI.communicationProviderHealth(),
         adminAPI.communicationHistory({ limit: 50 }),
+        adminAPI.communicationRollout(),
       ]);
-      setTemplates(unwrap(t) || []); setAnalytics(unwrap(a) || []); setHealth(unwrap(h) || []); setHistory(unwrap(r) || []);
+      setTemplates(unwrap(t) || []); setAnalytics(unwrap(a) || []); setHealth(unwrap(h) || []); setHistory(unwrap(r) || []); setRollout(unwrap(ro) || { channels: [], events: [] });
     } catch (e) { setError(e?.message || 'Communications control plane could not be loaded.'); }
     finally { setLoading(false); }
   };
   useEffect(() => { void load(); }, []);
+
+  const toggleChannel = async (channel, enabled) => {
+    setBusy(`channel:${channel}`); setError('');
+    try { await adminAPI.updateCommunicationChannelControl(channel, enabled); await load(); }
+    catch (e) { setError(e?.message || 'Channel control update failed.'); }
+    finally { setBusy(''); }
+  };
+
+  const toggleEvent = async (eventType, channel, enabled) => {
+    setBusy(`event:${eventType}:${channel}`); setError('');
+    try { await adminAPI.updateCommunicationEventControl(eventType, channel, enabled); await load(); }
+    catch (e) { setError(e?.message || 'Event control update failed.'); }
+    finally { setBusy(''); }
+  };
 
   const retry = async (id) => {
     setBusy(id); setError('');
@@ -42,6 +59,14 @@ export default function AdminCommunications() {
       <button onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border bg-white text-sm font-bold"><RefreshCw size={15} className={loading ? 'animate-spin' : ''}/>Refresh</button>
     </div>
     {error && <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-sm">{error}</div>}
+    <section className="bg-white border rounded-xl overflow-hidden">
+      <div className="p-5 border-b"><div className="text-xs uppercase tracking-[.18em] text-slate-500 font-bold">Launch Controls</div><h2 className="text-lg font-black mt-1">What KAYAD is allowed to send</h2><p className="text-sm text-slate-500 mt-1">Roll communications out gradually. Email and SMS are launch channels; WhatsApp is built but remains off until you activate it.</p></div>
+      <div className="p-4 flex flex-wrap gap-2 border-b">{[['email','Email',Mail],['sms','Kenya SMS',Smartphone],['whatsapp','WhatsApp',MessageSquare]].map(([key,label,Icon])=>{const c=rollout.channels.find(x=>x.channel===key); return <button key={key} onClick={()=>setTab(key)} className={`px-4 py-2 rounded-lg border text-sm font-black inline-flex items-center gap-2 ${tab===key?'bg-slate-900 text-white':'bg-white text-slate-700'}`}><Icon size={15}/>{label}<span className="text-xs opacity-70">{c?.canonicalProvider}</span></button>})}</div>
+      <div className="p-5 space-y-4">
+        {(() => { const c=rollout.channels.find(x=>x.channel===tab); const events=rollout.events.filter(x=>x.channel===tab); return <><div className="flex items-center justify-between p-4 rounded-xl border bg-slate-50"><div><div className="font-black">{c?.canonicalProvider || tab}</div><div className="text-xs text-slate-500">Master switch for this channel</div></div><button onClick={()=>toggleChannel(tab,!c?.enabled)} disabled={busy===`channel:${tab}`} className={`px-3 py-2 rounded-lg text-xs font-black inline-flex items-center gap-2 ${c?.enabled?'bg-emerald-600 text-white':'bg-slate-200 text-slate-700'}`}><Power size={14}/>{c?.enabled?'Active':'Off'}</button></div>
+        <div className="grid md:grid-cols-2 gap-2">{events.map(e=><div key={e.id} className="flex items-center justify-between gap-3 p-3 border rounded-lg"><div><div className="text-sm font-bold">{e.eventType}</div><div className="text-xs text-slate-500">{e.enabled?'Allowed to send':'Suppressed at launch'}</div></div><button onClick={()=>toggleEvent(e.eventType,tab,!e.enabled)} disabled={!c?.enabled || busy===`event:${e.eventType}:${tab}`} className={`px-3 py-1.5 rounded-lg text-xs font-black ${e.enabled?'bg-emerald-50 text-emerald-700 border border-emerald-200':'bg-slate-100 text-slate-500 border'}`}>{e.enabled?'Enabled':'Disabled'}</button></div>)}</div></> })()}
+      </div>
+    </section>
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div className="p-4 rounded-xl bg-white border"><div className="text-xs text-slate-500">Templates</div><div className="text-2xl font-black">{templates.length}</div></div>
       <div className="p-4 rounded-xl bg-white border"><div className="text-xs text-slate-500">24h delivery groups</div><div className="text-2xl font-black">{analytics.reduce((n,x)=>n+Number(x.total||0),0)}</div></div>

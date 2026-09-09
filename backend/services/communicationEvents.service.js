@@ -4,6 +4,7 @@ import { sendUserCommunication } from "./communicationGateway.service.js";
 export const COMMUNICATION_EVENTS = Object.freeze({
   REGISTRATION: "registration.completed",
   EMAIL_VERIFICATION: "account.email_verification",
+  PASSWORD_RESET: "account.password_reset",
   PHONE_VERIFICATION: "account.phone_verification",
   BID_PLACED: "auction.bid_placed",
   BID_CONFIRMED: "auction.bid_confirmed",

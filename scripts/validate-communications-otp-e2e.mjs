@@ -14,7 +14,7 @@ const checks = [
   ["delivery ledger migration exists", fs.existsSync(path.join(root,"supabase/migrations/20260909143000_communications_otp_delivery_control.sql"))],
   ["delivery ledger fields mapped", read("backend/utils/fieldMap.js").includes("communication_deliveries") && read("backend/utils/fieldMap.js").includes("otp_challenges")],
   ["disabled email is honest", read("backend/services/email.service.js").includes('success: false, disabled: true')],
-  ["unknown SMS provider fails closed", read("backend/utils/sms.js").includes("Unsupported SMS provider")],
+  ["SMS is locked to canonical Africa\'s Talking adapter", read("backend/utils/sms.js").includes("sendAfricaTalkingSms")],
   ["notification service converges channels", read("backend/services/notification.service.js").includes("sendUserCommunication")],
   ["communication webhook mounted", read("backend/server.js").includes("communicationWebhookRoutes") && read("backend/server.js").includes("/api/communications/webhooks")],
   ["communication control plane exists", fs.existsSync(path.join(root,"backend/services/communicationControl.service.js")) && fs.existsSync(path.join(root,"backend/routes/communicationControlRoutes.js"))],

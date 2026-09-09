@@ -1,57 +1,11 @@
-import nodemailer from "nodemailer";
-import { withRetry, createServiceConfig } from "../utils/retry.js";
 import { recordMetric, setGauge, incrementCounter } from "../config/metrics.js";
 import { logInfo, logError, logWarn } from "../utils/logger.js";
-import { triggerAlert } from "../config/alerting.js";
 import { addEmailJob } from "../queues/emailQueue.js";
 
 const APP_NAME = process.env.APP_NAME || "Kayad";
 const APP_URL = process.env.FRONTEND_URL || "https://www.kayad.space";
-const FROM = process.env.EMAIL_FROM || `noreply@kayad.space`;
-const ENABLED = !!process.env.EMAIL_HOST || !!process.env.SENDGRID_API_KEY;
+const FROM = process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || `noreply@kayad.space`;
 const QUEUE_MODE = process.env.QUEUE_MODE === "true";
-
-let transporter = null;
-
-// Email service configuration with SRE
-const emailConfig = createServiceConfig("email", {
-  circuitBreaker: true,
-  onCircuitOpen: (key, failures, resetMs) => {
-    triggerAlert({
-      level: "warning",
-      message: `Email circuit breaker opened after ${failures} failures`,
-      source: "email",
-      metrics: { failures, resetMs },
-    });
-  },
-  fallback: async () => {
-    logInfo("Email unavailable, using fallback mode");
-    incrementCounter("email_fallback_used");
-    return { success: false, fallback: true, error: "Email service unavailable" };
-  },
-});
-
-const getTransporter = () => {
-  if (transporter) return transporter;
-  if (!ENABLED) return null;
-
-  transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || "587"),
-    secure: process.env.EMAIL_PORT === "465",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    pool: true,
-    maxConnections: 5,
-    connectionTimeout: 30000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-  });
-
-  return transporter;
-};
 
 const layout = (content, title = APP_NAME) => `
 <!DOCTYPE html>
@@ -119,63 +73,33 @@ const divider = () => `<hr style="border:none;border-top:1px solid #1E2530;margi
 // Export raw email function for queue worker
 export const sendRawEmail = async ({ to, subject, html, text, from = FROM }) => {
   const startTime = Date.now();
-  const t = getTransporter();
-
-  if (!t && !process.env.SENDGRID_API_KEY) {
+  if (!process.env.RESEND_API_KEY) {
     incrementCounter("email_disabled");
-    logWarn("Email provider is not configured", { subject, to });
-    return { success: false, disabled: true, error: "Email provider is not configured" };
+    logWarn("Resend provider is not configured", { subject, to });
+    return { success: false, disabled: true, error: "Resend provider is not configured" };
   }
 
   try {
-    let info;
-    if (process.env.SENDGRID_API_KEY) {
-      const { default: sgMail } = await import("@sendgrid/mail");
-      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-      const [response] = await withRetry(
-        () => sgMail.send({ from: FROM, to, subject, text: text || subject, html }),
-        { ...emailConfig, timeoutMs: 30000 },
-      );
-      info = { messageId: response?.headers?.["x-message-id"] || response?.headers?.["X-Message-Id"] || null };
-    } else {
-      info = await withRetry(
-        () => t.sendMail({ from: `"${APP_NAME}" <${FROM}>`, to, subject, text: text || subject, html }),
-        {
-          ...emailConfig,
-          timeoutMs: 30000,
-          onRetry: (err, attempt) => {
-            logWarn(`Email send retry ${attempt}`, { to, subject, error: err.message });
-            incrementCounter("email_retry", { attempt });
-          },
-        },
-      );
-    }
-
+    const { sendResendEmail } = await import("./emailProvider.service.js");
+    const info = await sendResendEmail({ to, subject, html, text: text || subject, from });
     const duration = Date.now() - startTime;
     recordMetric("email_send_duration", duration);
     incrementCounter("email_send_success");
-
-    logInfo(`Email sent successfully`, { subject, to, messageId: info.messageId });
-    return { success: true, id: info.messageId };
+    logInfo("Email sent successfully", { subject, to, messageId: info.id });
+    return { success: true, id: info.id, provider: "resend" };
   } catch (err) {
-    const duration = Date.now() - startTime;
-    recordMetric("email_send_duration", duration, { status: "error" });
+    recordMetric("email_send_duration", Date.now() - startTime, { status: "error" });
     incrementCounter("email_send_failure", { error_type: err.code || "unknown" });
-
-    logError(`Email failed after retries`, err, { to, subject, error: err.message });
-
-    // Queue failed email for retry
+    logError("Email failed after retries", err, { to, subject, error: err.message });
     if (QUEUE_MODE && err.code !== "CIRCUIT_BREAKER_OPEN") {
       try {
         await addEmailJob({ to, subject, html, text, from });
         incrementCounter("email_queued_for_retry");
-        logInfo(`Email queued for retry`, { to, subject });
         return { success: false, queued: true, error: err.message };
       } catch (queueErr) {
-        logError(`Failed to queue email for retry`, queueErr);
+        logError("Failed to queue email", queueErr);
       }
     }
-
     return { success: false, error: err.message };
   }
 };

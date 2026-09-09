@@ -1,6 +1,6 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import { adminOnly } from "../middleware/auth.js";
-import { getAdminTemplates, saveTemplate, getCommunicationAnalytics, getProviderHealth, getDeliveryHistory, retryDelivery, getPreferences, updatePreferences } from "../services/communicationControl.service.js";
+import { getAdminTemplates, saveTemplate, getCommunicationAnalytics, getProviderHealth, getDeliveryHistory, retryDelivery, getPreferences, updatePreferences, getRolloutControls, updateChannelControl, updateEventControl } from "../services/communicationControl.service.js";
 
 export const adminTemplates = asyncHandler(async (req, res) => res.json({ success: true, data: await getAdminTemplates(req.query) }));
 export const adminSaveTemplate = asyncHandler(async (req, res) => res.json({ success: true, data: await saveTemplate(req.user, req.body, req.params.id || null) }));
@@ -13,3 +13,7 @@ export const userCommunicationPreferences = asyncHandler(async (req, res) => res
 export const updateUserCommunicationPreferences = asyncHandler(async (req, res) => res.json({ success: true, data: await updatePreferences(req.user.id, req.body) }));
 
 export { adminOnly };
+
+export const adminRollout = asyncHandler(async (_req, res) => res.json({ success: true, data: await getRolloutControls() }));
+export const adminUpdateChannelControl = asyncHandler(async (req, res) => res.json({ success: true, data: await updateChannelControl(req.user, req.params.channel, req.body?.enabled) }));
+export const adminUpdateEventControl = asyncHandler(async (req, res) => res.json({ success: true, data: await updateEventControl(req.user, req.params.eventType, req.params.channel, req.body?.enabled) }));

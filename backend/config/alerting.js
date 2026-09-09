@@ -92,7 +92,7 @@ const alertRules = {
 
 const sendEmailAlert = async (alert) => {
   try {
-    if (!process.env.ALERT_EMAIL_TO || !process.env.EMAIL_HOST) {
+    if (!process.env.ALERT_EMAIL_TO || !process.env.RESEND_API_KEY) {
       logWarn("Email alert not configured");
       return;
     }
@@ -116,7 +116,7 @@ const sendEmailAlert = async (alert) => {
 
 const sendSMSAlert = async (alert) => {
   try {
-    if (!process.env.ALERT_PHONE_TO || !process.env.TWILIO_ACCOUNT_SID) {
+    if (!process.env.ALERT_PHONE_TO || !process.env.AT_API_KEY || !process.env.AT_USERNAME) {
       logWarn("SMS alert not configured");
       return;
     }

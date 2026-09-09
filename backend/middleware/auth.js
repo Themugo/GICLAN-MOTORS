@@ -138,7 +138,7 @@ export const protect = async (req, res, next) => {
 
     // 📧 EMAIL VERIFICATION (config-gated; OWNER + DEMO EXEMPT)
     // Mirror the login gate: only enforce when verification is actually possible.
-    const _emailConfigured = !!process.env.EMAIL_HOST;
+    const _emailConfigured = !!process.env.RESEND_API_KEY;
     const _requireVerification = process.env.REQUIRE_EMAIL_VERIFICATION
       ? process.env.REQUIRE_EMAIL_VERIFICATION === "true"
       : _emailConfigured;
