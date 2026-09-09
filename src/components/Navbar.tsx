@@ -4,7 +4,6 @@ import {
   PlusCircle,
   Menu,
   X,
-  MapPin,
   ShieldCheck,
   User,
   ChevronDown,
@@ -49,19 +48,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   savedCount = 0,
   activeNav,
   onNavClick,
-  selectedCounty,
-  onCountyChange,
   onOpenAuth,
   onOpenAlerts,
   onLogout,
   unreadCount = 0
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showCountyDropdown, setShowCountyDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [trustIndex, setTrustIndex] = useState(0);
 
-  const countyRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
 
   const counties = ['All East Africa', 'Nairobi', 'Mombasa', 'Nakuru', 'Kiambu', 'Eldoret', 'Kisumu'];
@@ -85,9 +80,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   // Close dropdowns on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (countyRef.current && !countyRef.current.contains(e.target as Node)) {
-        setShowCountyDropdown(false);
-      }
       if (userRef.current && !userRef.current.contains(e.target as Node)) {
         setShowUserDropdown(false);
       }
@@ -123,38 +115,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right: Region Selector & Account/Alerts */}
           <div className="flex items-center space-x-3 shrink-0">
-            <div className="relative hidden md:block" ref={countyRef}>
-              <button
-                onClick={() => setShowCountyDropdown(!showCountyDropdown)}
-                className="flex items-center gap-1.5 hover:text-white transition-colors py-0.5 px-2.5 rounded bg-slate-800/80 border border-slate-700/60"
-                id="county-selector-top"
-              >
-                <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                <span>Region: <strong className="text-white font-semibold">{selectedCounty}</strong></span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
-              </button>
-
-              {showCountyDropdown && (
-                <div className="absolute right-0 mt-1 w-48 bg-white text-slate-800 rounded-xl shadow-lg border border-slate-200 py-1 z-50 text-xs animate-fade-in">
-                  {counties.map((county) => (
-                    <button
-                      key={county}
-                      onClick={() => {
-                        onCountyChange(county);
-                        setShowCountyDropdown(false);
-                      }}
-                      className={`w-full text-left px-3 py-1.5 hover:bg-[#F5F2EB] flex items-center justify-between transition-colors ${
-                        selectedCounty === county ? 'font-bold text-[#1E3063] bg-[#F5F2EB]' : ''
-                      }`}
-                    >
-                      {county}
-                      {selectedCounty === county && <span className="w-1.5 h-1.5 rounded-full bg-[#1E3063]"></span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <button
               onClick={onOpenAlerts}
               className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors font-medium hidden sm:flex"
@@ -797,21 +757,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          {/* Region Selector Mobile */}
-          <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-300">
-            <span className="flex items-center gap-1 text-slate-400 font-medium">
-              <MapPin className="w-4 h-4 text-slate-400" /> Region: <strong className="text-white">{selectedCounty}</strong>
-            </span>
-            <button
-              onClick={() => {
-                onOpenAlerts();
-                setMobileMenuOpen(false);
-              }}
-              className="text-slate-300 font-bold flex items-center gap-1"
-            >
-              <Bell className="w-3.5 h-3.5" /> Price Alerts
-            </button>
-          </div>
         </div>
       )}
     </header>

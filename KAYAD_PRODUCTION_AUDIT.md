@@ -88,3 +88,32 @@ Production verification:
 - Supabase migration `20260909090002_vehicle_identity_trigger_correctness` applied successfully.
 - Live identity registry currently contains 0 identities because the production `cars` table currently contains no qualifying inventory rows; this is expected and will populate automatically with the first seller listing.
 - TypeScript/full frontend dependency verification remains environment-limited because the sandbox does not have the project's installed node_modules; this is not reported as a pass.
+
+## Marketplace-wide search convergence — 2026-09-09
+
+Completed the second half of the Search & Discovery initiative as an end-to-end convergence pass.
+
+### Search architecture
+- `/api/search` is now the canonical marketplace vehicle search transport used by Showroom.
+- Search covers live vehicle fields including title, seller-entered brand/model, description, VIN/chassis/registration, engine, drivetrain, body, fuel, transmission, colour, condition and location.
+- Seller/dealer names and business names participate in keyword search and autocomplete, resolving to their inventory.
+- `/api/search/autocomplete` remains the canonical live suggestion source and now includes seller-defined vehicle identities plus seller/dealer discovery.
+- `/api/search/facets` supplies dynamic filter values from live inventory rather than hardcoded brand/location lists.
+- Search supports auction, buy-now, sold, seller type, verified-dealer and inspected-only discovery plus price/year/mileage ranges.
+- Typo tolerance is applied only after an exact search produces zero matches, using the live vehicle-identity suggestion source to avoid weakening normal indexed searches.
+- Zero-result responses provide live alternative suggestions instead of a dead end.
+
+### UI convergence
+- Added a full-width marketplace filter bar under the Showroom command bar with dynamic Make, Model, Region, Body, Fuel, Transmission, Colour, Condition, Seller and Sale filters plus price/year/mileage and verification controls.
+- Removed the Region selector from the Navbar utility strip, including the mobile region block.
+- Legacy `/browse` and `/mobile/browse` search entry points now route to the canonical Showroom search URL instead of maintaining separate search implementations.
+- Home Global Search now uses live marketplace facets and navigates to canonical Showroom search URLs.
+- Removed the Showroom's competing legacy filter sidebar from the active search path.
+
+### Verification
+- `scripts/validate-search-discovery-contract.mjs`: PASS.
+- `scripts/validate-frontend-runtime-contracts.mjs`: PASS.
+- `scripts/validate-backend-runtime-contracts.mjs`: 14/14 PASS.
+- Backend search/controller JavaScript syntax checks: PASS.
+- Production Supabase verification confirmed `public.vehicle_identities` exists and its unique brand/model identity index exists.
+- Public HTTP/DNS smoke testing remains unavailable from the sandbox and is not claimed as passed.
