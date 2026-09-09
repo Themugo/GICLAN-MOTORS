@@ -7,7 +7,6 @@ import { validateObjectId, validateQuery, userListQuerySchema, carListQuerySchem
 import { auditLog } from "../middleware/auditLog.js";
 import bcrypt from "bcryptjs";
 import { escapeRegex } from "../utils/escapeRegex.js";
-import { getEscrowRules, getActiveEscrowAccounts, saveEscrowAccount, removeEscrowAccount } from "../services/escrowConfiguration.service.js";
 
 import User from "../models/User.js";
 import UserAuth from "../models/UserAuth.js";
@@ -2046,39 +2045,48 @@ router.get(
 );
 
 // =============================
-// 🏦 ESCROW CUSTODY CONFIGURATION
+// 🔐 ESCROW MANAGEMENT (dealers)
 // =============================
-router.get("/escrow/config", adminOrSuper, asyncHandler(async (req, res) => {
-  const rules = await getEscrowRules();
-  const accounts = await getActiveEscrowAccounts();
-  res.json({ success: true, rules, accounts });
-}));
 
-router.put("/escrow/config", adminOrSuper, asyncHandler(async (req, res) => {
-  const input = req.body || {};
-  const rules = {
-    enabled: Boolean(input.enabled),
-    privateSellerRequirement: ["mandatory", "optional", "disabled"].includes(input.privateSellerRequirement) ? input.privateSellerRequirement : "mandatory",
-    fundingMethods: ["bank_transfer"],
-    releaseDays: Math.max(0, Math.min(90, Number(input.releaseDays) || 0)),
-    minimumAmount: Math.max(0, Number(input.minimumAmount) || 0),
-    maximumAmount: input.maximumAmount == null || input.maximumAmount === "" ? null : Math.max(0, Number(input.maximumAmount)),
-    commissionPct: Math.max(0, Math.min(50, Number(input.commissionPct) || 0)),
-    futureWalletEnabled: false,
-  };
-  const updated = await update("platform_config", (await findOne("platform_config", {}))?.id, { escrowRules: rules });
-  res.json({ success: true, rules: updated?.escrowRules || rules });
-}));
+// Toggle escrow approval for dealers
+router.put(
+  "/users/:id/escrow-approve",
+  adminOrSuper,
+  validateObjectId,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (user.role !== "dealer")
+      return res.status(400).json({ success: false, message: "Only dealers can be escrow-approved" });
+    user.escrowApproved = !user.escrowApproved;
+    await user.save();
+    res.json({
+      success: true,
+      user,
+      message: `Escrow ${user.escrowApproved ? "approved" : "revoked"} for ${user.name || user.email}`,
+    });
+  }),
+);
 
-router.post("/escrow/accounts", adminOrSuper, asyncHandler(async (req, res) => {
-  const account = await saveEscrowAccount(req.body || {});
-  res.status(201).json({ success: true, account });
-}));
-
-router.delete("/escrow/accounts/:id", adminOrSuper, validateObjectId, asyncHandler(async (req, res) => {
-  await removeEscrowAccount(req.params.id);
-  res.json({ success: true });
-}));
-
+// Force escrow on dealers who violate trust
+router.put(
+  "/users/:id/escrow-force",
+  adminOrSuper,
+  validateObjectId,
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (user.role !== "dealer")
+      return res.status(400).json({ success: false, message: "Only dealers can be escrow-forced" });
+    user.escrowForced = !user.escrowForced;
+    if (user.escrowForced) user.escrowApproved = true;
+    await user.save();
+    res.json({
+      success: true,
+      user,
+      message: `Escrow ${user.escrowForced ? "forced" : "unforced"} for ${user.name || user.email}`,
+    });
+  }),
+);
 
 export default router;

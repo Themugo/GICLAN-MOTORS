@@ -1,15 +1,12 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Search, SlidersHorizontal, ArrowRight, ShieldCheck, MapPin, DollarSign, Calendar, Fuel, Gauge, Car } from 'lucide-react';
 import { useMarketplace } from '../../context/MarketplaceContext';
-import { useNavigate } from 'react-router-dom';
-import { getSearchFacets } from '../../services/searchApi';
+import { BodyStyle, FuelType, TransmissionType } from '../../types';
 import type { FC } from 'react';
-import { autocompleteSearch } from '../../services/searchApi';
 
 export const GlobalSearchSection: FC = () => {
-  const { resetFilters } = useMarketplace();
-  const navigate = useNavigate();
+  const { navigateTo, setFilters, resetFilters } = useMarketplace();
 
   const [keyword, setKeyword] = useState('');
   const [selectedMake, setSelectedMake] = useState<string>('all');
@@ -20,49 +17,60 @@ export const GlobalSearchSection: FC = () => {
   const [selectedFuel, setSelectedFuel] = useState<string>('all');
   const [selectedCondition, setSelectedCondition] = useState<string>('all');
   const [isExpandedFilters, setIsExpandedFilters] = useState(false);
-  const [suggestions, setSuggestions] = useState<{ type: string; text: string }[]>([]);
-  const [facets, setFacets] = useState<any>(null);
 
-  useEffect(() => {
-    const q = keyword.trim();
-    if (q.length < 2) { setSuggestions([]); return undefined; }
-    let cancelled = false;
-    const timer = window.setTimeout(async () => {
-      try {
-        const results = await autocompleteSearch(q, 8);
-        if (!cancelled) setSuggestions(results);
-      } catch {
-        if (!cancelled) setSuggestions([]);
-      }
-    }, 180);
-    return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [keyword]);
-
-  useEffect(() => { getSearchFacets().then(setFacets).catch(() => setFacets(null)); }, []);
-  const makes = facets?.brands || [];
-  const locations = facets?.locations || [];
-  const bodyStyles = facets?.bodyTypes || [];
-  const fuels = facets?.fuels || [];
-  const conditions = facets?.conditions || [];
+  const makes = ['Toyota', 'Land Rover', 'Porsche', 'Mercedes-Benz', 'BMW', 'Subaru', 'Lexus', 'Nissan', 'Ford', 'Audi'];
+  const locations = ['Nairobi', 'Mombasa', 'Eldoret', 'Nakuru', 'Kisumu', 'Thika'];
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
     resetFilters();
-    const params = new URLSearchParams();
-    if (keyword.trim()) params.set('keyword', keyword.trim());
-    if (selectedMake !== 'all') params.set('brand', selectedMake);
-    if (selectedBodyStyle !== 'all') params.set('body', selectedBodyStyle);
-    if (selectedFuel !== 'all') params.set('fuel', selectedFuel);
-    if (selectedLocation !== 'all') params.set('location', selectedLocation);
-    if (selectedYear !== 'all') params.set('yearMin', selectedYear);
-    if (selectedPriceRange !== 'all') {
-      const ranges = { under_2m:[0,2000000], '2m_5m':[2000000,5000000], '5m_10m':[5000000,10000000], above_10m:[10000000,100000000] };
-      const [min,max] = ranges[selectedPriceRange] || [];
-      if (min !== undefined) params.set('priceMin', String(min));
-      if (max !== undefined) params.set('priceMax', String(max));
-    }
-    navigate(`/showroom${params.toString() ? `?${params.toString()}` : ''}`);
+
+    setFilters(prev => {
+      const updated = { ...prev };
+
+      if (keyword.trim()) {
+        updated.searchQuery = keyword.trim();
+      }
+
+      if (selectedMake !== 'all') {
+        updated.makes = [selectedMake];
+      }
+
+      if (selectedBodyStyle !== 'all') {
+        updated.bodyStyles = [selectedBodyStyle as BodyStyle];
+      }
+
+      if (selectedFuel !== 'all') {
+        updated.fuelType = [selectedFuel];
+      }
+
+      if (selectedYear !== 'all') {
+        const yearNum = parseInt(selectedYear, 10);
+        if (!isNaN(yearNum)) {
+          updated.minYear = yearNum;
+        }
+      }
+
+      if (selectedPriceRange !== 'all') {
+        if (selectedPriceRange === 'under_2m') {
+          updated.maxPrice = 2000000;
+        } else if (selectedPriceRange === '2m_5m') {
+          updated.minPrice = 2000000;
+          updated.maxPrice = 5000000;
+        } else if (selectedPriceRange === '5m_10m') {
+          updated.minPrice = 5000000;
+          updated.maxPrice = 10000000;
+        } else if (selectedPriceRange === 'above_10m') {
+          updated.minPrice = 10000000;
+          updated.maxPrice = 100000000;
+        }
+      }
+
+      return updated;
+    });
+
+    navigateTo('gallery');
   };
 
   return (
@@ -79,18 +87,9 @@ export const GlobalSearchSection: FC = () => {
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Search live inventory by make, model, VIN, location, body type, fuel, transmission, colour or keyword..."
+              placeholder="Search by make, model, VIN, or keyword (e.g. Prado TX, Land Cruiser V8)..."
               className="w-full pl-12 pr-4 py-3.5 bg-[#2A3B7A] dark:bg-[#0B132B] text-white placeholder-slate-300 dark:placeholder-slate-400 rounded-2xl text-xs sm:text-sm font-sans focus:outline-none focus:ring-2 focus:ring-[#00C9CE] border border-white/15 transition-all"
             />
-            {suggestions.length > 0 && (
-              <div className="absolute z-50 left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden border border-white/10 bg-[#101a31] shadow-2xl">
-                {suggestions.map((item) => (
-                  <button key={`${item.type}:${item.text}`} type="button" onClick={() => { setKeyword(item.text); setSuggestions([]); }} className="w-full text-left px-4 py-3 hover:bg-white/10 text-white text-xs flex items-center justify-between gap-3">
-                    <span>{item.text}</span><span className="text-[9px] uppercase tracking-wider text-slate-400">{item.type}</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Quick Dropdowns Row */}
@@ -130,7 +129,11 @@ export const GlobalSearchSection: FC = () => {
               className="px-3 py-3 bg-[#2A3B7A] dark:bg-[#0B132B] text-white rounded-2xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#00C9CE] border border-white/15 cursor-pointer col-span-2 sm:col-span-1"
             >
               <option value="all" className="bg-[#1E3063] text-white">All Body Styles</option>
-              {bodyStyles.map((body) => <option key={body} value={body} className="bg-[#1E3063] text-white">{body}</option>)}
+              <option value="SUV" className="bg-[#1E3063] text-white">SUV / 4x4</option>
+              <option value="Sedan" className="bg-[#1E3063] text-white">Sedan / Luxury</option>
+              <option value="Truck" className="bg-[#1E3063] text-white">Pickup / Commercial</option>
+              <option value="Coupe" className="bg-[#1E3063] text-white">Coupe / Sports</option>
+              <option value="Hatchback" className="bg-[#1E3063] text-white">Hatchback</option>
             </select>
           </div>
 
@@ -225,7 +228,10 @@ export const GlobalSearchSection: FC = () => {
                 className="w-full px-3 py-2 bg-[#2A3B7A] dark:bg-[#0B132B] text-white rounded-xl text-xs font-mono font-bold border border-white/15 focus:outline-none"
               >
                 <option value="all">Any Condition</option>
-                {conditions.map((condition) => <option key={condition} value={condition}>{condition}</option>)}
+                <option value="New">Brand New</option>
+                <option value="Like New">Like New</option>
+                <option value="Excellent">Excellent</option>
+                <option value="Good">Good</option>
               </select>
             </div>
 

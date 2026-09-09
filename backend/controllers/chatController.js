@@ -157,17 +157,22 @@ export const sendMessage = async (req, res) => {
       return res.status(403).json({ success: false, message: "Not authorized" });
     }
 
-    const messageId = crypto.randomUUID();
-    const messageData = { id: messageId, sender: req.user.id, text: msgText, createdAt: new Date().toISOString(), seenBy: [] };
-    if (attachments && Array.isArray(attachments)) {
-      messageData.attachments = attachments.map((a) => ({
-        url: a.url,
-        type: a.type || "image",
-      }));
-    }
-
-    const messages = [...(chat.messages || []), messageData];
-    await update("chats", chatId, { messages });
+    const sb = getSupabase();
+    const normalizedAttachments = attachments && Array.isArray(attachments)
+      ? attachments.map((a) => ({ url: a.url, type: a.type || "image" }))
+      : [];
+    const { data: rpcMessage, error: rpcError } = await sb.rpc("kayad_append_chat_message", {
+      p_chat_id: chatId, p_sender_id: req.user.id, p_text: msgText, p_attachments: normalizedAttachments,
+    });
+    if (rpcError) throw rpcError;
+    const messageData = {
+      id: rpcMessage?.id || crypto.randomUUID(),
+      sender: req.user.id,
+      text: rpcMessage?.text || msgText,
+      createdAt: rpcMessage?.createdAt || new Date().toISOString(),
+      seenBy: rpcMessage?.seenBy || [],
+      attachments: rpcMessage?.attachments || normalizedAttachments,
+    };
 
     // Add lead activity for message sent
     try {
@@ -274,14 +279,9 @@ export const markAsSeen = async (req, res) => {
 
     if (!chat.participants.some((p) => String(p) === String(req.user.id))) return res.status(403).json({ success: false, message: "Not authorized" });
 
-    const messages = (chat.messages || []).map((m) => {
-      if (m.sender !== req.user.id && (!m.seenBy || !m.seenBy.includes(req.user.id))) {
-        return { ...m, seenBy: [...(m.seenBy || []), req.user.id] };
-      }
-      return m;
-    });
-
-    await update("chats", chatId, { messages });
+    const sb = getSupabase();
+    const { error: seenError } = await sb.rpc("kayad_mark_chat_seen", { p_chat_id: chatId, p_user_id: req.user.id });
+    if (seenError) throw seenError;
 
     if (getIO()) {
       getIO().to(`chat_${chatId}`).emit("messagesSeen", { chatId, userId: req.user.id });

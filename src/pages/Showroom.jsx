@@ -39,10 +39,9 @@ import {
 } from 'lucide-react';
 
 import { carsAPI, savedSearchAPI } from '../api/api';
-import { searchMarketplace } from '../services/searchApi';
 import CartyGrid from '../components/CartyGrid';
 import SearchBar from '../components/SearchBar';
-import MarketplaceFilterBar from '../components/MarketplaceFilterBar';
+import SearchSidebar from '../components/SearchSidebar';
 import usePageMeta from '../hooks/usePageMeta';
 import useMediaQuery from '../hooks/useMediaQuery';
 import useIntersectionObserver from '../hooks/useIntersectionObserver';
@@ -88,7 +87,7 @@ const FILTER_LABELS = {
 };
 
 const ALL_FILTER_KEYS = [
-  'filter', 'keyword', 'brand', 'model', 'location',
+  'filter', 'keyword', 'brand', 'location',
   'priceMin', 'priceMax', 'yearMin', 'yearMax',
   'body', 'fuel', 'transmission', 'color', 'condition',
   'mileageMin', 'mileageMax', 'dealerType',
@@ -122,7 +121,6 @@ export default function Showroom() {
   const [showSavePrompt, setShowSavePrompt]     = useState(false);
   const [saveName, setSaveName]                 = useState('');
   const [showroomError, setShowroomError]       = useState(null);
-  const [zeroResult, setZeroResult]             = useState(null);
 
   // Local mirror of the keyword for snappy typing; debounced before going to URL.
   const [keywordInput, setKeywordInput] = useState(searchParams.get('keyword') || '');
@@ -154,7 +152,6 @@ export default function Showroom() {
     filter:        searchParams.get('filter')        || 'all',
     keyword:       searchParams.get('keyword')       || '',
     brand:         searchParams.get('brand')         || '',
-    model:         searchParams.get('model')         || '',
     location:      searchParams.get('location')      || '',
     priceMin:      searchParams.get('priceMin')      || '',
     priceMax:      searchParams.get('priceMax')      || '',
@@ -240,9 +237,6 @@ export default function Showroom() {
     mileageMin:   filters.mileageMin  || undefined,
     mileageMax:   filters.mileageMax  || undefined,
     dealerType:   filters.dealerType  || undefined,
-    model:        filters.model        || undefined,
-    verifiedOnly: filters.verifiedOnly || undefined,
-    inspectedOnly: filters.inspectedOnly || undefined,
     category:     activeFilter === 'all' ? undefined : activeFilter,
     sort:         sortBy === 'default' ? undefined : sortBy,
   }), [filters, brandFilter, activeFilter, sortBy]);
@@ -252,19 +246,17 @@ export default function Showroom() {
     loadingRef.current = true;
     setLoading(true);
     try {
-      const data = await searchMarketplace(getApiParams(pageNum));
+      const data = await carsAPI.list(getApiParams(pageNum));
       const newCars = data.data || data.cars || [];
-      if (replace) setZeroResult(data.zeroResult || null);
       if (replace && (!newCars || newCars.length === 0)) {
         setCars([]);
         setTotalCount(0);
         setHasMore(false);
         setShowroomError(null);
-        setZeroResult(null);
       } else {
         setCars(prev => (replace ? newCars : [...prev, ...newCars]));
         setTotalCount(data.pagination?.total || 0);
-        setHasMore(Boolean(data.pagination?.hasMore ?? (pageNum < (data.pagination?.totalPages || 1))));
+        setHasMore(pageNum < (data.pagination?.pages || 1));
         setShowroomError(null);
       }
     } catch (error) {
@@ -562,8 +554,6 @@ export default function Showroom() {
           </div>
         )}
 
-        <MarketplaceFilterBar filters={filters} onFilterChange={onFilterChange} onClear={() => onFilterChange('clear','')} />
-
         {/* ── Save-search prompt ────────────────────────────────────── */}
         {showSavePrompt && (
           <div className={`container ${isMobile ? 'save-prompt-wrap-mobile' : 'save-prompt-wrap'}`}>
@@ -587,6 +577,37 @@ export default function Showroom() {
 
         {/* ── Body: sidebar + grid ─────────────────────────────────── */}
         <div className={`showroom-body ${isMobile ? 'showroom-body-mobile' : 'showroom-body-desktop'}`}>
+          {/* Desktop sidebar */}
+          {!isMobile && (
+            <aside className="showroom-sidebar-desktop">
+              <SearchSidebar
+                cars={cars}
+                filters={filters}
+                onFilterChange={onFilterChange}
+                onBrandChange={onBrandChange}
+                activeBrand={filters.brand}
+              />
+            </aside>
+          )}
+
+          {/* Mobile filter drawer */}
+          {isMobile && mobileFilterOpen && (
+            <>
+              <div role="presentation" onClick={() => setMobileFilterOpen(false)} className="mobile-filter-overlay" />
+              <div className="mobile-filter-drawer">
+                <SearchSidebar
+                  cars={cars}
+                  filters={filters}
+                  onFilterChange={onFilterChange}
+                  onBrandChange={onBrandChange}
+                  activeBrand={filters.brand}
+                  isMobile
+                  onClose={() => setMobileFilterOpen(false)}
+                />
+              </div>
+            </>
+          )}
+
           {/* Grid / list area */}
           <main className={`showroom-main ${isMobile ? 'showroom-main-mobile' : 'showroom-main-desktop'}`}>
             <div className={`container showroom-main-inner ${!isMobile ? 'showroom-main-inner-desktop' : ''}`}>
@@ -597,15 +618,16 @@ export default function Showroom() {
                     <div key={i} className="skeleton-thumbnail skeleton" style={{ borderRadius: 14, minHeight: 180 }} />
                   ))}
                 </div>
-              ) : zeroResult && cars.length === 0 ? (
+              ) : showroomError && cars.length === 0 ? (
                 <div className="showroom-error-state">
-                  <div className="empty-state-icon" style={{ opacity: 0.35, margin: '0 auto 20px' }}><AlertTriangle size={48} strokeWidth={1.2} /></div>
-                  <h3 className="empty-state-title">No exact matches for “{zeroResult.query}”</h3>
-                  <p className="empty-state-text" style={{ marginBottom: 16 }}>{zeroResult.message}</p>
-                  <div className="zero-result-suggestions">
-                    {(zeroResult.suggestions || []).map(item => <button key={`${item.type}:${item.text}`} type="button" onClick={() => { const next=new URLSearchParams(searchParams); next.set('keyword',item.text); setSearchParams(next); }}><span>{item.text}</span><small>{item.type}</small></button>)}
+                  <div className="empty-state-icon" style={{ opacity: 0.35, margin: '0 auto 20px' }}>
+                    <AlertTriangle size={48} strokeWidth={1.2} />
                   </div>
-                  <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop:16 }}>
+                  <h3 className="empty-state-title">{showroomError}</h3>
+                  <p className="empty-state-text" style={{ marginBottom: 16 }}>
+                    You can try again or adjust your filters.
+                  </p>
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                     <button type="button" onClick={() => { loadCars(1, true); setShowroomError(null); }} className="btn btn-gold btn-sm">
                       <RefreshCw size={14} style={{ marginRight: 6 }} /> Retry
                     </button>

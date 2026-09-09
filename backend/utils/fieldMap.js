@@ -239,7 +239,7 @@ export const REVERSE_FIELD_ALIASES = Object.fromEntries(
 // table. Tables not listed here don't support `$text` — we skip the
 // filter rather than guess at column names that may not exist.
 export const SEARCHABLE_FIELDS = {
-  cars: ["title", "brand", "model", "description", "vin", "chassis_number", "registration_number", "engine", "drive_type", "body_type", "fuel", "transmission", "color", "condition", "location_city"],
+  cars: ["title", "brand", "model", "description"],
 };
 
 export function mapKeyOut(table, key) {

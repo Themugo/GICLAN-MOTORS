@@ -12,7 +12,6 @@ import Bid from "../models/Bid.js";
 // Canonical engine only: auction state lives on the cars row, closing
 // goes through services/auctionClose.service.js.
 import { closeAuction } from "../services/auctionClose.service.js";
-import { startAuction, extendAuction } from "../services/auctionLifecycle.service.js";
 
 const router = express.Router();
 
@@ -52,9 +51,21 @@ router.post(
       return res.status(400).json({ success: false, message: "Duration required" });
     }
 
-    const result = await startAuction({ carId: req.params.carId, durationMs: Number(durationMs), startingBid: Number(startingBid) || 0, req });
+    // Server-authoritative schedule: the server sets both timestamps.
+    car.auctionStatus = "live";
+    car.allowBid = true;
+    car.startingBid = startingBid;
+    car.currentBid = startingBid;
+    car.auctionStartTime = new Date();
+    car.auctionEnd = new Date(Date.now() + durationMs);
 
-    res.json({ success: true, message: "Auction started", endTime: result.auction_end, result });
+    await car.save();
+
+    res.json({
+      success: true,
+      message: "Auction started",
+      endTime: car.auctionEnd,
+    });
   }),
 );
 
@@ -100,9 +111,24 @@ router.post(
       });
     }
 
-    const result = await extendAuction({ carId: req.params.carId, extraMs: Number(extraMs), req });
+    const car = await Car.findById(req.params.carId);
 
-    res.json({ success: true, newEndTime: result.auction_end, result });
+    if (!car) {
+      return res.status(404).json({
+        success: false,
+        message: "Car not found",
+      });
+    }
+
+    const currentEnd = new Date(car.auctionEnd).getTime();
+    car.auctionEnd = new Date(Math.max(currentEnd, Date.now()) + extraMs);
+
+    await car.save();
+
+    res.json({
+      success: true,
+      newEndTime: car.auctionEnd,
+    });
   }),
 );
 

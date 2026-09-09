@@ -142,15 +142,12 @@ export const AuctionsView: React.FC<AuctionsViewProps> = ({
     setBidBusy(true);
     setMessage(null);
     try {
-      const result = await placeBid(selected.carId, amount);
+      const result = await placeBid(selected.carId, amount, user.phone || '');
       if (result.success) {
-        setMessage('Bid submitted. Complete the M-Pesa security payment; the bid remains pending until payment is confirmed.');
+        setMessage('Bid submitted successfully and accepted by the server.');
         setBidAmount('');
         await loadAuctions();
-        const refreshed = (await fetchActiveAuctions({ page: 1, limit: 100 })).auctions as AuctionRecord[];
-        setAuctions(refreshed);
-        const refreshedSelected = refreshed.find((auction) => String(auction.carId) === String(selected.carId));
-        setSelected(refreshedSelected || null);
+        setSelected((current) => current ? { ...current, highestBid: Math.max(current.highestBid, amount), bidCount: current.bidCount + 1 } : current);
       } else {
         setMessage(result.message || 'The server did not accept this bid.');
       }

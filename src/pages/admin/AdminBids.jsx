@@ -28,7 +28,7 @@ export default function AdminBids() {
     try {
       const params = { page, limit: 20 };
       if (search) params.search = search;
-      if (paidFilter !== 'all') params.status = paidFilter === 'paid' ? 'paid' : 'pending';
+      if (paidFilter !== 'all') params.mpesaPaid = paidFilter === 'paid';
       const [allRes, suspRes] = await Promise.all([
         bidsAPI.adminAll(params),
         bidsAPI.adminSuspicious().catch(() => ({ bids: [] })),
@@ -59,8 +59,8 @@ export default function AdminBids() {
   const totalPages = Math.ceil(total / 20);
 
   // Summary stats
-  const paidTotal   = bids.filter(b => b.status === 'paid').reduce((s, b) => s + (b.amount || 0), 0);
-  const unpaidCount = bids.filter(b => b.status !== 'paid').length;
+  const paidTotal   = bids.filter(b => b.mpesaPaid).reduce((s, b) => s + (b.amount || 0), 0);
+  const unpaidCount = bids.filter(b => !b.mpesaPaid).length;
 
   return (
     <div className="page">
@@ -168,8 +168,8 @@ export default function AdminBids() {
                         </td>
                         <td style={{ fontWeight: 700, color: 'var(--gold-light)' }}>{formatKES(bid.amount)}</td>
                         <td>
-                          <span className={`badge ${bid.status === 'paid' ? 'badge-green' : 'badge-orange'}`}>
-                            {bid.status === 'paid' ? '✓ Paid' : 'Pending'}
+                          <span className={`badge ${bid.mpesaPaid ? 'badge-green' : 'badge-orange'}`}>
+                            {bid.mpesaPaid ? '✓ Paid' : 'Pending'}
                           </span>
                         </td>
                         <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
@@ -240,7 +240,7 @@ export default function AdminBids() {
               {[
                 { label: 'Bidder',      val: selected.user?.name || '—' },
                 { label: 'Phone',       val: selected.phone || selected.user?.phone || '—', mono: true },
-                { label: 'M-Pesa Paid', val: selected.status === 'paid' ? '✅ Yes' : '⏳ Pending' },
+                { label: 'M-Pesa Paid', val: selected.mpesaPaid ? '✅ Yes' : '⏳ Pending' },
                 { label: 'Receipt',     val: selected.mpesaReceipt || '—', mono: true },
                 { label: 'Fraud Score', val: selected.fraudScore !== undefined ? `${selected.fraudScore}%` : '—' },
                 { label: 'Time',        val: selected.createdAt ? new Date(selected.createdAt).toLocaleString('en-KE') : '—' },

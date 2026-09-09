@@ -5,6 +5,11 @@ import { autocompleteSearch } from '../../../services/searchApi';
 
 const MAX_RECENT = 8;
 
+const DEFAULT_BRANDS = [
+  'BMW', 'Mercedes', 'Toyota', 'Nissan', 'Subaru',
+  'Audi', 'Lexus', 'Range Rover', 'Volkswagen', 'Mazda',
+];
+
 interface SearchBarProps {
   value?: string;
   onChange?: (value: string) => void;
@@ -19,7 +24,7 @@ export default function SearchBar({
   value = '',
   onChange,
   onSubmit,
-  suggestions = [],
+  suggestions = DEFAULT_BRANDS,
   placeholder = 'Search by make, model, or keyword…',
   autoFocus = false,
   size = 'md',
@@ -49,7 +54,7 @@ export default function SearchBar({
   }, [value]);
 
   const matched = value
-    ? remoteSuggestions
+    ? (remoteSuggestions.length ? remoteSuggestions : suggestions.filter(s => s.toLowerCase().includes(value.toLowerCase())))
     : suggestions;
   const showSuggestions = focused && matched.length > 0 && matched[0] !== value;
   const showRecent = focused && !value && recentSearches.length > 0;

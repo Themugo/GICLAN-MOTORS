@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Vehicle, InspectionBooking, InspectionReport, InspectionPayment, InspectionRating, UserProfile } from '../types';
 import { createInspectionOrder, getMyInspections, InspectionApiError, BackendInspectionOrder } from '../services/inspectionApi';
+import { useSocket } from '../context/SocketContext';
 import {
   ShieldCheck,
   Search,
@@ -122,6 +123,7 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
   onViewVehicleDetails
 }) => {
   // State
+  const socket = useSocket();
   // Fixed: reports/bookings previously started from, and only ever
   // showed, entirely fake mock data (specific fake mechanic names,
   // ratings, business names, platform-wide fake "recently completed"
@@ -164,6 +166,21 @@ export const InspectionsView: React.FC<InspectionsViewProps> = ({
       });
     return () => { cancelled = true; };
   }, [user]);
+
+  // Realtime is a reconciliation signal only: the API remains the source of truth.
+  useEffect(() => {
+    if (!user || bookings.length === 0) return;
+    const channels = bookings.map((booking) => socket.joinInspection(booking.id, {
+      onUpdate: () => {
+        getMyInspections().then((res) => {
+          const orders = res.orders || [];
+          setBookings(orders.map(mapBackendOrderToBooking));
+          setReports(orders.filter((o) => o.overallScore !== undefined).map(mapBackendOrderToReport));
+        }).catch(() => undefined);
+      },
+    })).filter(Boolean);
+    return () => channels.forEach((channel) => channel && socket.leaveChannel(channel));
+  }, [user, bookings.map((b) => b.id).join(',')]);
 
   // Top-Level Mode: 'buyer_marketplace' | 'mechanic_portal'
 

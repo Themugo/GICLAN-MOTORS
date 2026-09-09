@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { formatKES } from '../../../api/api';
-import { initiatePayment, getPaymentByCheckout } from '../../../services/paymentApi';
+import { paymentsAPI, formatKES } from '../../../api/api';
 import { useSocket } from '../../../context/SocketContext';
 import { useToast } from '../../../context/ToastContext';
 import { formatPhone } from '../../../utils/helpers';
@@ -42,7 +41,6 @@ export default function PaymentModal({ onClose, amount, carId, type = 'escrow', 
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState<'input' | 'waiting' | 'success' | 'failed'>('input');
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
-  const [fundingAccount, setFundingAccount] = useState<any>(null);
   const [pollInterval, setPoll] = useState<ReturnType<typeof setInterval> | null>(null);
   const stageRef = useRef(stage);
 
@@ -74,11 +72,11 @@ export default function PaymentModal({ onClose, amount, carId, type = 'escrow', 
   }, [checkoutId, pollInterval, stage]);
 
   useEffect(() => {
-    if (stage !== 'waiting' || !checkoutId || type === 'escrow') return;
+    if (stage !== 'waiting' || !checkoutId) return;
 
     const interval = setInterval(async () => {
       try {
-        const data = await getPaymentByCheckout(checkoutId);
+        const data = await paymentsAPI.byCheckout(checkoutId);
         if (data.payment?.status === 'success' && stageRef.current !== 'success') {
           clearInterval(interval);
           setStage('success');
@@ -99,24 +97,19 @@ export default function PaymentModal({ onClose, amount, carId, type = 'escrow', 
   }, [stage, checkoutId]);
 
   const handleInitiate = async () => {
-    const formatted = phone ? formatPhone(phone) : '';
-    if (type !== 'escrow' && formatted.length !== 12) {
+    const formatted = formatPhone(phone);
+    if (formatted.length !== 12) {
       toast('Enter a valid Safaricom number (07...)', 'error'); return;
     }
 
     setLoading(true);
     try {
-      if (type === 'escrow') {
-        const data = await initiatePayment({ phone: formatted || '000000000000', amount, carId, type });
-        setFundingAccount(data.fundingAccount || null);
-        setStage('waiting');
-        toast('Escrow instructions generated. Complete the bank transfer, then KAYAD will verify the deposit.', 'info');
-      } else {
-        const data = await initiatePayment({ phone: formatted || '000000000000', amount, carId, type });
-        setCheckoutId(data.checkoutRequestID || data.checkoutID || null);
-        setStage('waiting');
-        toast('STK push sent! Check your phone', 'info');
-      }
+      const data = await paymentsAPI.initiate({
+        phone: formatted, amount, carId, type,
+      });
+      setCheckoutId(data.checkoutRequestID || data.checkoutID);
+      setStage('waiting');
+      toast('STK push sent! Check your phone', 'info');
     } catch (err: any) {
       toast(err.response?.data?.message || 'Failed to initiate payment', 'error');
     } finally {
@@ -146,23 +139,11 @@ export default function PaymentModal({ onClose, amount, carId, type = 'escrow', 
           <div className="price-tag" style={{ fontSize: '2rem', marginTop: 4 }}>{formatKES(amount)}</div>
         </div>
 
-        {stage === 'waiting' && type === 'escrow' && fundingAccount && (
-          <div style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--surface)', marginBottom: 16 }}>
-            <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 700 }}>KAYAD Escrow Bank Account</div>
-            <div style={{ marginTop: 8, fontWeight: 700 }}>{fundingAccount.accountName}</div>
-            <div style={{ marginTop: 4 }}>{fundingAccount.bankName} · {fundingAccount.accountNumber}</div>
-            {fundingAccount.branch && <div style={{ marginTop: 4, color: 'var(--text-muted)' }}>Branch: {fundingAccount.branch}</div>}
-            {fundingAccount.notes && <div style={{ marginTop: 8, color: 'var(--text-muted)', fontSize: 12 }}>{fundingAccount.notes}</div>}
-            <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)' }}>Reference your escrow transaction exactly as provided by KAYAD. Funding is verified by an authorized custody administrator before the escrow moves to funded.</div>
-            <button className="btn btn-gold btn-full btn-lg" onClick={onClose}>Done</button>
-          </div>
-        )}
-
         {stage === 'input' && (
           <>
             <div className="input-group" style={{ marginBottom: 20 }}>
-              {type !== 'escrow' && <label className="input-label">Safaricom Number</label>}
-              {type !== 'escrow' && <div className="mpesa-wrap">
+              <label className="input-label">Safaricom Number</label>
+              <div className="mpesa-wrap">
                 <span className="mpesa-prefix">🇰🇪</span>
                 <input
                   className="input"
@@ -171,7 +152,7 @@ export default function PaymentModal({ onClose, amount, carId, type = 'escrow', 
                   onChange={e => setPhone(e.target.value)}
                   maxLength={13}
                 />
-              </div>}
+              </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginTop: 8 }}>
                 {meta.desc}
               </div>
@@ -180,9 +161,9 @@ export default function PaymentModal({ onClose, amount, carId, type = 'escrow', 
             <button
               className="btn btn-gold btn-full btn-lg"
               onClick={handleInitiate}
-              disabled={loading || (type !== 'escrow' && phone.length < 9)}
+              disabled={loading || phone.length < 9}
             >
-              {loading ? <><div className="spinner" style={{ width: 18, height: 18 }} /> Sending...</> : type === 'escrow' ? 'Create Escrow Funding Instructions' : '📲 Send STK Push'}
+              {loading ? <><div className="spinner" style={{ width: 18, height: 18 }} /> Sending...</> : '📲 Send STK Push'}
             </button>
 
             <div style={{ marginTop: 16, textAlign: 'center', color: 'var(--text-dim)', fontSize: 12 }}>

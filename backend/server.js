@@ -646,6 +646,28 @@ io.on("connection", (socket) => {
   socket.on("leaveChat", (chatId) => {
     if (!isRateLimited("leaveChat") && isValidId(chatId)) socket.leave(`chat_${chatId}`);
   });
+
+  socket.on("joinInspection", async (inspectionId) => {
+    if (!socket.user || isRateLimited("joinInspection") || !isValidId(inspectionId)) return;
+    const userId = String(socket.user.id || socket.user._id);
+    if (!isValidId(userId)) return;
+    try {
+      const { getSupabase } = await import("./utils/supabase.js");
+      const sb = getSupabase();
+      const { data: inspection } = await sb.from("vehicle_inspections")
+        .select("id,requester_id,inspector_id,status,digital_inspection_id,chat_id,completed_at,updated_at")
+        .eq("id", inspectionId).maybeSingle();
+      if (!inspection) return;
+      if (![inspection.requester_id, inspection.inspector_id].filter(Boolean).map(String).includes(userId)) return;
+      socket.join(`inspection_${inspectionId}`);
+      socket.emit("inspectionResync", inspection);
+    } catch (error) {
+      logWarn("Socket inspection room authorization failed", { inspectionId, userId, error: error?.message });
+    }
+  });
+  socket.on("leaveInspection", (inspectionId) => {
+    if (!isRateLimited("leaveInspection") && isValidId(inspectionId)) socket.leave(`inspection_${inspectionId}`);
+  });
   socket.on("typing", ({ chatId } = {}) => {
     if (!socket.user || !isRateLimited("typing") || !isValidId(String(chatId || ""))) return;
 

@@ -362,10 +362,12 @@ export const createCar = async (req, res) => {
     // individual_seller: escrow is always enabled (enforced in payment)
     // dealer: if escrowForced -> auto-enable; if not approved/forced -> disable
     if (isDealer) {
-      // Vehicle purchase escrow is a private-seller custody rail. Dealers
-      // cannot opt listings into this rail; payment eligibility is enforced
-      // again at the settlement boundary.
-      req.body.escrowEnabled = false;
+      const dealerUser = seller; // seller is the dealer
+      if (dealerUser.escrowForced) {
+        req.body.escrowEnabled = true;
+      } else if (!dealerUser.escrowApproved && !dealerUser.escrowForced) {
+        req.body.escrowEnabled = false;
+      }
     }
 
     const body = {
@@ -534,7 +536,14 @@ export const updateCar = async (req, res) => {
     // When a dealer updates a car, enforce escrow rules
     const updaterIsDealer = req.user.role === "dealer";
     if (updaterIsDealer || isOwner) {
-      car.escrowEnabled = false;
+      const seller = await User.findById(req.user.id).select("role escrowApproved escrowForced");
+      if (seller) {
+        if (seller.escrowForced) {
+          car.escrowEnabled = true;
+        } else if (!seller.escrowApproved && !seller.escrowForced) {
+          car.escrowEnabled = false;
+        }
+      }
     }
 
     // Preserve existing coverImage if caller didn't explicitly send one
@@ -873,6 +882,50 @@ export const getCar = async (req, res) => {
   } catch (err) {
     logError("GET ONE ERROR", { error: err.message });
     res.status(500).json({ success: false, message: "Failed to fetch car" });
+  }
+};
+
+// =============================
+// ⚡ PLACE BID
+// =============================
+export const placeBid = async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    const car = await Car.findById(req.params.id);
+
+    if (!car || !car.allowBid) {
+      return res.status(400).json({ success: false, message: "Car not available for bidding" });
+    }
+
+    if (Number(amount) <= (car.currentBid || 0)) {
+      return res.status(400).json({
+        success: false,
+        message: "Bid too low",
+      });
+    }
+
+    car.currentBid = Number(amount);
+    car.bidsCount += 1;
+
+    await car.save();
+
+    await logActionFromReq(req, "place_bid", {
+      target: car._id,
+      targetModel: "Car",
+      details: { amount: Number(amount), bidsCount: car.bidsCount },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        currentBid: car.currentBid,
+        bidsCount: car.bidsCount,
+      },
+    });
+  } catch (err) {
+    logError("BID ERROR", { error: err.message });
+    res.status(500).json({ success: false, message: "Bid failed" });
   }
 };
 

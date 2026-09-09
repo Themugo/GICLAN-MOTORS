@@ -9,6 +9,8 @@ import InspectionOrder from "../models/InspectionOrder.js";
 import Car from "../models/Car.js";
 import { initiatePayment } from "../services/paymentService.js";
 import { logWarn } from "../infrastructure/logging/index.js";
+import { getSupabase } from "../utils/supabase.js";
+import { getIO } from "../utils/io.js";
 
 const router = express.Router();
 router.use(protect);
@@ -88,7 +90,21 @@ router.post(
       checkoutRequestID: payment.checkoutID,
     });
 
-    res.json({ success: true, order, checkoutRequestID: payment.checkoutID });
+    // Bridge the operational order into the canonical digital inspection
+    // execution record and establish one persistent buyer/seller inspection chat.
+    const sb = getSupabase();
+    const sellerId = car.dealer_id || car.dealer || car.seller_id || null;
+    const { data: bridge, error: bridgeError } = await sb.rpc("kayad_bridge_inspection_execution", {
+      p_vehicle_inspection_id: order.id, p_car_id: carId, p_buyer_id: req.user.id, p_provider_id: null,
+    });
+    if (bridgeError) throw bridgeError;
+    const { data: chatId, error: chatError } = await sb.rpc("kayad_get_or_create_inspection_chat", {
+      p_vehicle_inspection_id: order.id, p_car_id: carId, p_buyer_id: req.user.id, p_seller_id: sellerId, p_inspector_id: null,
+    });
+    if (chatError) throw chatError;
+
+    if (getIO()) getIO().to(`user_${req.user.id}`).emit("inspectionUpdated", { inspectionId: order.id, status: order.status, digitalInspectionId: bridge?.digitalInspectionId, chatId });
+    res.json({ success: true, order: { ...order, digitalInspectionId: bridge?.digitalInspectionId, chatId }, checkoutRequestID: payment.checkoutID });
   }),
 );
 
@@ -189,7 +205,25 @@ router.post(
     order.status = "assigned";
     await order.save();
 
-    res.json({ success: true, order });
+    const sb = getSupabase();
+    const { data: bridge } = await sb.rpc("kayad_bridge_inspection_execution", {
+      p_vehicle_inspection_id: order.id, p_car_id: String(order.car), p_buyer_id: String(order.buyer), p_provider_id: null,
+    });
+    const car = await Car.findById(order.car);
+    const sellerId = car?.dealer_id || car?.dealer || car?.seller_id || null;
+    const { data: chatId, error: chatError } = await sb.rpc("kayad_get_or_create_inspection_chat", {
+      p_vehicle_inspection_id: order.id, p_car_id: String(order.car), p_buyer_id: String(order.buyer), p_seller_id: sellerId, p_inspector_id: inspectorId,
+    });
+    if (chatError) throw chatError;
+    if (bridge?.digitalInspectionId) {
+      await sb.from("vehicle_inspections").update({ inspector_id: inspectorId, updated_at: new Date().toISOString() }).eq("id", bridge.digitalInspectionId);
+    }
+    if (getIO()) {
+      getIO().to(`user_${order.buyer}`).emit("inspectionUpdated", { inspectionId: order.id, status: order.status, inspectorId, digitalInspectionId: bridge?.digitalInspectionId, chatId });
+      getIO().to(`user_${inspectorId}`).emit("inspectionUpdated", { inspectionId: order.id, status: order.status, inspectorId, digitalInspectionId: bridge?.digitalInspectionId, chatId });
+    }
+
+    res.json({ success: true, order: { ...order, digitalInspectionId: bridge?.digitalInspectionId, chatId } });
   }),
 );
 
@@ -207,7 +241,14 @@ router.post(
     order.status = "in_progress";
     await order.save();
 
-    res.json({ success: true, order });
+    const sb = getSupabase();
+    const { data: bridge } = await sb.rpc("kayad_bridge_inspection_execution", {
+      p_vehicle_inspection_id: order.id, p_car_id: String(order.car), p_buyer_id: String(order.buyer), p_provider_id: null,
+    });
+    if (bridge?.digitalInspectionId) await sb.from("vehicle_inspections").update({ status: "in_progress", current_stage: "job_verification", scheduled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", bridge.digitalInspectionId);
+    if (getIO()) getIO().to(`user_${order.buyer}`).emit("inspectionUpdated", { inspectionId: order.id, status: order.status, digitalInspectionId: bridge?.digitalInspectionId });
+
+    res.json({ success: true, order: { ...order, digitalInspectionId: bridge?.digitalInspectionId } });
   }),
 );
 
@@ -229,9 +270,22 @@ router.post(
     order.conditionRating = conditionRating || "fair";
     order.inspectorNotes = inspectorNotes || "";
     order.images = images || [];
+    order.evidence = images || [];
     order.status = "completed";
     order.completedAt = new Date();
     await order.save();
+
+    const sb = getSupabase();
+    const { data: vi } = await sb.from("vehicle_inspections").select("id,chat_id,current_stage").eq("id", order.id).maybeSingle();
+    if (vi) {
+      await sb.from("vehicle_inspections").update({ overall_score: Number(overallScore) || 0, overall_grade: Number(overallScore) >= 90 ? "A" : Number(overallScore) >= 80 ? "B+" : Number(overallScore) >= 70 ? "B" : Number(overallScore) >= 60 ? "C" : "D", status: "completed", completed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", vi.id);
+    }
+    if (getIO()) {
+      const event = { inspectionId: order.id, status: order.status, digitalInspectionId: vi?.id || null, chatId: vi?.chat_id || null, overallScore: order.overallScore, conditionRating: order.conditionRating };
+      getIO().to(`user_${order.buyer}`).emit("inspectionUpdated", event);
+      getIO().to(`user_${order.inspector}`).emit("inspectionUpdated", event);
+      getIO().to(`inspection_${order.id}`).emit("inspectionUpdated", event);
+    }
 
     // Update inspector stats
 

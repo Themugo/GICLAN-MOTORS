@@ -23,7 +23,6 @@ import {
   disputeEscrow as serviceDispute,
   closeEscrow as serviceClose,
 } from "../services/escrow.service.js";
-import { verifyEscrowFunding } from "../services/escrowConfiguration.service.js";
 import { STATES, getAllowedTransitions } from "../services/escrowStateMachine.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 
@@ -387,31 +386,4 @@ export const notifyEscrowRefunded = async (escrowRef) => {
   } catch (e) {
     logWarn("notifyEscrowRefunded error:", e.message);
   }
-};
-
-
-export const verifyFunding = async (req, res) => {
-  try {
-    const { reference } = req.body || {};
-    if (!reference || String(reference).trim().length < 3) return res.status(400).json({ success: false, message: "Funding reference is required" });
-    const result = await verifyEscrowFunding(req.params.id, req.user.id, String(reference).trim());
-    getIO()?.to(`user_${result.buyerId || ""}`).emit("escrowFunded", result);
-    getIO()?.to(String(result.carId || "")).emit("escrowFunded", result);
-    await logActionFromReq(req, "escrow.funding_verified", { target: req.params.id, targetModel: "Escrow", details: { reference: String(reference).trim() } });
-    return res.json({ success: true, data: result });
-  } catch (err) {
-    logError("VERIFY ESCROW FUNDING ERROR", err);
-    return res.status(400).json({ success: false, message: err.message || "Funding verification failed" });
-  }
-};
-
-
-export const getFundingInstructions = async (req, res) => {
-  try {
-    const escrow = await Escrow.findById(req.params.id).populate("car buyer seller custodianAccount").lean();
-    if (!escrow) return res.status(404).json({ success: false, message: "Escrow not found" });
-    const userId = String(req.user.id);
-    if (String(escrow.buyer?._id || escrow.buyer) !== userId && String(escrow.seller?._id || escrow.seller) !== userId && !["admin","superadmin","escrow_officer"].includes(req.user.role)) return res.status(403).json({ success: false, message: "Not authorized" });
-    res.json({ success: true, data: { escrowId: escrow._id, status: escrow.status, amount: escrow.amount, fundingReference: escrow.fundingReference || null, fundingMethod: "bank_transfer", account: escrow.custodianAccount ? { id: escrow.custodianAccount._id, accountName: escrow.custodianAccount.accountName, bankName: escrow.custodianAccount.bankName, accountNumber: escrow.custodianAccount.accountNumber, branch: escrow.custodianAccount.branch, currency: escrow.custodianAccount.currency || "KES", notes: escrow.custodianAccount.notes || null } : null } });
-  } catch (err) { return res.status(500).json({ success: false, message: "Failed to load funding instructions" }); }
 };
