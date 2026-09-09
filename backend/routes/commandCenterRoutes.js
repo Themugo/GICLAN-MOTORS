@@ -4,6 +4,7 @@ import asyncHandler from "../middleware/asyncHandler.js";
 import {
   // Mission Control
   getMissionControl,
+  getControlPlaneSnapshot,
   getLiveActivity,
   // Operations Centers
   getOperationsCenter,
@@ -48,6 +49,9 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(protect, allowRoles("admin", "superadmin", "executive", "engineer", "manager"));
+
+// Canonical control-plane snapshot
+router.get("/snapshot", asyncHandler(getControlPlaneSnapshot));
 
 // Mission Control
 router.get("/mission-control", asyncHandler(getMissionControl));

@@ -8,17 +8,7 @@ import express from "express";
 import { protect, adminOnly } from "../middleware/auth.js";
 import asyncHandler from "../middleware/asyncHandler.js";
 import { validateQuery, analyticsQuerySchema } from "../middleware/validate.js";
-import {
-  getSystemHealth,
-  getPaymentFailures,
-  getEscrowDisputes,
-  getDealerOnboarding,
-  getListingModeration,
-  getQueueHealth,
-  getNotifications,
-  getFraudAlerts,
-  getDashboardOverview,
-} from "../controllers/operationsDashboardController.js";
+import { getInfrastructureOperations, getFinanceOperations, getOperationsCenter, getDealerOperations, getMarketplaceCenter, getSecurityOperations, getNotifications, getAIOperations } from "../controllers/commandCenterController.js";
 
 const router = express.Router();
 
@@ -33,37 +23,37 @@ router.use(adminOnly);
 // =============================
 // 📊 DASHBOARD OVERVIEW
 // =============================
-router.get("/overview", validateQuery(analyticsQuerySchema), asyncHandler(getDashboardOverview));
+router.get("/overview", validateQuery(analyticsQuerySchema), asyncHandler(getOperationsCenter));
 
 // =============================
 // 💻 SYSTEM HEALTH
 // =============================
-router.get("/system-health", asyncHandler(getSystemHealth));
+router.get("/system-health", asyncHandler(getInfrastructureOperations));
 
 // =============================
 // 💳 PAYMENT FAILURES
 // =============================
-router.get("/payment-failures", asyncHandler(getPaymentFailures));
+router.get("/payment-failures", asyncHandler(getFinanceOperations));
 
 // =============================
 // 🛡️ ESCROW DISPUTES
 // =============================
-router.get("/escrow-disputes", asyncHandler(getEscrowDisputes));
+router.get("/escrow-disputes", asyncHandler(getOperationsCenter));
 
 // =============================
 // 👥 DEALER ONBOARDING
 // =============================
-router.get("/dealer-onboarding", asyncHandler(getDealerOnboarding));
+router.get("/dealer-onboarding", asyncHandler(getDealerOperations));
 
 // =============================
 // 📄 LISTING MODERATION
 // =============================
-router.get("/listing-moderation", asyncHandler(getListingModeration));
+router.get("/listing-moderation", asyncHandler(getMarketplaceCenter));
 
 // =============================
 // 📊 QUEUE HEALTH
 // =============================
-router.get("/queue-health", asyncHandler(getQueueHealth));
+router.get("/queue-health", asyncHandler(getOperationsCenter));
 
 // =============================
 // 🔔 NOTIFICATIONS
@@ -73,6 +63,6 @@ router.get("/notifications", asyncHandler(getNotifications));
 // =============================
 // 🚨 FRAUD ALERTS
 // =============================
-router.get("/fraud-alerts", asyncHandler(getFraudAlerts));
+router.get("/fraud-alerts", asyncHandler(getSecurityOperations));
 
 export default router;

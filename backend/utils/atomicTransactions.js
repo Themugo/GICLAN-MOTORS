@@ -107,7 +107,12 @@ export async function atomicExtendAuction({ carId, extraMs }) {
   return data;
 }
 
-export async function atomicOpenDispute(args){ const {data,error}=await getSupabase().rpc("kayad_open_dispute_atomic",{p_escrow_id:args.escrowId,p_actor_id:args.actorId,p_role:args.role,p_title:args.title,p_description:args.description,p_category:args.category,p_priority:args.priority,p_idempotency_key:args.idempotencyKey||null}); if(error) throw error; return data; }
-export async function atomicTransitionDispute(args){ const {data,error}=await getSupabase().rpc("kayad_transition_dispute_atomic",{p_escrow_id:args.escrowId,p_actor_id:args.actorId,p_role:args.role,p_next_status:args.nextStatus,p_reason:args.reason||null}); if(error) throw error; return data; }
-export async function atomicAppendDisputeEvidence(args){ const {data,error}=await getSupabase().rpc("kayad_append_dispute_evidence_atomic",{p_escrow_id:args.escrowId,p_actor_id:args.actorId,p_role:args.role,p_item:args.item}); if(error) throw error; return data; }
-export async function atomicResolveDispute(args){ const {data,error}=await getSupabase().rpc("kayad_resolve_dispute_atomic",{p_escrow_id:args.escrowId,p_actor_id:args.actorId,p_decision:args.decision,p_amount:args.amount??null,p_seller_amount:args.sellerAmount??null,p_buyer_amount:args.buyerAmount??null,p_reason:args.reason||null,p_idempotency_key:args.idempotencyKey||null}); if(error) throw error; return data; }
+export async function atomicResolveDispute({ escrowId, actorId, decision, amount = null, sellerAmount = null, buyerAmount = null, reason = null, idempotencyKey = null }) {
+  const { data, error } = await getSupabase().rpc('kayad_resolve_dispute_atomic', {
+    p_escrow_id: escrowId, p_actor_id: actorId, p_decision: decision,
+    p_amount: amount, p_seller_amount: sellerAmount, p_buyer_amount: buyerAmount,
+    p_reason: reason, p_idempotency_key: idempotencyKey,
+  });
+  if (error) throw error;
+  return data;
+}

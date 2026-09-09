@@ -7,7 +7,6 @@ import { handleMpesaCallback } from "../services/paymentCallback.service.js";
 import { logInfo } from "../utils/logger.js";
 import { logError } from "../infrastructure/logging/index.js";
 import { findAll, count } from "../db/index.js";
-import { getSupabase } from "../utils/supabase.js";
 
 // =============================
 // 📲 INITIATE PAYMENT (Phase 2 Transaction Support)
@@ -178,17 +177,6 @@ export const b2cCallback = async (req, res) => {
   try {
     const { handleB2CCallback } = await import("../services/mpesaB2C.service.js");
     const result = await handleB2CCallback(req.body);
-    const sb = getSupabase();
-    if (result.conversationID) {
-      const { data: payout } = await sb.from("dealer_payouts").select("id").eq("conversation_id", result.conversationID).maybeSingle();
-      if (payout?.id) {
-        await sb.rpc("kayad_mark_dealer_payout_atomic", {
-          p_payout: payout.id, p_status: result.success ? "paid" : "failed",
-          p_conversation_id: result.conversationID, p_transaction_id: result.transactionId,
-          p_failure_reason: result.success ? null : result.resultDesc,
-        });
-      }
-    }
     if (result.success) {
       // Log successful disbursement
       logInfo("B2C disbursement succeeded", {

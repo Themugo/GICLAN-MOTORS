@@ -7,6 +7,7 @@ import { validateObjectId, validateQuery, userListQuerySchema, carListQuerySchem
 import { auditLog } from "../middleware/auditLog.js";
 import bcrypt from "bcryptjs";
 import { escapeRegex } from "../utils/escapeRegex.js";
+import { getIO } from "../utils/io.js";
 
 import User from "../models/User.js";
 import UserAuth from "../models/UserAuth.js";
@@ -61,7 +62,14 @@ const router = express.Router();
 // ── Auto-audit all state-changing admin requests ────────────
 router.use((req, res, next) => {
   if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
-    return auditLog(`admin.${req.method.toLowerCase()}`)(req, res, next);
+    return auditLog(`admin.${req.method.toLowerCase()}`)(req, res, () => {
+      res.once("finish", () => {
+        if (res.statusCode < 500) {
+          getIO()?.to("admins").emit("controlPlaneUpdated", { type:"adminMutation", method:req.method, path:req.path, statusCode:res.statusCode, at:new Date().toISOString() });
+        }
+      });
+      next();
+    });
   }
   next();
 });
@@ -164,7 +172,7 @@ router.get(
       AdminAlert.countDocuments({ read: false }),                                      // activeAlerts
       User.countDocuments({ role: "individual_seller" }),                              // individualSellers
       Car.countDocuments({ status: "sold" }),                                          // carsSold
-      Escrow.countDocuments({ status: "disputed", disputeWorkflowStatus: { $in: ["open", "under_review", "mediation", "appealed"] } }),          // pendingReports
+      Escrow.countDocuments({ status: "disputed" }),          // pendingReports
       DealerVerification.countDocuments({ verificationStatus: { $in: ["pending", "under_review"] } }), // verificationQueue
       SupportTicket.countDocuments({ status: { $in: ["open", "in_progress", "waiting_on_user", "waiting_on_internal", "escalated"] } }), // supportQueue
       FraudDetection.countDocuments({ severity: { $in: ["critical", "high"] }, status: { $nin: ["dismissed", "action_taken"] } }), // fraudAlerts
@@ -807,14 +815,17 @@ router.post(
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    if (!['approve','reject','suspend'].includes(action)) {
-      return res.status(400).json({ success: false, message: "Action must be 'approve', 'reject' or 'suspend'" });
+    if (action === "approve") {
+      user.role = "dealer";
+      user.verificationStatus = "verified";
+      user.approved = true;
+    } else if (action === "reject") {
+      user.verificationStatus = "rejected";
+    } else {
+      return res.status(400).json({ success: false, message: "Action must be 'approve' or 'reject'" });
     }
-    const sb = getSupabase();
-    const { data: verificationResult, error: verificationError } = await sb.rpc('kayad_apply_dealer_verification_atomic', {
-      p_user: req.params.id, p_action: action, p_admin: req.user.id, p_reason: req.body?.reason || null,
-    });
-    if (verificationError) throw verificationError;
+
+    await user.save();
     await AuditLog.create({
       action: `Dealer verification: ${action} for ${user.email}`,
       admin: req.user.name || req.user.email,

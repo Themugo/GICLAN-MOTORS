@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, CheckCircle2, Clock3, RefreshCw, ShieldCheck, Siren, TrendingUp } from 'lucide-react';
-import { getMissionControl, getLiveActivity } from '../../../services/commandCenterApi';
+import { getControlPlaneSnapshot, getLiveActivity } from '../../../services/commandCenterApi';
+// getMissionControl remains available as the legacy read alias; snapshot is now canonical.
+
+import { useSocket } from '../../../context/SocketContext';
 
 const tone = (status = '') => {
   if (['healthy', 'good', 'low', 'completed'].includes(String(status).toLowerCase())) return 'text-emerald-700 bg-emerald-50';
@@ -17,6 +20,7 @@ function Metric({ icon: Icon, label, value, hint }) {
 }
 
 export default function EnterpriseCommandCenter() {
+  const socket = useSocket();
   const [data, setData] = useState(null);
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,8 +29,8 @@ export default function EnterpriseCommandCenter() {
   const load = async () => {
     setLoading(true); setError('');
     try {
-      const [mission, live] = await Promise.all([getMissionControl(), getLiveActivity({ limit: 50 })]);
-      setData(mission?.data?.data || mission?.data || null);
+      const [snapshot, live] = await Promise.all([getControlPlaneSnapshot(), getLiveActivity({ limit: 50 })]);
+      setData(snapshot?.data?.data || snapshot?.data || null);
       setActivity(live?.data?.data?.events || live?.data?.events || []);
     } catch (e) {
       setError(e?.response?.data?.message || e?.response?.data?.error || 'Unable to load command-center telemetry.');
@@ -34,15 +38,16 @@ export default function EnterpriseCommandCenter() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { const ch=socket.joinControlPlane?.({onUpdate:()=>{void load();}}); return () => { if(ch) socket.leaveChannel(ch); }; }, [socket]);
 
   const metrics = useMemo(() => {
-    const business = data?.dashboard?.business || {};
-    const overall = data?.dashboard?.overall || {};
+    const overall = {};
+    const business = data?.counts || {};
     return [
-      { icon: Activity, label: 'Platform health', value: overall.healthScore != null ? `${overall.healthScore}%` : '—', hint: overall.riskLevel ? `Risk: ${overall.riskLevel}` : 'Live system assessment' },
-      { icon: TrendingUp, label: 'Active users', value: business.activeUsers ?? '—', hint: 'Current platform population' },
-      { icon: Siren, label: 'Open incidents', value: data?.incidents?.length ?? 0, hint: 'Active operational incidents' },
-      { icon: AlertTriangle, label: 'Open alerts', value: data?.alerts?.length ?? 0, hint: 'Alerts requiring attention' },
+      { icon: Activity, label: 'Platform health', value: data ? 'Live' : '—', hint: overall.riskLevel ? `Risk: ${overall.riskLevel}` : 'Live system assessment' },
+      { icon: TrendingUp, label: 'Active users', value: business.users ?? '—', hint: 'Current platform population' },
+      { icon: Siren, label: 'Open incidents', value: data?.queues?.openIncidents ?? 0, hint: 'Active operational incidents' },
+      { icon: AlertTriangle, label: 'Open alerts', value: data?.queues?.openAlerts ?? 0, hint: 'Alerts requiring attention' },
     ];
   }, [data]);
 
@@ -60,11 +65,18 @@ export default function EnterpriseCommandCenter() {
 
     <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 p-5"><div><h2 className="font-semibold text-slate-950">Service health</h2><p className="text-xs text-slate-500">Measured on request</p></div><CheckCircle2 size={18} className="text-slate-400" /></div>
-        <div className="divide-y divide-slate-100">{(data?.health?.services || []).map(service => <div key={service.name} className="flex items-center justify-between p-4"><div><div className="font-medium capitalize text-slate-900">{service.name}</div><div className="text-xs text-slate-500">{service.latency}ms response measurement</div></div><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone(service.status)}`}>{service.status}</span></div>)}{!(data?.health?.services || []).length && <div className="p-8 text-sm text-slate-500">No service health records are currently available.</div>}</div>
+        <div className="flex items-center justify-between border-b border-slate-100 p-5"><div><h2 className="font-semibold text-slate-950">Control-plane state</h2><p className="text-xs text-slate-500">Authoritative Supabase-backed queues</p></div><CheckCircle2 size={18} className="text-slate-400" /></div>
+        <div className="grid grid-cols-2 gap-3 p-5 text-sm">
+          <div className="rounded-xl bg-slate-50 p-4">Users <strong className="float-right">{data?.counts?.users ?? 0}</strong></div>
+          <div className="rounded-xl bg-slate-50 p-4">Listings <strong className="float-right">{data?.counts?.cars ?? 0}</strong></div>
+          <div className="rounded-xl bg-slate-50 p-4">Dealers <strong className="float-right">{data?.counts?.dealers ?? 0}</strong></div>
+          <div className="rounded-xl bg-slate-50 p-4">Escrows <strong className="float-right">{data?.counts?.escrows ?? 0}</strong></div>
+        </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 p-5"><h2 className="font-semibold text-slate-950">Priority queue</h2><p className="text-xs text-slate-500">Incidents and alerts requiring attention</p></div><div className="divide-y divide-slate-100">{[...(data?.incidents || []).map(x => ({ ...x, kind: 'Incident' })), ...(data?.alerts || []).map(x => ({ ...x, kind: 'Alert' }))].slice(0, 12).map(x => <div key={`${x.kind}-${x.id}`} className="p-4"><div className="flex items-start justify-between gap-3"><div><div className="text-xs font-medium uppercase tracking-wider text-slate-400">{x.kind}</div><div className="mt-1 font-medium text-slate-900">{x.title}</div></div><span className={`rounded-full px-2 py-1 text-xs font-medium ${tone(x.severity)}`}>{x.severity || x.status}</span></div></div>)}{!(data?.incidents?.length || data?.alerts?.length) && <div className="p-8 text-sm text-slate-500">No active incidents or alerts.</div>}</div></div>
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 p-5"><h2 className="font-semibold text-slate-950">Priority queues</h2><p className="text-xs text-slate-500">Current actionable state</p></div><div className="divide-y divide-slate-100">
+        {[['Open incidents',data?.queues?.openIncidents],['Open alerts',data?.queues?.openAlerts],['Disputed escrows',data?.queues?.disputedEscrows],['Pending payments',data?.queues?.pendingPayments]].map(([label,value])=><div key={label} className="flex justify-between p-4 text-sm"><span>{label}</span><strong>{value ?? 0}</strong></div>)}
+      </div></div>
     </div>
 
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 p-5"><div className="flex items-center gap-2"><Clock3 size={18} className="text-slate-400" /><h2 className="font-semibold text-slate-950">Live activity</h2></div></div><div className="divide-y divide-slate-100">{activity.slice(0, 20).map(event => <div key={`${event.type}-${event.id}-${event.createdAt}`} className="flex items-center justify-between gap-4 p-4"><div><div className="font-medium text-slate-900">{event.title}</div><div className="mt-1 text-xs capitalize text-slate-500">{event.type}{event.status ? ` · ${event.status}` : ''}</div></div><time className="shrink-0 text-xs text-slate-400">{event.createdAt ? new Date(event.createdAt).toLocaleString() : '—'}</time></div>)}{!activity.length && <div className="p-8 text-sm text-slate-500">No recent activity is available.</div>}</div></div>

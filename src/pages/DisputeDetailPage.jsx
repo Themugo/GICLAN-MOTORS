@@ -7,7 +7,7 @@ import { useSocket } from '../context/SocketContext';
 import { timeAgo, formatDate } from '../utils/helpers';
 import { ArrowLeft, Shield, Clock, User, AlertTriangle, Gavel, RotateCcw, Activity } from 'lucide-react';
 import { LoadingPage } from '../components/features/common/LoadingPage';
-import EvidenceUpload from '../components/features/common/EvidenceUpload';
+import EvidenceUpload from '../components/EvidenceUpload';
 import EvidenceTimeline from '../components/features/common/EvidenceTimeline';
 import InternalNotes from '../components/features/common/InternalNotes';
 import MediationPanel from '../components/MediationPanel';
@@ -35,7 +35,7 @@ export default function DisputeDetailPage() {
   const { id } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { on, joinDispute, leaveChannel } = useSocket();
+  const { on } = useSocket();
   const [dispute, setDispute] = useState(null);
   const [evidence, setEvidence] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,14 +57,13 @@ export default function DisputeDetailPage() {
   useEffect(() => { load(); }, [id]);
 
   useEffect(() => {
-    const channel = joinDispute?.(id, { onUpdate: (data) => { if (data.disputeId === id || data.escrowId === id) load(); } });
     const offDispute = on?.('disputeUpdate', (data) => {
-      if (data.disputeId === id || data.escrowId === id) load();
+      if (data.disputeId === id) load();
     });
     const offEvidence = on?.('evidenceUploaded', (data) => {
       if (data.disputeId === id) load();
     });
-    return () => { offDispute?.(); offEvidence?.(); if (channel) leaveChannel(channel); };
+    return () => { offDispute?.(); offEvidence?.(); };
   }, [on, id]);
 
   if (loading) return <LoadingPage />;

@@ -1,3 +1,4 @@
+export const getControlPlaneSnapshot = () => api.get('/command-center/snapshot');
 import { api } from '../api/httpClient';
 
 

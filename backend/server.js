@@ -149,7 +149,6 @@ import { startAuctionReminderCron } from "./services/auctionReminderCron.js";
 import { startSavedSearchCron } from "./services/savedSearchCron.js";
 import { startPriceAlertCron } from "./services/priceAlertCron.js";
 import { startScheduler as startHealthScoreScheduler } from "./services/dealerHealthScoreScheduler.js";
-import { startDealerSubscriptionExpiryCron } from "./services/dealerSubscriptionExpiryCron.js";
 import { startScheduler as startMarketTrendScheduler } from "./services/marketTrendScheduler.js";
 import { startScheduler as startMarketplaceHealthScheduler } from "./services/marketplaceHealthScheduler.js";
 import { startSliScheduler } from "./services/sliScheduler.js";
@@ -666,20 +665,6 @@ io.on("connection", (socket) => {
       logWarn("Socket inspection room authorization failed", { inspectionId, userId, error: error?.message });
     }
   });
-  socket.on("joinDispute", async (escrowId) => {
-    if (!socket.user || isRateLimited("joinDispute") || !isValidId(escrowId)) return;
-    const userId = String(socket.user.id || socket.user._id);
-    try {
-      const { getSupabase } = await import("./utils/supabase.js");
-      const { data: escrow } = await getSupabase().from("escrows").select("id,buyer,seller,status,disputeChatId,disputeInspectionId,disputeWorkflowStatus").eq("id", escrowId).maybeSingle();
-      if (!escrow || escrow.status !== "disputed") return;
-      const allowed = [escrow.buyer, escrow.seller].map(String).includes(userId) || ["admin","superadmin","escrow_officer"].includes(socket.user.role);
-      if (!allowed) return;
-      socket.join(`dispute_${escrowId}`);
-      socket.emit("disputeResync", escrow);
-    } catch (error) { logWarn("Socket dispute room authorization failed", { escrowId, userId, error: error?.message }); }
-  });
-  socket.on("leaveDispute", (escrowId) => { if (!isRateLimited("leaveDispute") && isValidId(escrowId)) socket.leave(`dispute_${escrowId}`); });
   socket.on("leaveInspection", (inspectionId) => {
     if (!isRateLimited("leaveInspection") && isValidId(inspectionId)) socket.leave(`inspection_${inspectionId}`);
   });
@@ -697,7 +682,10 @@ io.on("connection", (socket) => {
     socket.to(room).emit("typing", { chatId, userId, name });
   });
   socket.on("joinAdmin", () => {
-    if (socket.user?.role === "admin") socket.join("admins");
+    if (["admin","superadmin","executive","manager","engineer","webhoist"].includes(socket.user?.role)) socket.join("admins");
+  });
+  socket.on("joinControlPlane", () => {
+    if (["admin","superadmin","executive","manager","engineer","webhoist"].includes(socket.user?.role)) socket.join("admins");
   });
   socket.on("joinShowroom", () => {
     if (!isRateLimited("joinShowroom")) socket.join("showroom");
@@ -876,8 +864,6 @@ const startBackgroundServices = async (io) => {
     (async () => {
       try { startHealthScoreScheduler(); console.log("✅ Health score scheduler started"); }
       catch (err) { logError("Failed to start health score scheduler", err); console.log("❌ Failed to start health score scheduler:", err); }
-      try { startDealerSubscriptionExpiryCron(); console.log("✅ Dealer subscription expiry cron started"); }
-      catch (err) { logError("Failed to start dealer subscription expiry cron", err); console.log("❌ Failed to start dealer subscription expiry cron:", err); }
     })(),
     (async () => {
       try { startMarketTrendScheduler(); console.log("✅ Market trend scheduler started"); }
