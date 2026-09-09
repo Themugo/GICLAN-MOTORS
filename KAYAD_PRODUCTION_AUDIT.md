@@ -60,3 +60,11 @@ Supabase still reports informational `RLS enabled, no policy` findings on many t
 The execution environment is Node 22.16.0, while the repository deliberately requires Node >=22.22.2. A strict `npm ci` therefore correctly refused to install. A dry-run with engine checking disabled resolved the lockfile successfully, but a full dependency installation timed out in the sandbox. Consequently, a local Vite build/Vitest run was not falsely marked as passed.
 
 Likewise, no Vercel/Render production deployment credentials were available to this working environment, so live deployment smoke tests were not represented as successful. The repository is prepared for the actual CI/deployment environment, which uses Node 22.22.2.
+
+
+## Production follow-up hardening — 2026-09-09
+
+- Live Supabase advisor review found one externally callable `SECURITY DEFINER` helper (`public.is_admin()`). It was revoked for `public`, `anon`, and `authenticated`; the `ad_slots` admin policy was converged to an inline role check using a scalar subquery.
+- Live duplicate-index findings were verified and removed: `idx_cars_search_brand_model` duplicates `idx_cars_brand_model`; `uq_payments_checkout_request_id` duplicates `idx_payments_checkout_request_unique`.
+- Remaining RLS-no-policy findings are INFO-level on service-role/backend-mediated tables and were not mass-converted into permissive client policies.
+- Public production DNS could not be exercised from the sandbox runtime, so no claim is made that an unauthenticated browser/API smoke test passed from this environment. GitHub/Vercel status for commit `71a7bc04` remained successful before this follow-up.
