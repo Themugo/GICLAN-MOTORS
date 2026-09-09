@@ -68,3 +68,23 @@ Likewise, no Vercel/Render production deployment credentials were available to t
 - Live duplicate-index findings were verified and removed: `idx_cars_search_brand_model` duplicates `idx_cars_brand_model`; `uq_payments_checkout_request_id` duplicates `idx_payments_checkout_request_unique`.
 - Remaining RLS-no-policy findings are INFO-level on service-role/backend-mediated tables and were not mass-converted into permissive client policies.
 - Public production DNS could not be exercised from the sandbox runtime, so no claim is made that an unauthenticated browser/API smoke test passed from this environment. GitHub/Vercel status for commit `71a7bc04` remained successful before this follow-up.
+
+## Search & Discovery — End-to-End Initiative (2026-09-09)
+
+Implemented and production-applied the seller-defined vehicle identity/search convergence.
+
+- Added `public.vehicle_identities` as the persistent identity registry for seller-created makes/models.
+- A `cars` trigger learns a new brand/model automatically when a listing is created; sellers are not blocked by a closed/predefined catalogue.
+- Identity names are normalized for matching while preserving the seller's first/observed display identity.
+- Listing popularity is tracked and corrected on identity changes; unchanged edits do not inflate counts.
+- Search autocomplete now uses the live database identity registry plus live available inventory rather than a hardcoded brand list.
+- The main search service now searches across title, brand, model, description, VIN, chassis number, registration number, engine, drivetrain, body type, fuel, transmission, colour, condition and location.
+- The primary search bar no longer falls back to hardcoded default brands when live suggestions are unavailable.
+- The home/global search input now consumes the same real backend autocomplete source.
+- Added `scripts/validate-search-discovery-contract.mjs`; it passes.
+
+Production verification:
+- Supabase migration `20260909090001_vehicle_identity_registry` applied successfully.
+- Supabase migration `20260909090002_vehicle_identity_trigger_correctness` applied successfully.
+- Live identity registry currently contains 0 identities because the production `cars` table currently contains no qualifying inventory rows; this is expected and will populate automatically with the first seller listing.
+- TypeScript/full frontend dependency verification remains environment-limited because the sandbox does not have the project's installed node_modules; this is not reported as a pass.

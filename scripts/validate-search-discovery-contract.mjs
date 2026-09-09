@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const read = (p) => fs.readFileSync(p, 'utf8');
+const search = read('backend/services/searchService.js');
+const fields = read('backend/utils/fieldMap.js');
+const bar = read('src/components/features/common/SearchBar.tsx');
+const global = read('src/components/home/GlobalSearchSection.tsx');
+const migration = read('supabase/migrations/20260909090001_vehicle_identity_registry.sql');
+assert.match(search, /vehicle_identities/);
+for (const field of ['title','brand','model','description','vin','chassisNumber','registrationNumber','engine','driveType','bodyType','fuel','transmission','color','condition','locationCity']) assert.match(search, new RegExp(`\\b${field}\\b`));
+for (const field of ['title','brand','model','description','vin','chassis_number','registration_number','engine','drive_type','body_type','fuel','transmission','color','condition','location_city']) assert.match(fields, new RegExp(field));
+assert.doesNotMatch(bar, /DEFAULT_BRANDS/);
+assert.match(bar, /autocompleteSearch/);
+assert.match(global, /autocompleteSearch/);
+assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.vehicle_identities/);
+assert.match(migration, /CREATE TRIGGER trg_register_vehicle_identity AFTER INSERT OR UPDATE OF brand, model, dealer_id ON public\.cars/);
+assert.match(migration, /ON CONFLICT \(normalized_brand,normalized_model\)/);
+console.log('Search/discovery contract: PASS');

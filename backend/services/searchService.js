@@ -32,6 +32,17 @@ const buildFilters = (params = {}) => {
       { brand: { $ilike: `%${safe}%` } },
       { model: { $ilike: `%${safe}%` } },
       { description: { $ilike: `%${safe}%` } },
+      { vin: { $ilike: `%${safe}%` } },
+      { chassisNumber: { $ilike: `%${safe}%` } },
+      { registrationNumber: { $ilike: `%${safe}%` } },
+      { engine: { $ilike: `%${safe}%` } },
+      { driveType: { $ilike: `%${safe}%` } },
+      { bodyType: { $ilike: `%${safe}%` } },
+      { fuel: { $ilike: `%${safe}%` } },
+      { transmission: { $ilike: `%${safe}%` } },
+      { color: { $ilike: `%${safe}%` } },
+      { condition: { $ilike: `%${safe}%` } },
+      { locationCity: { $ilike: `%${safe}%` } },
     ];
   }
   const inFilter = (key, value) => {
@@ -72,25 +83,58 @@ export async function searchVehicles(params = {}) {
 export async function getSearchSuggestions(query, limit = MAX_AUTOCOMPLETE) {
   const q = clean(query);
   if (!q || q.length < 2) return [];
-  const cacheKey = `kayad:search:suggestions:${q.toLowerCase()}`;
+  const normalized = q.toLowerCase();
+  const cacheKey = `kayad:search:suggestions:v2:${normalized}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return cached;
-  const rows = await db.findAll('cars', { filters: { status: 'available' }, select: 'brand,model,locationCity,bodyType', limit: 500 });
+
+  const [identities, cars] = await Promise.all([
+    db.findAll('vehicle_identities', {
+      filters: { $or: [
+        { brand: { $ilike: `%${q.replace(/[%_]/g, '')}%` } },
+        { model: { $ilike: `%${q.replace(/[%_]/g, '')}%` } },
+      ] },
+      select: 'brand,model,listingCount,lastSeenAt',
+      orderBy: 'listingCount', ascending: false, limit: 100,
+    }),
+    db.findAll('cars', {
+      filters: { status: 'available', $or: [
+        { title: { $ilike: `%${q.replace(/[%_]/g, '')}%` } },
+        { brand: { $ilike: `%${q.replace(/[%_]/g, '')}%` } },
+        { model: { $ilike: `%${q.replace(/[%_]/g, '')}%` } },
+        { locationCity: { $ilike: `%${q.replace(/[%_]/g, '')}%` } },
+        { bodyType: { $ilike: `%${q.replace(/[%_]/g, '')}%` } },
+      ] },
+      select: 'brand,model,locationCity,bodyType', limit: 100,
+    }),
+  ]);
+
   const candidates = new Map();
-  for (const row of rows) {
-    for (const [type, value] of [['make', row.brand], ['model', row.model], ['city', row.locationCity || row.city], ['bodyType', row.bodyType]]) {
-      if (!value) continue;
-      const text = String(value).trim();
-      const key = `${type}:${text.toLowerCase()}`;
-      if (!candidates.has(key)) candidates.set(key, { type, text });
-    }
+  const add = (type, text, popularity = 0) => {
+    const value = String(text || '').trim();
+    if (!value) return;
+    const key = `${type}:${value.toLowerCase()}`;
+    const lower = value.toLowerCase();
+    const prefix = lower.startsWith(normalized) ? 100 : lower.includes(normalized) ? 75 : 0;
+    const distance = levenshtein(normalized, lower.slice(0, Math.min(lower.length, normalized.length + 3)));
+    const typo = distance <= Math.max(1, Math.floor(normalized.length / 4)) ? 50 - distance * 8 : 0;
+    if (prefix || typo) candidates.set(key, { type, text: value, score: Math.max(prefix, typo) + Math.min(Number(popularity) || 0, 20) });
+  };
+
+  for (const row of identities) {
+    add('make', row.brand, row.listingCount);
+    if (row.model) add('model', row.model, row.listingCount);
+    if (row.brand && row.model) add('vehicle', `${row.brand} ${row.model}`, row.listingCount);
   }
-  const scored = [...candidates.values()].map(item => {
-    const lower = item.text.toLowerCase();
-    const prefix = lower.startsWith(q.toLowerCase()) ? 100 : lower.includes(q.toLowerCase()) ? 80 : 0;
-    const distance = levenshtein(q.toLowerCase(), lower.slice(0, Math.min(lower.length, q.length + 2)));
-    return { ...item, score: prefix || (distance <= Math.max(1, Math.floor(q.length / 4)) ? 60 - distance * 10 : 0) };
-  }).filter(item => item.score > 0).sort((a, b) => b.score - a.score || a.text.localeCompare(b.text)).slice(0, limit).map(({ type, text }) => ({ type, text }));
-  await cacheSet(cacheKey, scored, 600);
-  return scored;
+  for (const row of cars) {
+    add('make', row.brand); add('model', row.model); add('vehicle', [row.brand, row.model].filter(Boolean).join(' '));
+    add('city', row.locationCity); add('bodyType', row.bodyType);
+  }
+
+  const suggestions = [...candidates.values()]
+    .sort((a, b) => b.score - a.score || a.text.localeCompare(b.text))
+    .slice(0, limit)
+    .map(({ type, text }) => ({ type, text }));
+  await cacheSet(cacheKey, suggestions, 300);
+  return suggestions;
 }

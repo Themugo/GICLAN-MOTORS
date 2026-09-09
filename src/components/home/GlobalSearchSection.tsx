@@ -1,9 +1,10 @@
 import type React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, SlidersHorizontal, ArrowRight, ShieldCheck, MapPin, DollarSign, Calendar, Fuel, Gauge, Car } from 'lucide-react';
 import { useMarketplace } from '../../context/MarketplaceContext';
 import { BodyStyle, FuelType, TransmissionType } from '../../types';
 import type { FC } from 'react';
+import { autocompleteSearch } from '../../services/searchApi';
 
 export const GlobalSearchSection: FC = () => {
   const { navigateTo, setFilters, resetFilters } = useMarketplace();
@@ -17,6 +18,22 @@ export const GlobalSearchSection: FC = () => {
   const [selectedFuel, setSelectedFuel] = useState<string>('all');
   const [selectedCondition, setSelectedCondition] = useState<string>('all');
   const [isExpandedFilters, setIsExpandedFilters] = useState(false);
+  const [suggestions, setSuggestions] = useState<{ type: string; text: string }[]>([]);
+
+  useEffect(() => {
+    const q = keyword.trim();
+    if (q.length < 2) { setSuggestions([]); return undefined; }
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const results = await autocompleteSearch(q, 8);
+        if (!cancelled) setSuggestions(results);
+      } catch {
+        if (!cancelled) setSuggestions([]);
+      }
+    }, 180);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [keyword]);
 
   const makes = ['Toyota', 'Land Rover', 'Porsche', 'Mercedes-Benz', 'BMW', 'Subaru', 'Lexus', 'Nissan', 'Ford', 'Audi'];
   const locations = ['Nairobi', 'Mombasa', 'Eldoret', 'Nakuru', 'Kisumu', 'Thika'];
@@ -87,9 +104,18 @@ export const GlobalSearchSection: FC = () => {
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Search by make, model, VIN, or keyword (e.g. Prado TX, Land Cruiser V8)..."
+              placeholder="Search live inventory by make, model, VIN, location, body type, fuel, transmission, colour or keyword..."
               className="w-full pl-12 pr-4 py-3.5 bg-[#2A3B7A] dark:bg-[#0B132B] text-white placeholder-slate-300 dark:placeholder-slate-400 rounded-2xl text-xs sm:text-sm font-sans focus:outline-none focus:ring-2 focus:ring-[#00C9CE] border border-white/15 transition-all"
             />
+            {suggestions.length > 0 && (
+              <div className="absolute z-50 left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden border border-white/10 bg-[#101a31] shadow-2xl">
+                {suggestions.map((item) => (
+                  <button key={`${item.type}:${item.text}`} type="button" onClick={() => { setKeyword(item.text); setSuggestions([]); }} className="w-full text-left px-4 py-3 hover:bg-white/10 text-white text-xs flex items-center justify-between gap-3">
+                    <span>{item.text}</span><span className="text-[9px] uppercase tracking-wider text-slate-400">{item.type}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Dropdowns Row */}
