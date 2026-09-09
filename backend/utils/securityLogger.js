@@ -1,15 +1,6 @@
 import SecurityLog from "../models/SecurityLog.js";
 import { logError, logWarn, logInfo } from "./logger.js";
-
-// Lazy import for email — avoids circular deps
-let _sendRawEmail;
-const getSendRawEmail = async () => {
-  if (!_sendRawEmail) {
-    const mod = await import("../services/email.service.js");
-    _sendRawEmail = mod.sendRawEmail;
-  }
-  return _sendRawEmail;
-};
+import { deliver } from "../services/communicationGateway.service.js";
 
 // Security event types
 export const SECURITY_EVENTS = {
@@ -160,12 +151,17 @@ const sendToSIEM = async (data) => {
 const sendEmailAlert = async ({ action, actor, target, ip }) => {
   if (!process.env.SECURITY_ALERT_EMAIL) return;
   try {
-    const sendRawEmail = await getSendRawEmail();
-    await sendRawEmail({
-      to: process.env.SECURITY_ALERT_EMAIL.split(","),
+    const recipients = process.env.SECURITY_ALERT_EMAIL.split(",").map((v) => v.trim()).filter(Boolean);
+    await Promise.all(recipients.map((recipient) => deliver({
+      channel: "email",
+      eventType: "security.alert",
+      category: "system",
+      recipient,
       subject: `[KAYAD Security] ${action}`,
       html: `<h2>Security Alert</h2><p>Action: ${action}</p><p>Actor: ${actor || "unknown"}</p><p>Target: ${target || "N/A"}</p><p>IP: ${ip || "N/A"}</p><p>Time: ${new Date().toISOString()}</p>`,
-    });
+      text: `Security Alert: ${action}. Actor: ${actor || "unknown"}. Target: ${target || "N/A"}. IP: ${ip || "N/A"}.`,
+      metadata: { action, actor, target, ip },
+    })));
   } catch {
     logWarn("Security alert email failed");
   }

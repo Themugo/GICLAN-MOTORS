@@ -18,14 +18,6 @@ import { atomicPlaceBid, atomicConfirmBidPayment, atomicAutoBid } from "../utils
 import { findOrCreateLeadFromAuction, addLeadActivity, updateLeadStage } from "../services/leadService.js";
 import { logAuctionBidPlaced } from "../services/auditService.js";
 
-// Email service — top-level import, no-ops if unavailable
-let bidEmailService = {};
-try {
-  bidEmailService = await import("../services/email.service.js");
-} catch (e) {
-  logWarn("Bid email service unavailable", { error: e.message });
-}
-
 // =============================
 // 🆔 PSEUDONYM GENERATOR
 // =============================

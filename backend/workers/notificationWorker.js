@@ -6,7 +6,6 @@
 
 import { getWorker } from "../config/queue.js";
 import { findById } from "../db/index.js";
-import { sendNotification } from "../services/notification.service.js";
 import { sendUserCommunication } from "../services/communicationGateway.service.js";
 import { getIO } from "../utils/io.js";
 import { logInfo, logError, logWarn } from "../utils/logger.js";
@@ -27,19 +26,10 @@ const processNotification = async (job) => {
       return null;
     }
 
-    const notification = await sendNotification({
-      userId, title, message, type, data,
-      email: channels.includes("email") && user.email ? user.email : undefined,
-      phone: channels.includes("sms") && user.phone ? user.phone : undefined,
-    });
-    const channelResults = { in_app: Boolean(notification) };
+    const requestedChannels = channels.filter((channel) => ["in_app", "email", "sms", "whatsapp"].includes(channel));
+    const results = await sendUserCommunication({ userId, channels: requestedChannels.length ? requestedChannels : ["in_app"], eventType: type, title, message, metadata: data });
+    const channelResults = Object.fromEntries(results.map((item) => [item.channel, ["sent", "delivered", "read"].includes(item.status)]));
     if (channels.includes("push")) channelResults.push = await sendPushNotification(userId, title, message, data);
-    if (channels.includes("email")) channelResults.email = Boolean(user.email);
-    if (channels.includes("sms")) channelResults.sms = Boolean(user.phone);
-    if (channels.includes("whatsapp") && user.phone) {
-      const wa = await sendUserCommunication({ userId, channels: ["whatsapp"], eventType: type, title, message, metadata: data });
-      channelResults.whatsapp = wa[0]?.status === "sent" || wa[0]?.status === "delivered";
-    }
 
     const processingTime = Date.now() - startTime;
     logInfo("Notification processed successfully", {
@@ -75,51 +65,6 @@ const sendPushNotification = async (userId, title, message, data) => {
     }
   } catch (err) {
     logError("Failed to send push notification", err, { userId });
-  }
-};
-
-// =============================
-// 📧 EMAIL NOTIFICATION
-// =============================
-
-const sendEmailNotification = async (email, title, message, data) => {
-  try {
-    // Import email service dynamically to avoid circular dependency
-    const emailService = await import("../services/email.service.js");
-    await emailService.sendGenericEmail(email, title, message, data);
-    logInfo("Email notification sent", { email });
-  } catch (err) {
-    logError("Failed to send email notification", err, { email });
-  }
-};
-
-// =============================
-// 📱 SMS NOTIFICATION
-// =============================
-
-const sendSMSNotification = async (phone, title, message, data) => {
-  try {
-    // Import SMS service dynamically to avoid circular dependency
-    const smsService = await import("../services/sms.service.js");
-    await smsService.sendSMS(phone, `${title}: ${message}`);
-    logInfo("SMS notification sent", { phone });
-  } catch (err) {
-    logError("Failed to send SMS notification", err, { phone });
-  }
-};
-
-// =============================
-// 💬 WHATSAPP NOTIFICATION
-// =============================
-
-const sendWhatsAppNotification = async (phone, title, message, data) => {
-  try {
-    // Import SMS service (WhatsApp uses same infrastructure)
-    const smsService = await import("../services/sms.service.js");
-    await smsService.sendSMS(phone, `${title}: ${message}`);
-    logInfo("WhatsApp notification sent", { phone });
-  } catch (err) {
-    logError("Failed to send WhatsApp notification", err, { phone });
   }
 };
 

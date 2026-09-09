@@ -7,8 +7,7 @@
 
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { findAll, findById, update, create } from "../db/index.js";
-import { sendEmail } from "./email.service.js";
-import { sendSMS } from "../utils/sms.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "./communicationEvents.service.js";
 
 /**
  * Reminder types and their configurations
@@ -345,54 +344,19 @@ const sendReminderNotification = async (reminder, userId) => {
   try {
     const user = await findById("users", userId);
     if (!user) return;
-
-    const prefs = user.notificationPreferences || {};
-
-    // Send email if enabled
-    if (prefs.email !== false && user.email) {
-      try {
-        await sendEmail({
-          to: user.email,
-          subject: `[Reminder] ${reminder.message}`,
-          html: generateReminderEmailHtml(reminder),
-        });
-      } catch (err) {
-        logWarn("Reminder email failed", err);
-      }
-    }
-
-    // Send SMS for high urgency reminders
-    if (reminder.urgency === 'high' && prefs.sms !== false && user.phone) {
-      try {
-        await sendSMS(
-          user.phone,
-          `Kayad: ${reminder.message} - Action required.`
-        );
-      } catch (err) {
-        logWarn("Reminder SMS failed", err);
-      }
-    }
-
-    // Create in-app notification
-    try {
-      await create("notifications", {
-        user: userId,
-        title: `Reminder: ${REMINDER_TYPES[reminder.type]?.name || reminder.type}`,
-        message: reminder.message,
-        type: 'reminder',
-        urgency: reminder.urgency,
-        data: reminder.data,
-        read: false,
-        createdAt: new Date().toISOString(),
-      });
-    } catch (err) {
-      logWarn("In-app notification failed", err);
-    }
-
-    // Mark reminder as sent
+    const highUrgency = reminder.urgency === "high";
+    await emitCommunication({
+      userId,
+      eventType: COMMUNICATION_EVENTS.REMINDER,
+      category: "transactional",
+      title: `Reminder: ${REMINDER_TYPES[reminder.type]?.name || reminder.type}`,
+      subject: `[Reminder] ${reminder.message}`,
+      message: highUrgency ? `${reminder.message} - Action required.` : reminder.message,
+      channels: ["in_app", "email", ...(highUrgency ? ["sms", "whatsapp"] : [])],
+      metadata: { reminderId: reminder.id, reminderType: reminder.type, urgency: reminder.urgency, relatedId: reminder.relatedId, data: reminder.data },
+    });
     await update("reminders", reminder.id, { sent: true });
-
-    logInfo("Reminder sent", { reminderId: reminder.id, userId });
+    logInfo("Reminder communication emitted", { reminderId: reminder.id, userId });
   } catch (err) {
     logError("Send reminder notification error", err);
   }

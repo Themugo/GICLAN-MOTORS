@@ -6,10 +6,15 @@ import User from "../models/User.js";
 import { initiatePayment } from "../services/paymentService.js";
 import { emitListingUpdate } from "../socket/socket.js";
 import { sendNotification } from "../services/notification.service.js";
-import { sendSMS } from "../utils/sms.js";
+import { deliver } from "../services/communicationGateway.service.js";
 import { getIO } from "../utils/io.js";
 import { applySnipingProtection } from "../utils/snipeGuard.js";
 import { getMinNextBid } from "../utils/bidRules.js";
+
+const sendSmsResponse = async (phone, message, metadata = {}) => {
+  const delivery = await deliver({ channel: "sms", eventType: "sms_bidding.response", category: "transactional", recipient: phone, message, text: message, metadata });
+  return !["failed", "bounced"].includes(delivery?.status);
+};
 
 // =============================
 // 🔢 SMS BID PARSER
@@ -39,7 +44,7 @@ export const handleInboundSms = async (req, res) => {
 
     const amount = parseSmsBid(text);
     if (!amount || amount < 1000) {
-      await sendSMS(cleanedPhone, "Invalid bid format. Reply: BID <amount> — e.g. 'BID 4.3M' or 'BID 500K'");
+      await sendSmsResponse(cleanedPhone, "Invalid bid format. Reply: BID <amount> — e.g. 'BID 4.3M' or 'BID 500K'");
       return res.json({ success: true, message: "Invalid format, instructed user" });
     }
 
@@ -49,25 +54,25 @@ export const handleInboundSms = async (req, res) => {
       "title brand model year auctionStatus currentBid auctionEnd",
     );
     if (!smsBidder || smsBidder.subscriptions.length === 0) {
-      await sendSMS(cleanedPhone, "You are not registered for SMS bidding. Visit KAYAD to link your phone.");
+      await sendSmsResponse(cleanedPhone, "You are not registered for SMS bidding. Visit KAYAD to link your phone.");
       return res.json({ success: true, message: "Unregistered phone" });
     }
 
     // Find which subscribed car the bid is for — use the most recently active auction
     const activeSub = smsBidder.subscriptions.find((s) => s.car && s.car.auctionStatus === "live" && s.car.allowBid);
     if (!activeSub) {
-      await sendSMS(cleanedPhone, "No active auctions found on your subscribed cars.");
+      await sendSmsResponse(cleanedPhone, "No active auctions found on your subscribed cars.");
       return res.json({ success: true, message: "No active auctions" });
     }
 
     const car = await Car.findById(activeSub.car._id);
     if (!car || car.auctionStatus !== "live") {
-      await sendSMS(cleanedPhone, "The auction for this car is no longer live.");
+      await sendSmsResponse(cleanedPhone, "The auction for this car is no longer live.");
       return res.json({ success: true, message: "Auction ended" });
     }
 
     if (car.dealer && car.dealer.toString() === smsBidder.user.toString()) {
-      await sendSMS(cleanedPhone, "You cannot bid on your own listing.");
+      await sendSmsResponse(cleanedPhone, "You cannot bid on your own listing.");
       return res.json({ success: true, message: "Self-bid blocked" });
     }
 
@@ -75,7 +80,7 @@ export const handleInboundSms = async (req, res) => {
     const currentBid = Math.max(highest?.amount || 0, car.currentBid || 0) || car.price || 0;
     const minNextBid = getMinNextBid(currentBid);
     if (amount < minNextBid) {
-      await sendSMS(
+      await sendSmsResponse(
         cleanedPhone,
         `Bid too low. Minimum next bid is KES ${minNextBid.toLocaleString("en-KE")} (current: KES ${currentBid.toLocaleString("en-KE")}). Reply with a higher amount.`,
       );
@@ -84,7 +89,7 @@ export const handleInboundSms = async (req, res) => {
 
     // SMS bidding has no payment-integrated bid settlement path yet.
     // Never create a paid bid without a real payment record/callback.
-    await sendSMS(cleanedPhone, "SMS bidding is temporarily unavailable. Please place the bid through KAYAD with M-Pesa payment.");
+    await sendSmsResponse(cleanedPhone, "SMS bidding is temporarily unavailable. Please place the bid through KAYAD with M-Pesa payment.");
     return res.json({ success: false, message: "SMS bidding payment integration unavailable" });
 
     // Sniping protection — canonical implementation (env-configured
@@ -101,7 +106,7 @@ export const handleInboundSms = async (req, res) => {
     emitListingUpdate(car._id.toString(), { currentBid: amount, bidsCount: car.bidsCount });
 
     // Notify bidder
-    await sendSMS(
+    await sendSmsResponse(
       cleanedPhone,
       `✅ Bid of KES ${amount.toLocaleString("en-KE")} placed on ${car.title || "vehicle"}. Track it live on KAYAD.`,
     );
@@ -110,7 +115,7 @@ export const handleInboundSms = async (req, res) => {
     if (previousHighestBidder && String(previousHighestBidder) !== String(smsBidder.user)) {
       const prevUser = await User.findById(previousHighestBidder).select("phone name");
       if (prevUser?.phone) {
-        await sendSMS(
+        await sendSmsResponse(
           prevUser.phone,
           `You've been outbid on ${car.title || "vehicle"} — KES ${amount.toLocaleString("en-KE")}. Bid higher now on KAYAD.`,
         );

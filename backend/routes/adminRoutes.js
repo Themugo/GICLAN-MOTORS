@@ -33,13 +33,7 @@ import { stkPush } from "../services/mpesaService.js";
 import { sendNotification } from "../services/notification.service.js";
 import { getDealerPlans } from "../services/dealerSubscription.service.js";
 import { getSupabase } from "../utils/supabase.js";
-
-let adminEmailService = {};
-try {
-  adminEmailService = await import("../services/email.service.js");
-} catch (e) {
-  console.warn("⚠️ Admin email service unavailable:", e.message);
-}
+import { emitCommunication, COMMUNICATION_EVENTS } from "../services/communicationEvents.service.js";
 
 // Routes that only admin/superadmin can access
 const adminOrSuper = authorize("admin", "superadmin");
@@ -324,10 +318,14 @@ router.post(
 
     await user.save();
 
-    const { sendDealerApprovedEmail } = adminEmailService;
-    if (typeof sendDealerApprovedEmail === "function") {
-      sendDealerApprovedEmail(user).catch((e) => console.warn("⚠️  Dealer approval email failed:", e.message));
-    }
+    emitCommunication({
+      userId: user._id,
+      eventType: COMMUNICATION_EVENTS.DEALER_VERIFIED,
+      title: "Dealer account approved",
+      message: "Your dealer account has been approved. You can now list vehicles and access dealer features.",
+      channels: ["in_app", "email", "sms", "whatsapp"],
+      metadata: { userId: user._id },
+    }).catch((e) => console.warn("⚠️ Dealer approval communication failed:", e.message));
 
     sendNotification({
       userId: user._id,

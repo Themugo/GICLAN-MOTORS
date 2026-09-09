@@ -13,14 +13,7 @@ import { findAll, findById, findOne, create, update, remove, paginate, count } f
 import { getSupabase } from "../utils/supabase.js";
 import { sendNotification } from "../services/notification.service.js";
 import { initiateDealerUpgrade } from "../services/dealerSubscription.service.js";
-
-// Email service — top-level, no-ops if unavailable
-let dealerEmailService = {};
-try {
-  dealerEmailService = await import("../services/email.service.js");
-} catch (e) {
-  console.warn("⚠️ Dealer email service unavailable:", e.message);
-}
+import { deliver } from "../services/communicationGateway.service.js";
 
 const router = express.Router();
 
@@ -609,12 +602,16 @@ router.post(
       member = await create("dealer_teams", memberData);
     }
 
-    const { sendTeamInviteEmail } = dealerEmailService;
-    if (typeof sendTeamInviteEmail === "function") {
-      sendTeamInviteEmail(email, req.user.name, role, token).catch((e) =>
-        console.warn("⚠️  Team invite email failed:", e.message),
-      );
-    }
+    deliver({
+      channel: "email",
+      eventType: "dealer.team_invite",
+      category: "transactional",
+      recipient: email.toLowerCase().trim(),
+      subject: `You've been invited to ${req.user.name || "a KAYAD dealer team"}`,
+      text: `You have been invited to join a KAYAD dealer team as ${role}. Use your invitation token to complete onboarding: ${token}`,
+      html: `<p>You have been invited to join a KAYAD dealer team as <strong>${role}</strong>.</p><p>Use your invitation token to complete onboarding.</p>`,
+      metadata: { dealerId: req.user.id, role, inviteToken: token },
+    }).catch((e) => console.warn("⚠️ Team invite communication failed:", e.message));
 
     res.json({ success: true, member, inviteToken: token });
   }),

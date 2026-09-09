@@ -9,7 +9,6 @@
 import Escrow from "../models/Escrow.js";
 import Car from "../models/Car.js";
 import Payment from "../models/Payment.js";
-import { sendSMS } from "../utils/sms.js";
 import { emitCommunication, COMMUNICATION_EVENTS } from "../services/communicationEvents.service.js";
 import { logActionFromReq } from "../utils/securityLogger.js";
 import { getIO } from "../utils/io.js";
@@ -172,15 +171,14 @@ export const confirmDelivery = async (req, res) => {
       logWarn("Lead update failed", { error: leadErr.message });
     }
 
-    // Notify buyer
-    try {
-      const UserModel = (await import("../models/User.js")).default;
-      const buyer = await UserModel.findById(escrow.buyer).select("phone notifications");
-      if (buyer?.phone && buyer?.notifications?.sms !== false) {
-        sendSMS(buyer.phone, `Seller confirmed delivery for escrow KES ${Number(escrow.amount).toLocaleString("en-KE")}. Release pending admin approval. Kayad.`)
-          .catch((e) => logWarn("SMS send failed:", e.message));
-      }
-    } catch (e) { logWarn("Escrow notification failed", { error: e.message }); }
+    await emitCommunication({
+      userId: String(escrow.buyer),
+      eventType: COMMUNICATION_EVENTS.ESCROW_DELIVERY_CONFIRMED,
+      title: "Delivery confirmed",
+      message: `Seller confirmed delivery for escrow KES ${Number(escrow.amount).toLocaleString("en-KE")}. Release is pending admin approval.`,
+      channels: ["in_app", "email", "sms", "whatsapp"],
+      metadata: { escrowId: escrow._id, amount: escrow.amount, carId: escrow.car },
+    }).catch((e) => logWarn("Escrow communication failed", { error: e.message }));
 
     logActionFromReq(req, "escrow.delivery_confirmed", {
       target: escrow._id, targetModel: "Escrow", resourceId: req.params.id,

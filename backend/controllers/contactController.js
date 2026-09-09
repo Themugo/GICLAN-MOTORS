@@ -1,5 +1,5 @@
 import Contact from "../models/Contact.js";
-import { sendRawEmail } from "../services/email.service.js";
+import { deliver } from "../services/communicationGateway.service.js";
 import { logInfo, logError } from "../utils/logger.js";
 
 // M-9 FIX: Escape user input before interpolating into HTML email templates.
@@ -20,9 +20,11 @@ export const submitContact = async (req, res) => {
     }
     const contact = await Contact.create({ name, email, subject, message });
 
-    // Send email asynchronously without awaiting
-    sendRawEmail({
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_FROM,
+    deliver({
+      channel: "email",
+      eventType: "support.contact_form",
+      category: "transactional",
+      recipient: process.env.ADMIN_EMAIL || process.env.EMAIL_FROM,
       subject: `Contact form: ${escapeHTML(subject)}`,
       html: `<div style="font-family:sans-serif;background:#F8FAFC;color:#0F172A;padding:24px;max-width:500px;border:1px solid #E2E8F0;">
         <h2 style="color:#2563EB;">New Contact Form Submission</h2>
@@ -32,9 +34,9 @@ export const submitContact = async (req, res) => {
         <hr style="border-color:#252E3D;" />
         <p>${escapeHTML(message)}</p>
       </div>`,
-    }).catch(err => {
-      logError("Failed to send contact email", err);
-    });
+      text: `New contact form submission from ${name} (${email}): ${subject} - ${message}`,
+      metadata: { contactId: contact._id, senderEmail: email },
+    }).catch(err => logError("Failed to send contact email", err));
 
     res.json({ success: true, message: "Message received. We'll get back to you soon." });
   } catch (err) {

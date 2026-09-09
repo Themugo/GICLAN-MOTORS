@@ -10,6 +10,7 @@ export const COMMUNICATION_EVENTS = Object.freeze({
   OUTBID: "auction.outbid",
   AUCTION_STARTED: "auction.started",
   AUCTION_EXTENDED: "auction.extended",
+  AUCTION_ENDING_SOON: "auction.ending_soon",
   AUCTION_WON: "auction.won",
   AUCTION_LOST: "auction.lost",
   PAYMENT_SUCCESS: "payment.succeeded",
@@ -34,6 +35,11 @@ export const COMMUNICATION_EVENTS = Object.freeze({
   SUPPORT_CASE_CREATED: "support.case_created",
   SUPPORT_CASE_UPDATED: "support.case_updated",
   ADMIN_ACTION: "admin.action",
+  SAVED_SEARCH_MATCH: "marketplace.saved_search_match",
+  REMINDER: "system.reminder",
+  CONTACT_FORM: "support.contact_form",
+  ESCROW_DELIVERY_CONFIRMED: "escrow.delivery_confirmed",
+  SECURITY_ALERT: "security.alert",
 });
 
 const defaults = {

@@ -8,41 +8,22 @@
 // ─────────────────────────────────────────────────────────────
 
 import { logInfo, logWarn } from "../utils/logger.js";
-import { getIO } from "../utils/io.js";
-import { addNotificationJob } from "../queues/notificationQueue.js";
-import { addEmailJob } from "../queues/emailQueue.js";
-import { findAll, findById, create, update } from "../db/index.js";
-
-let cronEmailService = {};
-try {
-  cronEmailService = await import("./email.service.js");
-} catch (e) {
-  console.warn("⚠️ Auction reminder email service unavailable:", e.message);
-}
+import { findAll, findById, update } from "../db/index.js";
+import { isSupabaseConnected } from "../utils/supabase.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "./communicationEvents.service.js";
 
 const ENABLED = process.env.AUCTION_REMINDER_ENABLED !== "false";
-const QUEUE_MODE = process.env.QUEUE_MODE === "true";
 
-const notify = async (userId, title, message, type = "auction") => {
-  try {
-    // Use queue if enabled
-    if (QUEUE_MODE) {
-      await addNotificationJob({
-        userId,
-        title,
-        message,
-        type,
-        channels: ["push"],
-      });
-      return;
-    }
-
-    // Synchronous fallback
-    const notif = await create("notifications", { user: userId, title, message, type });
-    getIO()?.to(`user_${userId}`).emit("notification", notif);
-  } catch (e) {
-    console.error("❌ Notify failed:", e.message);
-  }
+const notify = async (userId, title, message, type = "auction", metadata = {}) => {
+  return emitCommunication({
+    userId,
+    eventType: COMMUNICATION_EVENTS.AUCTION_ENDING_SOON || "auction.ending_soon",
+    category: "transactional",
+    title,
+    message,
+    channels: ["in_app", "email", "sms", "whatsapp"],
+    metadata: { type, ...metadata },
+  });
 };
 
 const runReminders = async () => {
@@ -74,31 +55,13 @@ const runReminders = async () => {
 
         if (bidderIds.length === 0) continue;
 
-        const { sendAuctionEndingSoonEmail } = cronEmailService;
-
         for (const userId of bidderIds) {
-          const user = await findById("users", userId, "email,name,notifications");
-          if (user?.email && user?.notifications?.email !== false && typeof sendAuctionEndingSoonEmail === "function") {
-            // Use queue if enabled
-            if (QUEUE_MODE) {
-              await addEmailJob({
-                to: user.email,
-                subject: `Auction ending in ${threshold.minutes} minutes`,
-                html: `<p>The auction for ${car.title || "a vehicle"} ends in ${threshold.minutes} minutes. Current bid: KES ${Number(car.currentBid || car.price).toLocaleString("en-KE")}.</p>`,
-                text: `The auction for ${car.title || "a vehicle"} ends in ${threshold.minutes} minutes. Current bid: KES ${Number(car.currentBid || car.price).toLocaleString("en-KE")}.`,
-              });
-            } else {
-              sendAuctionEndingSoonEmail(user, car, threshold.minutes).catch((e) =>
-                console.warn("⚠️ Auction reminder email failed:", e.message),
-              );
-            }
-          }
-
           await notify(
             userId,
-            `⏰ Auction ending in ${threshold.minutes} min`,
+            `Auction ending in ${threshold.minutes} min`,
             `The auction for ${car.title || "a vehicle"} ends in ${threshold.minutes} minutes. Current bid: KES ${Number(car.currentBid || car.price).toLocaleString("en-KE")}.`,
             "auction",
+            { carId: car.id, auctionEnd: car.auctionEnd, thresholdMinutes: threshold.minutes },
           );
         }
 

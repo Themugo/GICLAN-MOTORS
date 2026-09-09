@@ -1,6 +1,4 @@
-import { createNotification } from "../controllers/notificationController.js";
-import { sendSavedSearchAlertEmail } from "./email.service.js";
-import { sendSMS } from "../utils/sms.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "./communicationEvents.service.js";
 import { logInfo, logWarn } from "../utils/logger.js";
 import { findAll, findById, update } from "../db/index.js";
 import { isSupabaseConnected } from "../utils/supabase.js";
@@ -54,10 +52,6 @@ const matches = (car, filters) => {
   return true;
 };
 
-const shouldNotify = (prefs, channel) => {
-  return prefs?.[channel] !== false;
-};
-
 export const startSavedSearchCron = () => {
   if (!isSupabaseConnected()) {
     logWarn("SavedSearchCron skipped: Supabase not connected");
@@ -90,34 +84,23 @@ export const startSavedSearchCron = () => {
 
         const user = await findById("users", search.user);
         if (!user) continue;
-        const prefs = user.notifications || {};
-
         const titles = fresh
           .slice(0, 3)
           .map((c) => c.title || `${c.brand || ""} ${c.year || ""}`)
           .join(", ");
         const rest = fresh.length > 3 ? ` and ${fresh.length - 3} more` : "";
+        const message = `${fresh.length} vehicle${fresh.length > 1 ? "s" : ""} added: ${titles}${rest}`;
 
-        if (shouldNotify(prefs, "inApp")) {
-          await createNotification({
-            user: search.user,
-            title: `New matching vehicles: ${search.name}`,
-            message: `${fresh.length} vehicle${fresh.length > 1 ? "s" : ""} added: ${titles}${rest}`,
-            type: "info",
-            data: { savedSearchId: search.id, count: fresh.length },
-          });
-        }
-
-        if (shouldNotify(prefs, "email") && user.email) {
-          sendSavedSearchAlertEmail(user, search, fresh, fresh.length).catch((e) =>
-            console.warn("⚠️ Saved search email failed:", e.message),
-          );
-        }
-
-        if (shouldNotify(prefs, "sms") && user.phone) {
-          const msg = `Kayad: ${fresh.length} new vehicle${fresh.length > 1 ? "s" : ""} matching "${search.name}". ${titles}${rest}. View: https://www.kayad.space/saved-searches`;
-          sendSMS(user.phone, msg).catch((e) => console.warn("⚠️ Saved search SMS failed:", e.message));
-        }
+        await emitCommunication({
+          userId: search.user,
+          eventType: COMMUNICATION_EVENTS.SAVED_SEARCH_MATCH,
+          category: "marketing",
+          title: `New matching vehicles: ${search.name}`,
+          subject: `New vehicles matching ${search.name}`,
+          message: `${message}. View: https://www.kayad.space/saved-searches`,
+          channels: ["in_app", "email", "sms", "whatsapp"],
+          metadata: { savedSearchId: search.id, count: fresh.length, vehicles: fresh.slice(0, 10).map((c) => ({ id: c.id || c._id, title: c.title })) },
+        });
       }
     } catch (err) {
       console.error("❌ SavedSearchCron error:", err.message);

@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { logError, logWarn, logInfo } from "../utils/logger.js";
+import { deliver } from "../services/communicationGateway.service.js";
 
 // =============================
 // 🚨 ALERT LEVELS
@@ -96,17 +97,15 @@ const sendEmailAlert = async (alert) => {
       return;
     }
 
-    const emailService = await import("../services/email.service.js");
-    await emailService.sendEmail({
-      to: process.env.ALERT_EMAIL_TO,
+    await deliver({
+      channel: "email",
+      eventType: "system.alert",
+      category: "system",
+      recipient: process.env.ALERT_EMAIL_TO,
       subject: `[${alert.level.toUpperCase()}] ${alert.title}`,
-      html: `
-        <h2>${alert.title}</h2>
-        <p><strong>Level:</strong> ${alert.level}</p>
-        <p><strong>Time:</strong> ${new Date(alert.timestamp).toISOString()}</p>
-        <p><strong>Message:</strong> ${alert.message}</p>
-        ${alert.metadata ? `<pre>${JSON.stringify(alert.metadata, null, 2)}</pre>` : ""}
-      `,
+      html: `<h2>${alert.title}</h2><p><strong>Level:</strong> ${alert.level}</p><p><strong>Time:</strong> ${new Date(alert.timestamp).toISOString()}</p><p><strong>Message:</strong> ${alert.message}</p>${alert.metadata ? `<pre>${JSON.stringify(alert.metadata, null, 2)}</pre>` : ""}`,
+      text: `[${alert.level.toUpperCase()}] ${alert.title}: ${alert.message}`,
+      metadata: { alertId: alert.id, ...alert.metadata },
     });
 
     logInfo("Email alert sent", { alertId: alert.id });
@@ -122,11 +121,14 @@ const sendSMSAlert = async (alert) => {
       return;
     }
 
-    const smsService = await import("../services/sms.service.js");
-    await smsService.sendSMS(
-      process.env.ALERT_PHONE_TO,
-      `[${alert.level.toUpperCase()}] ${alert.title}: ${alert.message}`,
-    );
+    await deliver({
+      channel: "sms",
+      eventType: "system.alert",
+      category: "system",
+      recipient: process.env.ALERT_PHONE_TO,
+      message: `[${alert.level.toUpperCase()}] ${alert.title}: ${alert.message}`,
+      metadata: { alertId: alert.id, ...alert.metadata },
+    });
 
     logInfo("SMS alert sent", { alertId: alert.id });
   } catch (err) {
