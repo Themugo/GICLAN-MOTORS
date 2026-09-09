@@ -6,6 +6,7 @@ import VehicleDetailModal from './components/VehicleDetailModal';
 import CompareModal from './components/CompareModal';
 import AuthModal from './components/AuthModal';
 import PriceAlertsModal from './components/PriceAlertsModal';
+import DashboardHub from './components/DashboardHub';
 
 import { getCars, getCarById, mapBackendCarToVehicle, VehicleApiError } from './services/vehicleApi';
 import { useVehicleCollections } from './hooks/useVehicleCollections';
@@ -410,7 +411,11 @@ function AppInner() {
             />
           )}
 
-          {activeNav === 'dashboard' && (
+          {activeNav === 'dashboard' && user && (
+            <DashboardHub user={authUser} vehicles={vehicles} onNavigate={(nav) => setActiveNav(nav)} />
+          )}
+
+          {activeNav === 'dashboard-legacy' && (
             <DashboardView
               savedVehicles={savedVehicles}
               vehicles={vehicles}

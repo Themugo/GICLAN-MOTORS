@@ -120,6 +120,7 @@ export const VehicleMarketplace: React.FC<VehicleMarketplaceProps> = ({
   // consolidated mode) rather than requiring a toggle click to reach
   // the standard dense layout.
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [gridColumns, setGridColumns] = useState<2 | 3 | 4>(3);
   const [sortBy, setSortBy] = useState<
     'newest' | 'price-asc' | 'price-desc' | 'mileage' | 'year' | 'most-viewed' | 'auction-ending'
   >('newest');
@@ -761,6 +762,15 @@ export const VehicleMarketplace: React.FC<VehicleMarketplaceProps> = ({
               <option value="most-viewed">Most Viewed</option>
               <option value="auction-ending">Auction Ending Soon</option>
             </select>
+            {viewMode === 'grid' && (
+              <div className="hidden sm:flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden" title="Grid density">
+                {[2, 3, 4].map((n) => (
+                  <button key={n} onClick={() => setGridColumns(n as 2 | 3 | 4)} className={`px-2 py-1.5 text-[10px] font-bold ${gridColumns === n ? 'bg-[#1E3063] text-white' : 'text-slate-500 hover:bg-slate-50'}`} title={`${n} columns`}>
+                    {n}×
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex bg-white border border-slate-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => setViewMode('grid')}
@@ -976,7 +986,7 @@ export const VehicleMarketplace: React.FC<VehicleMarketplaceProps> = ({
               </div>
             ) : (
               <div className={viewMode === 'grid'
-                ? `grid grid-cols-1 sm:grid-cols-2 ${showDesktopSidebar ? 'xl:grid-cols-3' : 'xl:grid-cols-4'} gap-4`
+                ? `grid grid-cols-1 sm:grid-cols-2 ${gridColumns === 2 ? 'xl:grid-cols-2' : gridColumns === 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3'} gap-4`
                 : 'flex flex-col gap-3'
               }>
                 {onlyAuction === false && paginatedVehicles.some((v) => v.isAuction) === false && filteredVehicles.some((v) => v.isAuction) && viewMode === 'grid' && (

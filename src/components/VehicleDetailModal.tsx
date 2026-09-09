@@ -257,7 +257,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
 
   // Status Chip Generation
   const getStatusChip = () => {
-    if (isAuction) return { label: 'Auction Ends Soon', variant: 'live' as const };
+    if (isAuction) return { label: vehicle.auctionEndsAt ? 'Auction Listing' : 'Auction', variant: 'live' as const };
     if (isPrivateSeller) return { label: 'Private Sale • Direct Transfer', variant: 'neutral' as const };
     if (vehicle.condition === 'Brand New') return { label: 'Ready for Immediate Transfer', variant: 'success' as const };
     return { label: 'Available Today • Ready for Viewing', variant: 'verified' as const };
@@ -343,14 +343,6 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                     {vehicle.condition || 'Foreign Used'}
                   </Badge>
 
-                  {/* 360 & Video Interactive Badges */}
-                  <span className="bg-white/90 backdrop-blur-md text-[#1E3063] text-[11px] font-extrabold px-3 py-1 rounded-full border border-white/50 shadow-xs flex items-center gap-1.5">
-                    <RotateCw className="w-3.5 h-3.5 text-blue-600" /> 360° View
-                  </span>
-
-                  <span className="bg-white/90 backdrop-blur-md text-[#1E3063] text-[11px] font-extrabold px-3 py-1 rounded-full border border-white/50 shadow-xs flex items-center gap-1.5">
-                    <PlayCircle className="w-3.5 h-3.5 text-rose-600" /> Walkaround Video
-                  </span>
                 </div>
 
                 {/* Floating Location Overlay */}
@@ -497,7 +489,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                           <ShieldCheck className="w-4 h-4 text-amber-500" />
                         </div>
                         <p className="text-[11px] text-slate-500 font-medium">
-                          ★ {vehicle.sellerRating} Rating • {vehicle.sellerType} • Response: {vehicle.responseTime || '< 15 mins'}
+                          {vehicle.sellerRating ? `★ ${vehicle.sellerRating} Rating` : 'Rating not available'} • {vehicle.sellerType || 'Seller'}{vehicle.responseTime ? ` • Response: ${vehicle.responseTime}` : ''}
                         </p>
                       </div>
                     </div>
@@ -584,7 +576,7 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
                 { label: 'Drive', val: vehicle.driveType || 'AWD / 4WD', icon: <Car className="w-4 h-4 text-[#1E3063]" /> },
                 { label: 'Engine', val: vehicle.engineSize || '2500 cc', icon: <Zap className="w-4 h-4 text-[#1E3063]" /> },
                 { label: 'Condition', val: vehicle.condition || 'Foreign Used', icon: <Award className="w-4 h-4 text-[#1E3063]" /> },
-                { label: 'Logbook', val: 'TIMS Verified', icon: <ShieldCheck className="w-4 h-4 text-emerald-600" /> }
+                { label: 'Verification', val: vehicle.verified ? 'Verified' : 'Pending verification', icon: <ShieldCheck className="w-4 h-4 text-emerald-600" /> }
               ].map((chip, idx) => (
                 <div key={idx} className="p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-200/80 text-center space-y-1 transition-colors">
                   <div className="flex justify-center">{chip.icon}</div>
@@ -609,14 +601,14 @@ export const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({
             {/* Exactly 6 Concise Trust Chips */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
               {[
-                { title: '✓ TIMS Verified', desc: 'Logbook title cleared' },
-                { title: '✓ Dealer Verified', desc: 'KRA & Audit passed' },
-                { title: '✓ 150-Point Certified', desc: 'Mechanical audit OK' },
-                { title: '✓ Finance Eligible', desc: 'Bank asset approved' },
-                { title: '✓ Secure Transaction', desc: 'Escrow vault protected' },
-                { title: '✓ Ownership Verified', desc: 'Zero lien encumbrance' }
+                { enabled: Boolean(vehicle.verified), title: '✓ Listing Verified', desc: 'KAYAD verification is recorded' },
+                { enabled: Boolean(vehicle.isDealerCertified), title: '✓ Dealer Certified', desc: 'Seller has a dealer certification record' },
+                { enabled: Boolean(vehicle.inspectionPassed || vehicle.inspection), title: '✓ Inspection Report', desc: 'Inspection data is available' },
+                { enabled: Boolean(vehicle.financeAvailable), title: '✓ Finance Available', desc: 'Financing is offered for this listing' },
+                { enabled: Boolean(vehicle.escrowEligible || isEscrowActive), title: '✓ Escrow Eligible', desc: 'Secure transaction workflow is available' },
+                { enabled: Boolean(vehicle.vin), title: '✓ Vehicle Identity', desc: 'VIN is recorded on the listing' }
               ].map((item, idx) => (
-                <div key={idx} className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/15 space-y-0.5">
+                <div key={idx} className={`p-3 rounded-2xl backdrop-blur-md border space-y-0.5 ${item.enabled ? 'bg-white/10 border-white/15' : 'bg-white/5 border-white/10 opacity-60'}`}>
                   <p className="font-extrabold text-white text-xs">{item.title}</p>
                   <p className="text-[10px] text-slate-300 font-medium">{item.desc}</p>
                 </div>

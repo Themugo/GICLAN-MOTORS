@@ -221,6 +221,8 @@ export const register = async (req, res) => {
       phone: validPhone,
       status,
       emailVerified: false,
+      businessName: role === 'dealer' || role === 'individual_seller' ? String(req.body.businessName || '').trim() : undefined,
+      location: role === 'dealer' || role === 'individual_seller' ? String(req.body.location || '').trim() : undefined,
       referredBy,
     });
 
