@@ -5,7 +5,7 @@ import { Vehicle, BodyStyle } from '../types';
 import { useOptionalAuth } from './AuthContext';
 import { useVehicleCollections } from '../hooks/useVehicleCollections';
 import { getCars, mapBackendCarToVehicle } from '../services/vehicleApi';
-import { bidsAPI } from '../api/api';
+import { myBids, placeBid as placeBidRequest } from '../services/bidApi';
 import type { FC } from 'react';
 
 // Local type definitions for context state
@@ -241,7 +241,7 @@ export const MarketplaceProvider: FC<{ children: React.ReactNode }> = ({ childre
     }
     let cancelled = false;
     setBidLoadError(null);
-    bidsAPI.myBids()
+    myBids()
       .then((response: any) => {
         if (cancelled) return;
         const rows = Array.isArray(response?.bids) ? response.bids : [];
@@ -331,7 +331,7 @@ export const MarketplaceProvider: FC<{ children: React.ReactNode }> = ({ childre
     if (!target) return false;
 
     try {
-      const res = await bidsAPI.place(vehicleId, { amount });
+      const res = await placeBidRequest(vehicleId, amount);
       if (!res?.data?.success) return false;
     } catch {
       return false;
@@ -343,7 +343,7 @@ export const MarketplaceProvider: FC<{ children: React.ReactNode }> = ({ childre
     try {
       const [latestCar, latestBids] = await Promise.all([
         import('../services/vehicleApi').then(({ getCarById }) => getCarById(vehicleId)),
-        bidsAPI.myBids(),
+        myBids(),
       ]);
       if (latestCar) {
         const mapped = mapBackendCarToVehicle(latestCar);

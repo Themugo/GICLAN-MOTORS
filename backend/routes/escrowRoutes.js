@@ -25,6 +25,8 @@ import {
   requestRelease,
   disputeEscrow,
   closeEscrowHandler,
+  verifyFunding,
+  getFundingInstructions,
 } from "../controllers/escrowController.js";
 
 const router = express.Router();
@@ -88,6 +90,8 @@ router.get("/:id", protect, validateObjectId, validateResponse(escrowResponseSch
  *         description: Escrow not found
  */
 router.get("/:id/state", protect, validateObjectId, validateResponse(escrowResponseSchema), asyncHandler(getEscrowState));
+
+router.get("/:id/funding-instructions", protect, validateObjectId, asyncHandler(getFundingInstructions));
 
 // =============================
 // ✅ VEHICLE CONFIRMED (BUYER)
@@ -173,6 +177,16 @@ router.post(
 // =============================
 // 💰 RELEASE (ADMIN)
 // =============================
+router.post(
+  "/:id/verify-funding",
+  protect,
+  adminOnly,
+  createLimiter,
+  idempotencyCheck,
+  validateObjectId,
+  asyncHandler(verifyFunding),
+);
+
 router.post(
   "/:id/release",
   protect,

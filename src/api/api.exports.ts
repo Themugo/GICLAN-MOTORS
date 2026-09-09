@@ -166,6 +166,10 @@ export const dealerAPI = {
 
 // ── ADMIN ─────────────────────────────────────────────
 export const adminAPI = {
+  getEscrowConfig: () => api.get('/admin/escrow/config').then(unwrap),
+  updateEscrowConfig: (body: any) => api.put('/admin/escrow/config', body).then(unwrap),
+  addEscrowAccount: (body: any) => api.post('/admin/escrow/accounts', body).then(unwrap),
+  deleteEscrowAccount: (id: string) => api.delete(`/admin/escrow/accounts/${id}`).then(unwrap),
   stats:         ()          => api.get('/admin/stats').then(unwrap),
   users:         (params: any)    => api.get('/admin/users', { params }).then(unwrap),
   toggleBan:     (userId: string)    => api.post(`/admin/users/${userId}/toggle-ban`).then(unwrap),
@@ -248,8 +252,6 @@ export const adminAPI = {
   integrityUpdateFlag:(id: string, body: any) => api.patch(`/new-admin/auction-integrity/${id}/status`, body).then(unwrap),
   integrityScan:      (body: any)   => api.post('/new-admin/auction-integrity/scan', body).then(unwrap),
   integrityRiskProfiles: (p: any) => api.get('/new-admin/auction-integrity/risk-profiles', { params: p }).then(unwrap),
-  escrowApprove: (userId: string) => api.put(`/admin/users/${userId}/escrow-approve`).then(unwrap),
-  escrowForce:   (userId: string) => api.put(`/admin/users/${userId}/escrow-force`).then(unwrap),
 };
 
 // ── DISPUTE ───────────────────────────────────────────

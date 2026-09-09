@@ -114,6 +114,11 @@ export async function disputeEscrow(escrowId: string, reason: string): Promise<B
  * contains { sellerAmount, commission }, not the full updated escrow
  * - callers should re-fetch the deal list afterward for the real,
  * current state rather than construct one from this response alone. */
+export async function verifyFunding(escrowId: string, reference: string): Promise<BackendEscrow> {
+  const body = await escrowFetch<{ data: BackendEscrow }>(`/api/escrow/${escrowId}/verify-funding`, { method: 'POST', body: JSON.stringify({ reference }) });
+  return body.data;
+}
+
 export async function releaseEscrow(escrowId: string): Promise<{ sellerAmount: number; commission: number }> {
   const body = await escrowFetch<{ data: { sellerAmount: number; commission: number } }>(`/api/escrow/${escrowId}/release`, { method: 'POST' });
   return body.data;

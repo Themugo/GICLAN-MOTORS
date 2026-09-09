@@ -5,6 +5,7 @@
 import { atomicStartAuction, atomicExtendAuction } from "../utils/atomicTransactions.js";
 import { logActionFromReq } from "../utils/securityLogger.js";
 import { closeAuction } from "./auctionClose.service.js";
+import { emitAuctionPhase, emitAuctionExtended, emitListingUpdate } from "../socket/socket.js";
 
 export const startAuction = async ({ carId, durationMs, startingBid, reservePrice = null, reserveMode = "none", req }) => {
   const result = await atomicStartAuction({
@@ -14,6 +15,14 @@ export const startAuction = async ({ carId, durationMs, startingBid, reservePric
     reservePrice,
     reserveMode,
   });
+
+  await emitAuctionPhase(String(carId), "live", {
+    startingBid: Number(result.starting_bid || startingBid),
+    endTime: result.auction_end,
+    reservePrice: result.reserve_price ?? null,
+    reserveMode: result.reserve_mode || reserveMode,
+  });
+  await emitListingUpdate(String(carId), { auctionStatus: "live", allowBid: true, currentBid: Number(result.starting_bid || startingBid), auctionEnd: result.auction_end });
 
   await logActionFromReq(req, "auction_start", {
     target: carId,
@@ -26,6 +35,8 @@ export const startAuction = async ({ carId, durationMs, startingBid, reservePric
 
 export const extendAuction = async ({ carId, extraMs, req, reason = "auction_extend" }) => {
   const result = await atomicExtendAuction({ carId, extraMs });
+  await emitAuctionExtended(String(carId), new Date(result.auction_end).getTime());
+  await emitListingUpdate(String(carId), { auctionEnd: result.auction_end, extensionCount: result.extension_count });
   await logActionFromReq(req, reason, {
     target: carId,
     targetModel: "Car",

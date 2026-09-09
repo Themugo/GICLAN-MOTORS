@@ -90,7 +90,7 @@ BEGIN
     UPDATE payments SET status = 'success', processed = true, paid_at = v_now, updated_at = v_now WHERE id = v_escrow.payment;
   END IF;
 
-  RETURN jsonb_build_object('id', v_escrow.id, 'status', 'funded', 'fundingReference', NULLIF(trim(p_reference), ''));
+  RETURN jsonb_build_object('id', v_escrow.id, 'status', 'funded', 'buyerId', v_escrow.buyer, 'carId', v_escrow.car, 'fundingReference', NULLIF(trim(p_reference), ''));
 END;
 $$;
 

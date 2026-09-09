@@ -27,11 +27,11 @@ export const initiatePayment = async ({ userId, carId, type, amount, phone, meta
     return { success: false, message: "Payment already in progress", payment: existing };
   }
 
-  const stkRes = await stkPush(formattedPhone, amount);
-  const checkoutID = stkRes?.CheckoutRequestID;
-  if (!checkoutID) throw new Error("M-Pesa did not return a checkout request ID");
   const mode = "mpesa";
 
+  // Create the authoritative payment row BEFORE contacting the provider.
+  // This gives every initiation attempt a durable identity even if the
+  // provider times out or fails before returning a checkout ID.
   let payment;
   try {
     payment = await create("payments", {
@@ -69,6 +69,17 @@ export const initiatePayment = async ({ userId, carId, type, amount, phone, meta
       const existing = await findOne("payments", { user: userId, car: carId, status: "pending", type });
       if (existing) return { success: false, message: "Payment already in progress", payment: existing };
     }
+    throw error;
+  }
+
+  let checkoutID;
+  try {
+    const stkRes = await stkPush(formattedPhone, amount);
+    checkoutID = stkRes?.CheckoutRequestID;
+    if (!checkoutID) throw new Error("M-Pesa did not return a checkout request ID");
+    payment = await update("payments", payment.id, { checkoutRequestId: checkoutID });
+  } catch (error) {
+    await update("payments", payment.id, { status: "failed", resultDesc: error.message || "M-Pesa initiation failed", processed: true }).catch(() => {});
     throw error;
   }
 

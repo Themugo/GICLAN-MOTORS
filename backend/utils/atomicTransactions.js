@@ -106,3 +106,14 @@ export async function atomicExtendAuction({ carId, extraMs }) {
   if (error) throw error;
   return data;
 }
+
+
+export async function atomicVerifyEscrowFunding(escrowId, actorId, fundingReference) {
+  const { data, error } = await getSupabase().rpc("kayad_verify_escrow_funding_atomic", {
+    p_escrow_id: escrowId,
+    p_actor_id: actorId,
+    p_reference: fundingReference,
+  });
+  if (error) throw error;
+  return data;
+}

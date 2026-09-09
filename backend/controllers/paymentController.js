@@ -6,7 +6,8 @@ import { initiatePayment as initiate } from "../services/paymentService.js";
 import { handleMpesaCallback } from "../services/paymentCallback.service.js";
 import { logInfo } from "../utils/logger.js";
 import { logError } from "../infrastructure/logging/index.js";
-import { findAll, count } from "../db/index.js";
+import { findAll, count, findOne as findOneDb, create as createDb } from "../db/index.js";
+import { validatePrivateSellerEscrow, sanitizeEscrowAccount } from "../services/escrowConfiguration.service.js";
 
 // =============================
 // 📲 INITIATE PAYMENT (Phase 2 Transaction Support)
@@ -42,13 +43,20 @@ export const initiatePayment = async (req, res) => {
     const normalizedType = type === "buy" || type === "direct" ? "escrow" : type;
 
     // Vehicle escrow is funded into the administrator-configured custody
-    // bank account. M-Pesa STK is not a vehicle escrow rail because the
-    // transaction value may exceed provider limits.
+    // bank account. M-Pesa STK is intentionally not used for settlement.
     if (normalizedType === "escrow") {
-      return res.status(400).json({
-        success: false,
-        message: "Vehicle escrow funding uses the configured bank-transfer custody flow, not M-Pesa STK",
-      });
+      if (!carId) return res.status(400).json({ success: false, message: "carId is required for vehicle escrow" });
+      const car = await findById("cars", carId, "price,winner,dealer,escrowEnabled");
+      if (!car) return res.status(404).json({ success: false, message: "Car not found" });
+      const seller = await findById("users", car.dealer, "role");
+      const escrowPolicy = await validatePrivateSellerEscrow({ car, seller, amount: parsedAmount });
+      const existing = await findOneDb("escrows", { car: carId, buyer: req.user.id, status: { $in: ["pending", "funded", "vehicle_confirmed", "delivered", "disputed"] } });
+      if (existing) {
+        return res.json({ success: true, mode: "bank_transfer", escrowId: existing.id, fundingAccount: sanitizeEscrowAccount(escrowPolicy.account), fundingMethods: ["bank_transfer"], mpesaEligible: false, message: "An active escrow already exists for this vehicle." });
+      }
+      const payment = await createDb("payments", { user: req.user.id, car: carId, type: "escrow", amount: parsedAmount, referenceId: carId, referenceModel: "Car", phone: phone || null, status: "pending", processed: false, mode: "bank_transfer", metadata: { fundingMethod: "bank_transfer", custodianAccountId: escrowPolicy.account.id } });
+      const escrow = await createDb("escrows", { car: carId, buyer: req.user.id, seller: car.dealer, amount: parsedAmount, payment: payment.id, status: "pending", custodianAccount: escrowPolicy.account.id });
+      return res.json({ success: true, mode: "bank_transfer", payment: { id: payment.id, status: payment.status, amount: payment.amount, type: payment.type }, escrowId: escrow.id, fundingAccount: sanitizeEscrowAccount(escrowPolicy.account), fundingMethods: ["bank_transfer"], mpesaEligible: false, message: "Escrow created. Complete the bank transfer to the configured KAYAD custody account; an authorized administrator must verify the deposit." });
     }
 
     // Amount integrity: for vehicle escrow payments the settlement

@@ -64,11 +64,11 @@ export interface PlaceBidResponse {
  * authoritative - this function does not duplicate or pre-empt it,
  * it surfaces exactly what the real backend decides, success or
  * rejection, to the caller. */
-export async function placeBid(carId: string, amount: number, phone: string): Promise<PlaceBidResponse> {
+export async function placeBid(carId: string, amount: number): Promise<PlaceBidResponse> {
   try {
     return await request<PlaceBidResponse>(`/api/bids/${carId}/bid`, {
       method: 'POST',
-      body: JSON.stringify({ amount, phone }),
+      body: JSON.stringify({ amount }),
     });
   } catch (err) {
     const error = err instanceof HttpRequestError ? err : new HttpRequestError('Request failed.');
@@ -77,3 +77,16 @@ export async function placeBid(carId: string, amount: number, phone: string): Pr
   }
 
 }
+
+
+export async function myBids() {
+  return request<{ bids: unknown[] }>('/api/bids/my');
+}
+
+export async function fetchAdminBids(params: Record<string, unknown> = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => { if (value !== undefined && value !== '') query.set(key, String(value)); });
+  return request<{ bids: unknown[]; pagination?: Record<string, unknown> }>(`/api/bids/admin/all${query.toString() ? `?${query}` : ''}`);
+}
+export async function fetchSuspiciousBids() { return request<{ bids: unknown[] }>('/api/bids/admin/suspicious'); }
+export async function setBidWinner(bidId: string) { return request<{ success: boolean; result?: unknown }>(`/api/bids/admin/${encodeURIComponent(bidId)}/set-winner`, { method: 'POST' }); }

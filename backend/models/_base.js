@@ -6,7 +6,7 @@ const BCRYPT_ROUNDS = 12;
 
 const TABLE_MAP = {
   User: "users", UserAuth: "user_auth", Car: "cars", Bid: "bids",
-  Escrow: "escrows", Payment: "payments", Chat: "chats", Message: "messages",
+  Escrow: "escrows", EscrowAccount: "escrow_accounts", Payment: "payments", Chat: "chats", Message: "messages",
   Notification: "notifications", Favorite: "favorites", Review: "reviews",
   Dealer: "dealers", DealerHealthScore: "dealer_health_scores",
   DealerTeam: "dealer_teams", DealerTrustScore: "dealer_trust_scores",

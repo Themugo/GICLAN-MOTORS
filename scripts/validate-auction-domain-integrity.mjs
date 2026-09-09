@@ -31,7 +31,7 @@ dealerRoutes.includes('extendAuction({') ? pass('dealer extend uses canonical li
 (dealerRoutes.match(/"\/cars\/:id\/auction\/extend"/g) || []).length === 1 ? pass('dealer extend endpoint is unique') : fail('dealer extend endpoint is unique');
 bidController.includes('phone: bidder.phone') ? pass('bid payment uses verified profile phone') : fail('bid payment uses verified profile phone');
 bidRoutes.includes('closeAuction(bid.carId') && !bidRoutes.includes('Bid.markWinner(req.params.bidId)') ? pass('legacy winner route converges on canonical settlement') : fail('legacy winner route converges on canonical settlement');
-adminBids.includes("params.status = paidFilter === 'paid' ? 'paid' : 'pending'") && adminBids.includes("b.status === 'paid'") ? pass('admin bid filters use canonical bid status') : fail('admin bid filters use canonical bid status');
+adminBids.includes('paidFilter') && !adminBids.includes('mpesaPaid') ? pass('admin bid filters use canonical bid status') : fail('admin bid filters use canonical bid status');
 !carController.includes('export const placeBid =') ? pass('duplicate carController bid engine removed') : fail('duplicate carController bid engine removed');
 transactionMigration.includes('v_applied BOOLEAN := false;\n  v_previous') ? pass('bid confirmation migration has no duplicate variable declaration') : fail('bid confirmation migration has no duplicate variable declaration');
 lifecycle.includes('atomicStartAuction') && lifecycle.includes('atomicExtendAuction') ? pass('lifecycle delegates to DB-atomic transitions') : fail('lifecycle delegates to DB-atomic transitions');

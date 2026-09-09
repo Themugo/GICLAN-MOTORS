@@ -13,6 +13,7 @@ import { findAll, findById, findOne, create, update, remove, paginate, count } f
 import { getSupabase } from "../utils/supabase.js";
 import { sendNotification } from "../services/notification.service.js";
 import { initiateDealerUpgrade } from "../services/dealerSubscription.service.js";
+import { startAuction, extendAuction } from "../services/auctionLifecycle.service.js";
 
 // Email service — top-level, no-ops if unavailable
 let dealerEmailService = {};
@@ -899,16 +900,9 @@ router.post(
     const car = await findOne("cars", { id: req.params.id, dealer: req.user.id });
     if (!car) return res.status(404).json({ success: false, message: "Car not found" });
 
-    if (car.auctionStatus === "live") {
-      return res.status(400).json({ success: false, message: "Auction already live" });
-    }
-
     const dealer = await findById("users", car.dealer, "commissionBalance,listingsLocked");
     if (dealer && dealer.listingsLocked && dealer.commissionBalance > 0) {
-      return res.status(403).json({
-        success: false,
-        message: "Cannot start auction — outstanding commission balance and listings are locked.",
-      });
+      return res.status(403).json({ success: false, message: "Cannot start auction — outstanding commission balance and listings are locked." });
     }
 
     const startingBidVal = Number(startingBid) || 0;
@@ -921,27 +915,16 @@ router.post(
       return res.status(400).json({ success: false, message: "Reserve price must be >= starting bid" });
     }
 
-    // Server-authoritative schedule: the server sets both timestamps.
-    const endTime = new Date(Date.now() + durationMs);
-
-    const updated = await update("cars", req.params.id, {
-      auctionStatus: "live",
-      allowBid: true,
+    const result = await startAuction({
+      carId: req.params.id,
+      durationMs: Number(durationMs),
       startingBid: startingBidVal,
-      currentBid: startingBidVal,
       reservePrice: reserveVal,
       reserveMode: reserveMode || "none",
-      auctionStartTime: new Date().toISOString(),
-      auctionEnd: endTime.toISOString(),
+      req,
     });
 
-    await logActionFromReq(req, "auction_start", {
-      target: req.params.id,
-      targetModel: "Car",
-      details: { startingBid: startingBidVal, reservePrice: reserveVal, durationMs },
-    });
-
-    res.json({ success: true, message: "Auction started", endTime, reservePrice: reserveVal });
+    res.json({ success: true, message: "Auction started", endTime: result.auction_end, reservePrice: result.reserve_price, result });
   }),
 );
 
@@ -984,29 +967,8 @@ router.post(
     const car = await findOne("cars", { id: req.params.id, dealer: req.user.id, auctionStatus: "live" });
     if (!car) return res.status(404).json({ success: false, message: "Car not found or auction not live" });
 
-    const MAX_EXTENSIONS = 3;
-    const extensionCount = car.extensionCount || 0;
-    if (extensionCount >= MAX_EXTENSIONS) {
-      return res
-        .status(400)
-        .json({ success: false, message: `Maximum ${MAX_EXTENSIONS} extensions per auction reached` });
-    }
-
-    const currentEnd = new Date(car.auctionEnd).getTime();
-    const newEnd = new Date(Math.max(currentEnd, Date.now()) + hours * 60 * 60 * 1000).toISOString();
-
-    const updated = await update("cars", req.params.id, {
-      auctionEnd: newEnd,
-      extensionCount: extensionCount + 1,
-    });
-
-    await logActionFromReq(req, "auction_extend", {
-      target: req.params.id,
-      targetModel: "Car",
-      details: { hours, extensionsUsed: extensionCount + 1, newEndTime: updated.auctionEnd },
-    });
-
-    res.json({ success: true, newEndTime: updated.auctionEnd, extensionsUsed: extensionCount + 1 });
+    const result = await extendAuction({ carId: req.params.id, extraMs: Number(hours) * 60 * 60 * 1000, req });
+    res.json({ success: true, newEndTime: result.auction_end, extensionsUsed: result.extension_count, result });
   }),
 );
 

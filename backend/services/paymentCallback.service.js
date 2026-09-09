@@ -188,7 +188,7 @@ export const handleMpesaCallback = async (callbackData) => {
     }
 
     if (payment.type === "escrow") {
-      // Defensive guard: vehicle escrow must never be funded from an M-Pesa
+      // M-Pesa is not a vehicle escrow funding rail. Defensive guard: vehicle escrow must never be funded from an M-Pesa
       // STK callback. Funding is verified separately against the admin-
       // configured custody bank account.
       assertPaymentTransition(payment.status, "failed");

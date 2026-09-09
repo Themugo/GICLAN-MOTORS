@@ -7,6 +7,7 @@ import { idempotencyCheck } from "../middleware/idempotency.js";
 import { mpesaIpWhitelist, validateMpesaCallback } from "../middleware/mpesaSecurity.js";
 
 import { placeBid, getAuctionBids, confirmBidPayment, endAuction, getMyBids } from "../controllers/bidController.js";
+import { closeAuction } from "../services/auctionClose.service.js";
 
 import Bid from "../models/Bid.js";
 
@@ -78,6 +79,8 @@ router.get(
     if (req.query.carId) filter.carId = req.query.carId;
     if (req.query.userId) filter.user = req.query.userId;
     if (req.query.status) filter.status = req.query.status;
+    if (req.query.mpesaPaid === "true") filter.status = "paid";
+    if (req.query.mpesaPaid === "false") filter.status = { $in: ["pending", "failed"] };
 
     // 💰 RANGE FILTER
     if (req.query.min || req.query.max) {
@@ -142,19 +145,12 @@ router.post(
   adminOnly,
   validateObjectId,
   asyncHandler(async (req, res) => {
-    const bid = await Bid.markWinner(req.params.bidId);
+    const bid = await Bid.findById(req.params.bidId);
+    if (!bid) return res.status(404).json({ success: false, message: "Bid not found" });
 
-    if (!bid) {
-      return res.status(404).json({
-        success: false,
-        message: "Bid not found",
-      });
-    }
-
-    res.json({
-      success: true,
-      bid,
-    });
+    const result = await closeAuction(bid.carId?.toString?.() || bid.carId, { req, actor: req.user, reason: "admin_set_winner", winnerBidId: bid.id });
+    if (!result.success && !result.alreadyClosed) return res.status(400).json({ success: false, message: result.message || "Unable to settle auction" });
+    res.json({ success: true, result });
   }),
 );
 
