@@ -49,6 +49,7 @@ import escrowRoutes from "./routes/escrowRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import favoriteRoutes from "./routes/favoriteRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import communicationWebhookRoutes from "./routes/communicationWebhookRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import auctionAdminRoutes from "./routes/auctionAdminRoutes.js";
@@ -727,6 +728,7 @@ app.use("/api/escrow", idempotencyCheck, csrfProtection, escrowRoutes); // Idemp
 app.use("/api/chat", chatRoutes);
 app.use("/api/favorites", csrfProtection, favoriteRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/communications/webhooks", communicationWebhookRoutes);
 app.use("/api/reviews", csrfProtection, reviewRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/auction-admin", auctionAdminRoutes);

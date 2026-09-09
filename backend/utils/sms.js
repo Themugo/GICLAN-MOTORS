@@ -57,8 +57,7 @@ const doSend = async (phone, message) => {
     return res.data?.SMSMessageData?.Recipients?.[0]?.status === "Success";
   }
 
-  logInfo("SMS sent (unknown provider)", { to, message });
-  return true;
+  throw new Error(`Unsupported SMS provider: ${SMS_PROVIDER}`);
 };
 
 export const sendSMS = async (phone, message) => {

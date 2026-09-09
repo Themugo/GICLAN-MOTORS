@@ -1,6 +1,5 @@
 import { create, findOne } from "../db/index.js";
-import { sendRawEmail } from "./email.service.js";
-import { sendSMS } from "../utils/sms.js";
+import { sendUserCommunication } from "./communicationGateway.service.js";
 import { withRetry } from "../utils/retry.js";
 import { getIO } from "../utils/io.js";
 
@@ -23,13 +22,12 @@ export const sendNotification = async ({ userId, title, message, type = "info", 
     try { preferences = await findOne("user_preferences", { user: userId }); } catch { /* in-app notification remains authoritative */ }
     const emailEnabled = preferences?.notifications?.email?.enabled !== false;
     const smsEnabled = preferences?.notifications?.sms?.enabled !== false;
-    if (emailEnabled && email) {
-      const safeTitle = String(title).replace(/[<>]/g, "");
-      const safeMessage = String(message).replace(/[<>]/g, "");
-      sendRawEmail({ to: email, subject: safeTitle, html: `<p>${safeMessage}</p>` }).catch((e) => console.warn("Notification email failed:", e.message));
-    }
-    if (smsEnabled && phone) {
-      sendSMS(phone, `${title}: ${message}`).catch((e) => console.warn("Notification SMS failed:", e.message));
+    const channels = ["in_app"];
+    if (emailEnabled && email) channels.push("email");
+    if (smsEnabled && phone) channels.push("sms");
+    if (channels.length > 1) {
+      sendUserCommunication({ userId, channels: channels.slice(1), eventType: normalizedType, title, message, metadata: { link, data } })
+        .catch((e) => console.warn("Notification channel delivery failed:", e.message));
     }
     return notification;
   } catch (err) {

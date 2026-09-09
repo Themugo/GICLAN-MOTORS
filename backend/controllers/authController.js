@@ -9,6 +9,7 @@ import { formatPhone } from "../utils/format.js";
 import * as R from "../utils/response.js";
 import PlatformConfig from "../models/PlatformConfig.js";
 import { sendNotification } from "../services/notification.service.js";
+import { deliver } from "../services/communicationGateway.service.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
 import { invalidateUserCache } from "../middleware/auth.js";
 import { recordFailedAttempt, recordSuccessfulAttempt } from "../middleware/accountLockout.js";
@@ -240,14 +241,20 @@ export const register = async (req, res) => {
       emailVerifyExpire: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
 
-    if (process.env.EMAIL_HOST) {
-      const { sendVerificationEmail } = emailService;
-      if (typeof sendVerificationEmail === "function") {
-        sendVerificationEmail(user.email, user.name, verifyToken).catch((e) =>
-          console.warn("⚠️  Verification email failed:", e.message),
-        );
-      }
-    }
+    try {
+      const verifyUrl = `${process.env.FRONTEND_URL || "https://www.kayad.space"}/verify-email?token=${verifyToken}`;
+      await deliver({
+        userId: user.id || user._id,
+        channel: "email",
+        eventType: "email_verification",
+        templateCode: "email_verification",
+        recipient: user.email,
+        subject: "Verify Your Email — KAYAD",
+        text: `Hi ${user.name || "there"}, verify your KAYAD email: ${verifyUrl}`,
+        html: `<p>Hi ${user.name || "there"},</p><p>Verify your KAYAD email to unlock your account.</p><p><a href="${verifyUrl}">Verify my email</a></p>`,
+        metadata: { verification: true },
+      });
+    } catch (e) { console.warn("⚠️ Verification email failed:", e.message); }
 
     if (referredBy) {
       const REFERRAL_BONUS = Number(process.env.REFERRAL_BONUS_KES) || 500;
@@ -268,13 +275,19 @@ export const register = async (req, res) => {
     }
 
     try {
-      const { sendWelcomeEmail } = emailService;
-      if (typeof sendWelcomeEmail === "function") {
-        sendWelcomeEmail(user).catch(() => {});
-      }
-    } catch {
-      // non-blocking
-    }
+      await deliver({
+        userId: user.id || user._id,
+        channel: "email",
+        eventType: "welcome",
+        templateCode: "welcome",
+        recipient: user.email,
+        subject: "Welcome to KAYAD — Drive Your Dream Today",
+        text: `Welcome to KAYAD, ${user.name || "there"}. Your account is ready.`,
+        html: `<p>Welcome to KAYAD, ${user.name || "there"}.</p><p>Your account is ready. Browse vehicles, join auctions and use secure transaction workflows.</p>`,
+        metadata: { welcome: true },
+      });
+    } catch { /* welcome delivery must not block registration */ }
+
 
     return sendAuthResponse(res.status(201), user, null, null, userAuth.tokenVersion || 0);
   } catch (err) {

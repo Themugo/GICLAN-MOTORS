@@ -9,7 +9,7 @@ import Dealer from "../models/Dealer.js";
 import DealerVerification from "../models/DealerVerification.js";
 import User from "../models/User.js";
 import Referral from "../models/Referral.js";
-import { sendSMS } from "../utils/sms.js";
+import { createOtpChallenge, verifyOtpChallenge } from "../services/otpService.js";
 import { sendNotification } from "../services/notification.service.js";
 import { logInfo, logWarn, logError } from "../utils/logger.js";
 import { logDealerVerificationSubmitted, logDealerVerificationApproved } from "../services/auditService.js";
@@ -184,130 +184,41 @@ export const getVerificationStatus = async (req, res) => {
 export const requestPhoneVerification = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { phoneNumber } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const phoneNumber = user.phone || req.body.phoneNumber;
+    if (!phoneNumber) return res.status(400).json({ success: false, message: "Phone number required" });
+    if (!/^(\+254|0)?7\d{8}$/.test(phoneNumber)) return res.status(400).json({ success: false, message: "Invalid Kenyan phone number format" });
 
-    if (!phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone number required",
-      });
-    }
-
-    // Validate phone format
-    if (!/^(\+254|0)?7\d{8}$/.test(phoneNumber)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid Kenyan phone number format",
-      });
-    }
-
-    let verification = await DealerVerification.findOne({ user: userId });
-
-    if (!verification) {
-      const dealer = await Dealer.findOne({ user: userId });
-      if (!dealer) {
-        return res.status(400).json({
-          success: false,
-          message: "Dealer profile required",
-        });
-      }
-
-      verification = new DealerVerification({
-        user: userId,
-        dealer: dealer._id,
-        verificationStatus: "pending",
-      });
-    }
-
-    // Initialize phone verification if not exists
-    if (!verification.documents.phoneVerification) {
-      verification.documents.phoneVerification = {};
-    }
-
-    verification.documents.phoneVerification.phoneNumber = phoneNumber;
-    verification.documents.phoneVerification.verified = false;
-
-    // Generate OTP
-    const otp = await verification.generateOTP();
-
-    // Send OTP via SMS
-    try {
-      await sendSMS(phoneNumber, `Your Kayad verification code is: ${otp}. Valid for 10 minutes.`);
-      logInfo("OTP sent", { userId, phoneNumber });
-    } catch (smsErr) {
-      logError("Failed to send OTP", smsErr, { userId, phoneNumber });
-      return res.status(500).json({
-        success: false,
-        message: "Failed to send verification code",
-      });
-    }
-
-    await verification.save();
-
-    res.json({
-      success: true,
-      message: "Verification code sent",
-      phoneNumber: phoneNumber.replace(/(\d{3})\d{6}(\d{2})/, "$1******$2"), // Masked
+    const result = await createOtpChallenge({
+      userId,
+      purpose: "phone_verification",
+      channel: "sms",
+      recipient: phoneNumber,
+      eventType: "phone_verification",
     });
+    logInfo("Dealer phone OTP challenge created", { userId, challengeId: result.challengeId });
+    return res.json({ success: true, message: "Verification code sent", expiresAt: result.expiresAt, phoneNumber: phoneNumber.replace(/(\d{3})\d{6}(\d{2})/, "$1******$2") });
   } catch (err) {
     logError("Request phone verification error", err);
-    res.status(500).json({
-      success: false,
-      message: "Failed to request phone verification",
-    });
+    return res.status(502).json({ success: false, message: "Failed to send verification code" });
   }
 };
 
-// =============================
-// 🔐 VERIFY OTP
-// =============================
 export const verifyOTP = async (req, res) => {
   try {
     const userId = req.user.id;
     const { otp } = req.body;
-
-    if (!otp) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP required",
-      });
-    }
-
-    const verification = await DealerVerification.findOne({ user: userId });
-
-    if (!verification || !verification.documents.phoneVerification) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone verification not initiated",
-      });
-    }
-
-    const isValid = await verification.verifyOTP(otp);
-
-    if (isValid) {
-      logInfo("Phone verified successfully", { userId });
-      res.json({
-        success: true,
-        message: "Phone verified successfully",
-      });
-    } else {
-      const attempts = verification.documents.phoneVerification.attempts;
-      const remaining = 3 - attempts;
-
-      logWarn("OTP verification failed", { userId, attempts });
-
-      res.status(400).json({
-        success: false,
-        message: "Invalid verification code",
-        remainingAttempts: remaining,
-      });
-    }
+    if (!/^\d{4}$/.test(String(otp || ""))) return res.status(400).json({ success: false, message: "Enter a valid 4-digit code" });
+    const result = await verifyOtpChallenge({ userId, purpose: "phone_verification", code: otp });
+    if (!result.valid) return res.status(400).json({ success: false, message: result.reason === "expired" ? "Code expired. Request a new one." : result.reason === "locked" ? "Too many attempts. Request a new code." : "Invalid verification code" });
+    const user = await User.findById(userId);
+    if (user) { user.phoneVerified = true; await user.save(); }
+    logInfo("Dealer phone verified successfully", { userId });
+    return res.json({ success: true, message: "Phone verified successfully" });
   } catch (err) {
     logError("Verify OTP error", err);
-    res.status(500).json({
-      success: false,
-      message: err.message || "Failed to verify OTP",
-    });
+    return res.status(500).json({ success: false, message: "Failed to verify phone" });
   }
 };
 

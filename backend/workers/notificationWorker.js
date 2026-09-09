@@ -7,6 +7,7 @@
 import { getWorker } from "../config/queue.js";
 import { findById } from "../db/index.js";
 import { sendNotification } from "../services/notification.service.js";
+import { sendUserCommunication } from "../services/communicationGateway.service.js";
 import { getIO } from "../utils/io.js";
 import { logInfo, logError, logWarn } from "../utils/logger.js";
 import { sendToDeadLetterQueue } from "../infrastructure/queues/deadLetterQueue.js";
@@ -35,7 +36,10 @@ const processNotification = async (job) => {
     if (channels.includes("push")) channelResults.push = await sendPushNotification(userId, title, message, data);
     if (channels.includes("email")) channelResults.email = Boolean(user.email);
     if (channels.includes("sms")) channelResults.sms = Boolean(user.phone);
-    if (channels.includes("whatsapp")) channelResults.whatsapp = "not_configured";
+    if (channels.includes("whatsapp") && user.phone) {
+      const wa = await sendUserCommunication({ userId, channels: ["whatsapp"], eventType: type, title, message, metadata: data });
+      channelResults.whatsapp = wa[0]?.status === "sent" || wa[0]?.status === "delivered";
+    }
 
     const processingTime = Date.now() - startTime;
     logInfo("Notification processed successfully", {

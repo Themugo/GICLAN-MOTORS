@@ -8,7 +8,7 @@ import { addEmailJob } from "../queues/emailQueue.js";
 const APP_NAME = process.env.APP_NAME || "Kayad";
 const APP_URL = process.env.FRONTEND_URL || "https://www.kayad.space";
 const FROM = process.env.EMAIL_FROM || `noreply@kayad.space`;
-const ENABLED = !!process.env.EMAIL_HOST;
+const ENABLED = !!process.env.EMAIL_HOST || !!process.env.SENDGRID_API_KEY;
 const QUEUE_MODE = process.env.QUEUE_MODE === "true";
 
 let transporter = null;
@@ -121,33 +121,35 @@ export const sendRawEmail = async ({ to, subject, html, text, from = FROM }) => 
   const startTime = Date.now();
   const t = getTransporter();
 
-  if (!t) {
-    if (process.env.NODE_ENV !== "test") {
-      logInfo("Email disabled - would send", { subject, to });
-    }
+  if (!t && !process.env.SENDGRID_API_KEY) {
     incrementCounter("email_disabled");
-    return { success: true, disabled: true };
+    logWarn("Email provider is not configured", { subject, to });
+    return { success: false, disabled: true, error: "Email provider is not configured" };
   }
 
   try {
-    const info = await withRetry(
-      () =>
-        t.sendMail({
-          from: `"${APP_NAME}" <${FROM}>`,
-          to,
-          subject,
-          text: text || subject,
-          html,
-        }),
-      {
-        ...emailConfig,
-        timeoutMs: 30000,
-        onRetry: (err, attempt) => {
-          logWarn(`Email send retry ${attempt}`, { to, subject, error: err.message });
-          incrementCounter("email_retry", { attempt });
+    let info;
+    if (process.env.SENDGRID_API_KEY) {
+      const { default: sgMail } = await import("@sendgrid/mail");
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      const [response] = await withRetry(
+        () => sgMail.send({ from: FROM, to, subject, text: text || subject, html }),
+        { ...emailConfig, timeoutMs: 30000 },
+      );
+      info = { messageId: response?.headers?.["x-message-id"] || response?.headers?.["X-Message-Id"] || null };
+    } else {
+      info = await withRetry(
+        () => t.sendMail({ from: `"${APP_NAME}" <${FROM}>`, to, subject, text: text || subject, html }),
+        {
+          ...emailConfig,
+          timeoutMs: 30000,
+          onRetry: (err, attempt) => {
+            logWarn(`Email send retry ${attempt}`, { to, subject, error: err.message });
+            incrementCounter("email_retry", { attempt });
+          },
         },
-      },
-    );
+      );
+    }
 
     const duration = Date.now() - startTime;
     recordMetric("email_send_duration", duration);

@@ -21,6 +21,28 @@ export const snakeToCamel = (s) => s.replace(/_([a-z0-9])/g, (_, c) => c.toUpper
 // can't fix. Add to this as more mismatches are found in other
 // tables — do not duplicate this map elsewhere.
 export const FIELD_ALIASES = {
+  communication_deliveries: {
+    userId: "user_id",
+    eventType: "event_type",
+    templateCode: "template_code",
+    recipientHash: "recipient_hash",
+    providerMessageId: "provider_message_id",
+    providerEventId: "provider_event_id",
+    sentAt: "sent_at",
+    deliveredAt: "delivered_at",
+    lastError: "last_error",
+    createdAt: "created_at",
+    updatedAt: "updated_at",
+  },
+  otp_challenges: {
+    userId: "user_id",
+    codeHash: "code_hash",
+    expiresAt: "expires_at",
+    maxAttempts: "max_attempts",
+    createdAt: "created_at",
+    updatedAt: "updated_at",
+    verifiedAt: "verified_at",
+  },
   reviews: { reviewer: 'reviewer_id', user: 'reviewer_id', dealer: 'dealer_id', car: 'car_id' },
   events: { user: "user_id" },
   search_analytics: { user: "user_id" },
