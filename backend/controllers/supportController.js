@@ -1,6 +1,7 @@
 import SupportTicket from "../models/SupportTicket.js";
 import User from "../models/User.js";
 import { logError } from '../infrastructure/logging/index.js';
+import { emitCommunication, COMMUNICATION_EVENTS } from '../services/communicationEvents.service.js';
 
 // =============================
 // 🎫 CREATE SUPPORT TICKET
@@ -28,6 +29,7 @@ export const createTicket = async (req, res) => {
 
     const populatedTicket = await SupportTicket.findById(ticket._id).populate("user", "name email");
 
+    await emitCommunication({ userId, eventType: COMMUNICATION_EVENTS.SUPPORT_CASE_CREATED, title: "Support case created", message: `Your support case ${populatedTicket.ticketNumber || populatedTicket._id} has been created.`, channels: ["in_app", "email", "sms", "whatsapp"], metadata: { ticketId: populatedTicket._id, category, priority } }).catch(() => {});
     res.json({ success: true, ticket: populatedTicket });
   } catch (error) {
     logError("Error creating ticket:", error);
@@ -194,6 +196,7 @@ export const addMessage = async (req, res) => {
       },
     ]);
 
+    await emitCommunication({ userId: String(ticket.user), eventType: COMMUNICATION_EVENTS.SUPPORT_CASE_UPDATED, title: "Support case updated", message: `Your support case has been updated to ${status || ticket.status}.`, channels: ["in_app", "email", "sms", "whatsapp"], metadata: { ticketId: ticket._id, status: status || ticket.status } }).catch(() => {});
     res.json({ success: true, ticket: updatedTicket[0] || ticket });
   } catch (error) {
     logError("Error adding message:", error);

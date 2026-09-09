@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { create, update, findById } from "../db/index.js";
+import { create, update, findById, findOne } from "../db/index.js";
 import { sendRawEmail } from "./email.service.js";
 import { sendSMS } from "../utils/sms.js";
 import { logError, logInfo } from "../utils/logger.js";
@@ -53,6 +53,8 @@ export const recordDelivery = async (payload) => {
     providerMessageId: payload.providerMessageId || null,
     providerEventId: payload.providerEventId ? hashExternalId(payload.provider || "unknown", payload.providerEventId) : null,
     metadata: payload.metadata || {},
+    category: payload.category || "transactional",
+    retryCount: payload.retryCount || 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -108,6 +110,7 @@ export const deliver = async ({
   text,
   message,
   metadata = {},
+  deliveryId = null,
 }) => {
   if (!CHANNELS.has(channel)) throw new Error(`Unsupported communication channel: ${channel}`);
   if (!recipient && channel !== "in_app") throw new Error(`Missing ${channel} recipient`);
@@ -121,17 +124,14 @@ export const deliver = async ({
         ? "twilio_whatsapp"
         : "socket";
 
-  let delivery = await recordDelivery({
-    userId,
-    channel,
-    eventType,
-    templateCode,
-    recipient: recipient || String(userId || ""),
-    provider,
+  let delivery = deliveryId ? await findById("communication_deliveries", deliveryId) : null;
+  if (!delivery) delivery = await recordDelivery({
+    userId, channel, eventType, templateCode,
+    recipient: recipient || String(userId || ""), provider,
     status: channel === "in_app" ? "delivered" : "queued",
-    metadata: { ...metadata, subject, message, text, html },
-    category,
+    metadata: { ...metadata, subject, message, text, html }, category,
   });
+  else await updateDelivery(delivery.id, { status: "sending", lastAttemptAt: new Date().toISOString(), lastError: null });
 
   try {
     if (channel === "in_app") {
@@ -193,6 +193,7 @@ export const sendUserCommunication = async ({
   subject = title,
   html,
   metadata = {},
+  deliveryId = null,
 }) => {
   const user = await findById("users", userId, "id,email,phone");
   if (!user) throw new Error("User not found");

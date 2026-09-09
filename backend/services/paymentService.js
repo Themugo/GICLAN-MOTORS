@@ -5,6 +5,7 @@ import { getIO } from "../utils/io.js";
 import { logWarn } from "../utils/logger.js";
 import { recordPaymentEvent, recordPaymentAttempt } from "./paymentFinancialLifecycle.service.js";
 import { findById, findOne, create, update } from "../db/index.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "./communicationEvents.service.js";
 
 const formatPhone = (phone) => {
   if (!phone) return null;
@@ -130,21 +131,17 @@ export const confirmPayment = async ({ checkoutRequestID, receipt, amount }) => 
     );
   }
 
-  // 📧 Payment confirmed email (fire-and-forget)
+  // Canonical payment communication event. Receipt delivery is handled by the same gateway.
   try {
-    const { sendPaymentConfirmedEmail } = await import("./email.service.js");
-    const user = await findById("users", payment.user, "email,name");
-    if (user?.email && typeof sendPaymentConfirmedEmail === "function") {
-      let carTitle = null;
-      if (payment.car) {
-        const carDoc = await findById("cars", payment.car, "title");
-        carTitle = carDoc?.title || null;
-      }
-      sendPaymentConfirmedEmail(user, updatedPayment, { title: carTitle }).catch((e) =>
-        logWarn("Payment confirmed email failed", { error: e.message }),
-      );
-    }
-  } catch (e) { logWarn("Payment email notification failed", { error: e.message }); }
+    const user = await findById("users", payment.user, "email,name,phone");
+    if (user) await emitCommunication({
+      userId: payment.user, eventType: COMMUNICATION_EVENTS.PAYMENT_SUCCESS, category: "transactional",
+      title: "Payment confirmed",
+      message: `Your KAYAD payment of KES ${Number(payment.amount).toLocaleString("en-KE")} was confirmed.`,
+      channels: ["in_app", "email", "sms", "whatsapp"],
+      metadata: { paymentId: payment.id, receipt, carId: payment.car || null },
+    });
+  } catch (e) { logWarn("Payment communication event failed", { error: e.message }); }
 
   // ── DIGITAL RECEIPT (email + SMS + WhatsApp) ──────────────
   try {

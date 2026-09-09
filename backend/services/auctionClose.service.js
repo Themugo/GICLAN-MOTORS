@@ -9,6 +9,7 @@ import { atomicCloseAuction } from "../utils/atomicTransactions.js";
 import { emitAuctionEnd, emitListingUpdate } from "../socket/socket.js";
 import { logAuctionEnded } from "./auditService.js";
 import { logInfo, logError } from "../utils/logger.js";
+import { emitAuctionOutcome, emitCommunication, COMMUNICATION_EVENTS } from "./communicationEvents.service.js";
 
 const SYSTEM_ACTOR = { id: null, role: "system", name: "auction-engine", email: null };
 
@@ -62,6 +63,9 @@ export const closeAuction = async (carId, { req = null, actor = null, reason = "
       sold: Boolean(winner),
       currentBid: Number(result?.final_bid || 0),
     });
+    try {
+      await emitAuctionOutcome({ carId, winnerUserId: winner?.user, winnerAmount: result?.final_bid, carTitle: car?.title });
+    } catch (e) { logError("Auction outcome communications failed", e, { carId }); }
 
     return {
       success: true,

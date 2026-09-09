@@ -10,6 +10,7 @@ import Escrow from "../models/Escrow.js";
 import Car from "../models/Car.js";
 import Payment from "../models/Payment.js";
 import { sendSMS } from "../utils/sms.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "../services/communicationEvents.service.js";
 import { logActionFromReq } from "../utils/securityLogger.js";
 import { getIO } from "../utils/io.js";
 import { isValidId } from "../utils/validateId.js";
@@ -344,46 +345,34 @@ export const closeEscrowHandler = async (req, res) => {
 // ── NOTIFICATION HELPERS ─────────────────────────────────────
 export const notifyEscrowReleased = async (escrowRef) => {
   try {
-    const { sendEscrowReleasedEmail } = await import("../services/email.service.js");
-    const UserModel = (await import("../models/User.js")).default;
-    const populated = await Escrow.findById(escrowRef).populate("seller", "email name").populate("car", "title");
-    if (populated?.seller?.email) await sendEscrowReleasedEmail(populated.seller, populated, populated.car);
-    if (populated?.seller?._id) {
-      const seller = await UserModel.findById(populated.seller._id).select("phone notifications");
-      if (seller?.phone && seller?.notifications?.sms !== false) {
-        sendSMS(seller.phone, `Escrow released — KES ${Number(populated.amount).toLocaleString("en-KE")} for ${populated.car?.title || "vehicle"} has been sent to your account. Kayad.`)
-          .catch((e) => logWarn("SMS send failed:", e.message));
-      }
-    }
-    if (populated?.buyer) {
-      const buyer = await UserModel.findById(populated.buyer).select("phone notifications");
-      if (buyer?.phone && buyer?.notifications?.sms !== false) {
-        sendSMS(buyer.phone, `Escrow released — KES ${Number(populated.amount).toLocaleString("en-KE")} for ${populated.car?.title || "vehicle"} has been paid to the seller. Kayad.`)
-          .catch((e) => logWarn("SMS send failed:", e.message));
-      }
-    }
-    getIO()?.to(`user_${populated?.seller?._id}`).emit("escrowReleased", { escrowId: populated?._id, amount: populated?.amount });
-    getIO()?.to(`user_${populated?.buyer}`).emit("escrowReleased", { escrowId: populated?._id, amount: populated?.amount });
-  } catch (e) {
-    logWarn("notifyEscrowReleased error:", e.message);
-  }
+    const populated = await Escrow.findById(escrowRef).populate("seller", "email name").populate("buyer", "email name").populate("car", "title");
+    if (!populated) return;
+    const sellerId = populated?.seller?._id;
+    const buyerId = populated?.buyer?._id || populated?.buyer;
+    await Promise.all([sellerId, buyerId].filter(Boolean).map((userId) => emitCommunication({
+      userId, eventType: COMMUNICATION_EVENTS.ESCROW_RELEASED, category: "transactional",
+      title: "Escrow released",
+      message: `Escrow of KES ${Number(populated.amount).toLocaleString("en-KE")} for ${populated.car?.title || "vehicle"} has been released.`,
+      channels: ["in_app", "email", "sms", "whatsapp"],
+      metadata: { escrowId: populated._id, amount: populated.amount, carId: populated.car?._id || populated.car }
+    })));
+    getIO()?.to(`user_${sellerId}`).emit("escrowReleased", { escrowId: populated?._id, amount: populated?.amount });
+    getIO()?.to(`user_${buyerId}`).emit("escrowReleased", { escrowId: populated?._id, amount: populated?.amount });
+  } catch (e) { logWarn("notifyEscrowReleased error:", e.message); }
 };
 
 export const notifyEscrowRefunded = async (escrowRef) => {
   try {
-    const { sendEscrowRefundedEmail } = await import("../services/email.service.js");
-    const UserModel = (await import("../models/User.js")).default;
     const populated = await Escrow.findById(escrowRef).populate("buyer", "email name").populate("car", "title");
-    if (populated?.buyer?.email) await sendEscrowRefundedEmail(populated.buyer, populated, populated.car);
-    if (populated?.buyer?._id) {
-      const buyer = await UserModel.findById(populated.buyer._id).select("phone notifications");
-      if (buyer?.phone && buyer?.notifications?.sms !== false) {
-        sendSMS(buyer.phone, `Escrow refunded — KES ${Number(populated.amount).toLocaleString("en-KE")} for ${populated.car?.title || "vehicle"} has been returned to your M-Pesa. Kayad.`)
-          .catch((e) => logWarn("SMS send failed:", e.message));
-      }
-    }
-    getIO()?.to(`user_${populated?.buyer?._id}`).emit("escrowRefunded", { escrowId: populated?._id, amount: populated?.amount });
-  } catch (e) {
-    logWarn("notifyEscrowRefunded error:", e.message);
-  }
+    if (!populated) return;
+    const buyerId = populated?.buyer?._id || populated?.buyer;
+    if (buyerId) await emitCommunication({
+      userId: buyerId, eventType: COMMUNICATION_EVENTS.ESCROW_REFUNDED, category: "transactional",
+      title: "Escrow refunded",
+      message: `Escrow of KES ${Number(populated.amount).toLocaleString("en-KE")} for ${populated.car?.title || "vehicle"} has been refunded.`,
+      channels: ["in_app", "email", "sms", "whatsapp"],
+      metadata: { escrowId: populated._id, amount: populated.amount, carId: populated.car?._id || populated.car }
+    });
+    getIO()?.to(`user_${buyerId}`).emit("escrowRefunded", { escrowId: populated?._id, amount: populated?.amount });
+  } catch (e) { logWarn("notifyEscrowRefunded error:", e.message); }
 };

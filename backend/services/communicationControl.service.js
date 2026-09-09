@@ -128,7 +128,7 @@ export const retryDelivery = async (id) => {
   if (row.status !== "failed") throw new Error("Only failed deliveries can be retried");
   const metadata = row.metadata || {};
   if (!metadata.message && !metadata.text && !metadata.body) throw new Error("Delivery does not contain retryable message content");
-  return deliver({ userId: row.userId, channel: row.channel, eventType: row.eventType, templateCode: row.templateCode, recipient: row.recipient, subject: metadata.subject, message: metadata.message || metadata.text || metadata.body, text: metadata.text || metadata.message || metadata.body, html: metadata.html, metadata: { ...metadata, retryOf: row.id } });
+  return deliver({ userId: row.userId, channel: row.channel, eventType: row.eventType, templateCode: row.templateCode, recipient: row.recipient, subject: metadata.subject, message: metadata.message || metadata.text || metadata.body, text: metadata.text || metadata.message || metadata.body, html: metadata.html, metadata: { ...metadata, retryOf: row.id }, deliveryId: row.id });
 };
 
 export const recordOtpAttempt = async ({ userId, purpose, code, ip, userAgent }) => {

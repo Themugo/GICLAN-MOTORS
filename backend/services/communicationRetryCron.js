@@ -14,7 +14,7 @@ export const runCommunicationRetries = async () => {
     for (const row of rows) {
       const meta = row.metadata || {};
       if (!meta.message && !meta.text && !meta.body) continue;
-      await deliver({ userId: row.userId, channel: row.channel, category: row.category || "transactional", eventType: row.eventType, templateCode: row.templateCode, recipient: row.recipient, subject: meta.subject, message: meta.message || meta.text || meta.body, text: meta.text || meta.message || meta.body, html: meta.html, metadata: { ...meta, retryOf: row.id, automatedRetry: true } });
+      await deliver({ userId: row.userId, channel: row.channel, category: row.category || "transactional", eventType: row.eventType, templateCode: row.templateCode, recipient: row.recipient, subject: meta.subject, message: meta.message || meta.text || meta.body, text: meta.text || meta.message || meta.body, html: meta.html, metadata: { ...meta, retryOf: row.id, automatedRetry: true }, deliveryId: row.id });
     }
     if (rows.length) logInfo("Communication retry cycle processed", { count: rows.length });
   } catch (error) {

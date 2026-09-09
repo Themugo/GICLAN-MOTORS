@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { getSupabase } from "../utils/supabase.js";
 import { findById } from "../db/index.js";
 import Car from "../models/Car.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "./communicationEvents.service.js";
 
 const normalizePlan = (plan) => ({
   id: String(plan?.id || "").trim(),
@@ -146,6 +147,7 @@ export async function activateDealerSubscriptionFromPayment(payment) {
     p_snapshot_hash: expectedHash,
   });
   if (error) throw error;
+  await emitCommunication({ userId: payment.user, eventType: COMMUNICATION_EVENTS.SUBSCRIPTION_ACTIVATED, title: "Dealer subscription activated", message: `Your ${snapshot.name} dealer subscription is now active.`, channels: ["in_app", "email", "sms", "whatsapp"], metadata: { paymentId: payment.id, planId: snapshot.id, expiresAt: data?.expires_at || null } }).catch(() => {});
   return data;
 }
 

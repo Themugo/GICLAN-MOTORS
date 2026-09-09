@@ -10,6 +10,7 @@ import * as R from "../utils/response.js";
 import PlatformConfig from "../models/PlatformConfig.js";
 import { sendNotification } from "../services/notification.service.js";
 import { deliver } from "../services/communicationGateway.service.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "../services/communicationEvents.service.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
 import { invalidateUserCache } from "../middleware/auth.js";
 import { recordFailedAttempt, recordSuccessfulAttempt } from "../middleware/accountLockout.js";
@@ -152,12 +153,14 @@ const notifyAdminsOfPendingSeller = async (seller) => {
 
     await Promise.all(
       admins.map((admin) =>
-        sendNotification({
+        emitCommunication({
           userId: admin._id,
+          eventType: "seller.approval_pending",
+          category: "system",
           title: "New seller approval pending",
           message: `${seller.businessName || seller.name} (${seller.email}) registered as a ${seller.role} and is awaiting approval.`,
-          type: "system",
-          email: admin.email,
+          channels: ["in_app", "email"],
+          metadata: { sellerId: seller._id, role: seller.role },
         }),
       ),
     );
@@ -246,8 +249,8 @@ export const register = async (req, res) => {
       await deliver({
         userId: user.id || user._id,
         channel: "email",
-        eventType: "email_verification",
-        templateCode: "email_verification",
+        eventType: COMMUNICATION_EVENTS.EMAIL_VERIFICATION,
+        templateCode: "account_verification_email",
         recipient: user.email,
         subject: "Verify Your Email — KAYAD",
         text: `Hi ${user.name || "there"}, verify your KAYAD email: ${verifyUrl}`,
@@ -278,8 +281,8 @@ export const register = async (req, res) => {
       await deliver({
         userId: user.id || user._id,
         channel: "email",
-        eventType: "welcome",
-        templateCode: "welcome",
+        eventType: COMMUNICATION_EVENTS.REGISTRATION,
+        templateCode: "account_welcome_email",
         recipient: user.email,
         subject: "Welcome to KAYAD — Drive Your Dream Today",
         text: `Welcome to KAYAD, ${user.name || "there"}. Your account is ready.`,

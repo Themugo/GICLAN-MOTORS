@@ -11,6 +11,7 @@ import { initiatePayment } from "../services/paymentService.js";
 import { logWarn } from "../infrastructure/logging/index.js";
 import { getSupabase } from "../utils/supabase.js";
 import { getIO } from "../utils/io.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "../services/communicationEvents.service.js";
 
 const router = express.Router();
 router.use(protect);
@@ -104,6 +105,7 @@ router.post(
     if (chatError) throw chatError;
 
     if (getIO()) getIO().to(`user_${req.user.id}`).emit("inspectionUpdated", { inspectionId: order.id, status: order.status, digitalInspectionId: bridge?.digitalInspectionId, chatId });
+    await emitCommunication({ userId: req.user.id, eventType: COMMUNICATION_EVENTS.INSPECTION_BOOKED, title: "Inspection booked", message: `Your vehicle inspection for ${car.title || "the vehicle"} has been booked.`, channels: ["in_app", "email", "sms", "whatsapp"], metadata: { inspectionId: order.id, carId } }).catch(() => {});
     res.json({ success: true, order: { ...order, digitalInspectionId: bridge?.digitalInspectionId, chatId }, checkoutRequestID: payment.checkoutID });
   }),
 );
@@ -247,6 +249,7 @@ router.post(
     });
     if (bridge?.digitalInspectionId) await sb.from("vehicle_inspections").update({ status: "in_progress", current_stage: "job_verification", scheduled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", bridge.digitalInspectionId);
     if (getIO()) getIO().to(`user_${order.buyer}`).emit("inspectionUpdated", { inspectionId: order.id, status: order.status, digitalInspectionId: bridge?.digitalInspectionId });
+    await emitCommunication({ userId: order.buyer, eventType: COMMUNICATION_EVENTS.INSPECTION_STARTED, title: "Inspection started", message: "Your vehicle inspection has started.", channels: ["in_app", "email", "sms", "whatsapp"], metadata: { inspectionId: order.id, carId: order.car } }).catch(() => {});
 
     res.json({ success: true, order: { ...order, digitalInspectionId: bridge?.digitalInspectionId } });
   }),
@@ -286,6 +289,8 @@ router.post(
       getIO().to(`user_${order.inspector}`).emit("inspectionUpdated", event);
       getIO().to(`inspection_${order.id}`).emit("inspectionUpdated", event);
     }
+
+    await emitCommunication({ userId: order.buyer, eventType: COMMUNICATION_EVENTS.INSPECTION_COMPLETED, title: "Inspection completed", message: `Your vehicle inspection is complete with a score of ${Number(order.overallScore) || 0}/100.`, channels: ["in_app", "email", "sms", "whatsapp"], metadata: { inspectionId: order.id, carId: order.car, overallScore: order.overallScore, conditionRating: order.conditionRating } }).catch(() => {});
 
     // Update inspector stats
 

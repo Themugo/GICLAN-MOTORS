@@ -6,6 +6,7 @@ import Escrow from "../models/Escrow.js";
 import { initiatePayment } from "../services/paymentService.js";
 import { emitListingUpdate } from "../socket/socket.js";
 import { sendSMS } from "../utils/sms.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "../services/communicationEvents.service.js";
 import { logActionFromReq } from "../utils/securityLogger.js";
 import { applySnipingProtection } from "../utils/snipeGuard.js";
 import { getMinIncrement } from "../utils/bidRules.js";
@@ -366,39 +367,27 @@ export const confirmBidPayment = async (req, res) => {
       emitListingUpdate(bid.carId.toString(), { currentBid: car.currentBid, bidsCount: car?.bidsCount || 1 });
     }
 
-    // 📧 Email notifications + 📱 SMS (fire-and-forget)
+    // Canonical communication event: confirmed bidder + previous highest bidder.
     try {
-      const { sendBidConfirmationEmail, sendOutbidEmail } = bidEmailService;
       const User = (await import("../models/User.js")).default;
-
-      const bidder = await User.findById(bid.user).select("email name phone");
-      if (bidder?.email && typeof sendBidConfirmationEmail === "function") {
-        sendBidConfirmationEmail(bidder, bid, car).catch((e) =>
-          logWarn("Bid confirm email failed", { error: e.message }),
-        );
-      }
-      if (bidder?.phone && bidder?.notifications?.sms !== false) {
-        sendSMS(
-          bidder.phone,
-          `Bid confirmed on ${car?.title || "vehicle"} — KES ${Number(bid.amount).toLocaleString("en-KE")}. Track it live on Kayad.`,
-        ).catch((e) => logWarn("SMS send failed", { error: e.message }));
-      }
-
+      const bidder = await User.findById(bid.user).select("email name phone").lean();
+      if (bidder) await emitCommunication({
+        userId: bid.user, eventType: COMMUNICATION_EVENTS.BID_CONFIRMED, category: "transactional",
+        title: "Bid confirmed",
+        message: `Your bid of KES ${Number(bid.amount).toLocaleString("en-KE")} on ${car?.title || "vehicle"} is confirmed.`,
+        channels: ["in_app", "email", "sms", "whatsapp"],
+        metadata: { bidId: bid.id || bid._id, carId: bid.carId, amount: bid.amount },
+      });
       if (previousHighestBidder && String(previousHighestBidder) !== String(bid.user)) {
-        const prevBidder = await User.findById(previousHighestBidder).select("email name phone");
-        if (prevBidder?.email && typeof sendOutbidEmail === "function") {
-          sendOutbidEmail(prevBidder, bid.amount, car).catch((e) =>
-            logWarn("Outbid email failed", { error: e.message }),
-          );
-        }
-        if (prevBidder?.phone && prevBidder?.notifications?.sms !== false) {
-          sendSMS(
-            prevBidder.phone,
-            `You've been outbid on ${car?.title || "vehicle"} — KES ${Number(bid.amount).toLocaleString("en-KE")}. Bid higher now on Kayad.`,
-          ).catch((e) => logWarn("SMS send failed", { error: e.message }));
-        }
+        await emitCommunication({
+          userId: previousHighestBidder, eventType: COMMUNICATION_EVENTS.OUTBID, category: "transactional",
+          title: "You have been outbid",
+          message: `You have been outbid on ${car?.title || "vehicle"} at KES ${Number(bid.amount).toLocaleString("en-KE")}.`,
+          channels: ["in_app", "email", "sms", "whatsapp"],
+          metadata: { bidId: bid.id || bid._id, carId: bid.carId, amount: bid.amount },
+        });
       }
-    } catch (e) { logWarn("Bid confirmation SMS notification failed", { error: e.message }); }
+    } catch (e) { logWarn("Bid communication event failed", { error: e.message }); }
 
     res.json({ success: true });
   } catch (err) {

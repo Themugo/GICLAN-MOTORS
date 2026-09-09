@@ -5,6 +5,8 @@
 import { atomicStartAuction, atomicExtendAuction } from "../utils/atomicTransactions.js";
 import { logActionFromReq } from "../utils/securityLogger.js";
 import { closeAuction } from "./auctionClose.service.js";
+import { emitCommunication, COMMUNICATION_EVENTS } from "./communicationEvents.service.js";
+import Car from "../models/Car.js";
 
 export const startAuction = async ({ carId, durationMs, startingBid, reservePrice = null, reserveMode = "none", req }) => {
   const result = await atomicStartAuction({
@@ -21,6 +23,8 @@ export const startAuction = async ({ carId, durationMs, startingBid, reservePric
     details: { startingBid: result.starting_bid, reservePrice: result.reserve_price, durationMs },
   });
 
+  const car = await Car.findById(carId).select("title dealer").lean();
+  if (car?.dealer) await emitCommunication({ userId: car.dealer, eventType: COMMUNICATION_EVENTS.AUCTION_STARTED, title: "Auction started", message: `${car.title || "Your vehicle"} is now live for auction.`, channels: ["in_app", "email", "sms", "whatsapp"], metadata: { carId, auctionEnd: result.auction_end } }).catch(() => {});
   return result;
 };
 
@@ -31,6 +35,8 @@ export const extendAuction = async ({ carId, extraMs, req, reason = "auction_ext
     targetModel: "Car",
     details: { extraMs, extensionCount: result.extension_count, newEndTime: result.auction_end },
   });
+  const car = await Car.findById(carId).select("title dealer").lean();
+  if (car?.dealer) await emitCommunication({ userId: car.dealer, eventType: COMMUNICATION_EVENTS.AUCTION_EXTENDED, title: "Auction extended", message: `${car.title || "Your vehicle"} auction has been extended.`, channels: ["in_app", "email", "sms", "whatsapp"], metadata: { carId, extraMs, auctionEnd: result.auction_end } }).catch(() => {});
   return result;
 };
 
