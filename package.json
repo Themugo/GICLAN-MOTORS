@@ -55,7 +55,7 @@
     "@vitejs/plugin-react": "6.0.5",
     "axios": "1.19.0",
     "date-fns": "4.4.0",
-    "framer-motion": "12.43.0",
+    "framer-motion": "13.1.0",
     "lucide-react": "1.28.0",
     "posthog-js": "1.409.5",
     "react": "19.2.8",
