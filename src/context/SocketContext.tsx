@@ -1,201 +1,33 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
-import { supabase, RealtimeChannel } from '../lib/supabaseClient';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 
-interface BidPayload {
-  id: string;
-  car_id: string;
-  amount: number;
-  user_id: string;
-  created_at: string;
+type SocketHandler = (data: any) => void;
+interface SocketClient { connected:boolean; on:(event:string,handler:SocketHandler)=>SocketClient; off:(event:string,handler:SocketHandler)=>SocketClient; emit:(event:string,...args:any[])=>SocketClient; disconnect:()=>SocketClient; connect:()=>SocketClient; joinShowroom?:()=>void; leaveShowroom?:()=>void; }
+interface SocketChannel { socket:SocketClient; room:string; events:Array<[string,SocketHandler]>; }
+interface SocketContextValue extends SocketClient { connected:boolean; socket: SocketClient | null; joinAuction:(carId:string,handlers?:{onBid?:SocketHandler;onCarUpdate?:SocketHandler})=>SocketChannel|undefined; joinNotifications:(handlers?:{onNotification?:SocketHandler})=>SocketChannel|null; joinMessages:(conversationId:string,handlers?:{onMessage?:SocketHandler})=>SocketChannel|undefined; leaveChannel:(channel:SocketChannel)=>void; }
+declare global { interface Window { io?: (url:string,options?:Record<string,any>)=>SocketClient; } }
+const SocketCtx=createContext<SocketContextValue|null>(null);
+const socketUrl=()=>import.meta.env.VITE_SOCKET_URL || (import.meta.env.PROD?'https://api.kayad.space':'http://localhost:5000');
+let loaderPromise:Promise<void>|null=null;
+function loadSocketIoClient(){
+ if(window.io)return Promise.resolve(); if(loaderPromise)return loaderPromise;
+ loaderPromise=new Promise((resolve,reject)=>{const existing=document.querySelector('script[data-kayad-socketio]') as HTMLScriptElement|null; if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('Unable to load Socket.IO client')),{once:true});return;} const script=document.createElement('script'); script.src=`${socketUrl()}/socket.io/socket.io.js`;script.async=true;script.dataset.kayadSocketio='true';script.onload=()=>resolve();script.onerror=()=>reject(new Error(`Unable to load Socket.IO client from ${script.src}`));document.head.appendChild(script);}); return loaderPromise;
 }
-
-interface CarPayload {
-  id: string;
-  current_bid?: number;
-  bids_count?: number;
-  auction_status?: string;
+export function SocketProvider({children}:{children:ReactNode}){
+ const {isAuth}=useAuth(); const [connected,setConnected]=useState(false); const socketRef=useRef<SocketClient|null>(null); const subscriptions=useRef<SocketChannel[]>([]);
+ useEffect(()=>{let cancelled=false; if(!isAuth){socketRef.current?.disconnect();socketRef.current=null;setConnected(false);return()=>{cancelled=true};}
+  void loadSocketIoClient().then(()=>{if(cancelled||!window.io)return;const s=window.io(socketUrl(),{withCredentials:true,transports:['websocket','polling'],reconnection:true,reconnectionAttempts:Infinity,reconnectionDelay:1000});socketRef.current=s;const c=()=>setConnected(true),d=()=>setConnected(false);s.on('connect',c);s.on('disconnect',d);if(s.connected)setConnected(true);}).catch(e=>{if(!cancelled){console.warn('[KAYAD] Realtime unavailable:',e);setConnected(false);}});
+  return()=>{cancelled=true;subscriptions.current.forEach(ch=>ch.events.forEach(([ev,h])=>ch.socket.off(ev,h)));subscriptions.current=[];socketRef.current?.disconnect();socketRef.current=null;setConnected(false)};
+ },[isAuth]);
+ const on=useCallback((event:string,handler:SocketHandler)=>{socketRef.current?.on(event,handler);return()=>socketRef.current?.off(event,handler)},[]);
+ const off=useCallback((event:string,handler:SocketHandler)=>{socketRef.current?.off(event,handler);return socketRef.current},[]);
+ const emit=useCallback((event:string,...args:any[])=>{socketRef.current?.emit(event,...args);return socketRef.current},[]);
+ const joinAuction=useCallback((carId:string,handlers:{onBid?:SocketHandler;onCarUpdate?:SocketHandler}={})=>{const s=socketRef.current;if(!s||!carId)return undefined;s.emit('joinAuction',carId);const events:Array<[string,SocketHandler]>=[];if(handlers.onBid){s.on('bidUpdate',handlers.onBid);events.push(['bidUpdate',handlers.onBid]);}if(handlers.onCarUpdate){s.on('auctionResync',handlers.onCarUpdate);s.on('auctionPhase',handlers.onCarUpdate);events.push(['auctionResync',handlers.onCarUpdate],['auctionPhase',handlers.onCarUpdate]);}const ch={socket:s,room:`car_${carId}`,events};subscriptions.current.push(ch);return ch;},[]);
+ const joinNotifications=useCallback((handlers:{onNotification?:SocketHandler}={})=>{const s=socketRef.current;if(!s)return null;const events:Array<[string,SocketHandler]>=[];if(handlers.onNotification){s.on('notification',handlers.onNotification);events.push(['notification',handlers.onNotification]);}const ch={socket:s,room:'user_notifications',events};subscriptions.current.push(ch);return ch;},[]);
+ const joinMessages=useCallback((conversationId:string,handlers:{onMessage?:SocketHandler}={})=>{const s=socketRef.current;if(!s||!conversationId)return undefined;s.emit('joinChat',conversationId);const events:Array<[string,SocketHandler]>=[];if(handlers.onMessage){s.on('newMessage',handlers.onMessage);events.push(['newMessage',handlers.onMessage]);}const ch={socket:s,room:`chat_${conversationId}`,events};subscriptions.current.push(ch);return ch;},[]);
+ const leaveChannel=useCallback((ch:SocketChannel)=>{if(!ch)return;ch.events.forEach(([ev,h])=>ch.socket.off(ev,h));if(ch.room.startsWith('chat_'))ch.socket.emit('leaveChat',ch.room.slice(5));if(ch.room.startsWith('car_'))ch.socket.emit('leaveAuction',ch.room.slice(4));subscriptions.current=subscriptions.current.filter(x=>x!==ch)},[]);
+ const joinShowroom=useCallback(()=>socketRef.current?.emit('joinShowroom'),[]),leaveShowroom=useCallback(()=>socketRef.current?.emit('leaveShowroom'),[]);
+ const value={connected,socket:socketRef.current,on,off,emit,disconnect:()=>socketRef.current?.disconnect(),connect:()=>socketRef.current?.connect(),joinShowroom,leaveShowroom,joinAuction,joinNotifications,joinMessages,leaveChannel} as SocketContextValue;
+ return <SocketCtx.Provider value={value}>{children}</SocketCtx.Provider>;
 }
-
-interface NotificationPayload {
-  id: string;
-  user_id: string;
-  type: string;
-  title: string;
-  message: string;
-  read: boolean;
-  created_at: string;
-}
-
-interface MessagePayload {
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  content: string;
-  created_at: string;
-}
-
-interface AuctionHandlers {
-  onBid?: (bid: BidPayload) => void;
-  onCarUpdate?: (car: CarPayload) => void;
-}
-
-interface NotificationHandlers {
-  onNotification?: (notification: NotificationPayload) => void;
-}
-
-interface MessageHandlers {
-  onMessage?: (message: MessagePayload) => void;
-}
-
-interface SocketContextValue {
-  connected: boolean;
-  on: (event: string, handler: (data: any) => void) => () => void;
-  off: (event: string, handler: (data: any) => void) => void;
-  joinAuction: (carId: string, handlers?: AuctionHandlers) => RealtimeChannel | undefined;
-  joinNotifications: (handlers?: NotificationHandlers) => RealtimeChannel | null;
-  joinMessages: (conversationId: string, handlers?: MessageHandlers) => RealtimeChannel | undefined;
-  leaveChannel: (channel: RealtimeChannel) => void;
-}
-
-const SocketCtx = createContext<SocketContextValue | null>(null);
-
-interface SocketProviderProps {
-  children: ReactNode;
-}
-
-export function SocketProvider({ children }: SocketProviderProps) {
-  const { user } = useAuth();
-  const [connected, setConnected] = useState(false);
-  const channelsRef = useRef<RealtimeChannel[]>([]);
-  const eventHandlersRef = useRef<Map<string, Set<(data: any) => void>>>(new Map());
-
-  useEffect(() => {
-    setConnected(Boolean(user && supabase));
-
-    return () => {
-      channelsRef.current.forEach(ch => supabase?.removeChannel(ch));
-      channelsRef.current = [];
-    };
-  }, [user]);
-
-  // Event emitter interface for components that expect 'on' method
-  const on = useCallback((event: string, handler: (data: any) => void): (() => void) => {
-    if (!eventHandlersRef.current.has(event)) {
-      eventHandlersRef.current.set(event, new Set());
-    }
-    eventHandlersRef.current.get(event)!.add(handler);
-
-    // Return unsubscribe function
-    return () => {
-      eventHandlersRef.current.get(event)?.delete(handler);
-    };
-  }, []);
-
-  const off = useCallback((event: string, handler: (data: any) => void): void => {
-    eventHandlersRef.current.get(event)?.delete(handler);
-  }, []);
-
-  // Internal method to emit events (called by Supabase subscriptions)
-  const emit = useCallback((event: string, data: any): void => {
-    eventHandlersRef.current.get(event)?.forEach(handler => {
-      try {
-        handler(data);
-      } catch (e) {
-        console.error(`Error in socket event handler for ${event}:`, e);
-      }
-    });
-  }, []);
-
-  const joinAuction = useCallback((carId: string, handlers: AuctionHandlers = {}): RealtimeChannel | undefined => {
-    if (!supabase || !user) return undefined;
-    const channel = supabase
-      .channel(`auction-${carId}`)
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'bids', filter: `car_id=eq.${carId}` },
-        (payload) => {
-          if (handlers.onBid && payload.new) {
-            handlers.onBid(payload.new as BidPayload);
-          }
-        }
-      )
-      .on('postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'cars', filter: `id=eq.${carId}` },
-        (payload) => {
-          if (handlers.onCarUpdate && payload.new) {
-            handlers.onCarUpdate(payload.new as CarPayload);
-          }
-        }
-      )
-      .subscribe();
-
-    channelsRef.current.push(channel);
-    return channel;
-  }, []);
-
-  const joinNotifications = useCallback((handlers: NotificationHandlers = {}): RealtimeChannel | null => {
-    if (!user || !supabase) return null;
-
-    const channel = supabase
-      .channel('notifications')
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          if (handlers.onNotification && payload.new) {
-            handlers.onNotification(payload.new as NotificationPayload);
-          }
-        }
-      )
-      .subscribe();
-
-    channelsRef.current.push(channel);
-    return channel;
-  }, [user]);
-
-  const joinMessages = useCallback((conversationId: string, handlers: MessageHandlers = {}): RealtimeChannel | undefined => {
-    if (!supabase || !user) return undefined;
-    const channel = supabase
-      .channel(`messages-${conversationId}`)
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
-        (payload) => {
-          if (handlers.onMessage && payload.new) {
-            handlers.onMessage(payload.new as MessagePayload);
-          }
-        }
-      )
-      .subscribe();
-
-    channelsRef.current.push(channel);
-    return channel;
-  }, []);
-
-  const leaveChannel = useCallback((channel: RealtimeChannel) => {
-    if (channel) {
-      supabase?.removeChannel(channel);
-      channelsRef.current = channelsRef.current.filter(ch => ch !== channel);
-    }
-  }, []);
-
-  return (
-    <SocketCtx.Provider value={{
-      connected,
-      on,
-      off,
-      joinAuction,
-      joinNotifications,
-      joinMessages,
-      leaveChannel,
-    }}>
-      {children}
-    </SocketCtx.Provider>
-  );
-}
-
-export const useSocket = () => {
-  const context = useContext(SocketCtx);
-  if (!context) {
-    throw new Error('useSocket must be used within a SocketProvider');
-  }
-  return context;
-};
+export const useSocket=()=>{const c=useContext(SocketCtx);if(!c)throw new Error('useSocket must be used within a SocketProvider');return c};

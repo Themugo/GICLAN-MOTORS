@@ -127,8 +127,7 @@ Object.defineProperty(import.meta, 'env', {
     PROD: false,
     MODE: 'test',
     VITE_API_URL: '/api',
-    VITE_SUPABASE_URL: 'https://test.supabase.co',
-    VITE_SUPABASE_ANON_KEY: 'test-key',
+    VITE_SOCKET_URL: 'http://localhost:5000',
   },
 });
 

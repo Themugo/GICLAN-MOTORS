@@ -44,7 +44,7 @@ export default function AuctionLivePage() {
     }).finally(() => setLoading(false));
   }, [id]);
 
-  // Join auction room via Supabase Realtime
+  // Join auction room via Socket.IO
   useEffect(() => {
     if (!id) return;
     const channel = joinAuction(id, {
@@ -64,7 +64,7 @@ export default function AuctionLivePage() {
       },
     });
     return () => { if (channel) leaveChannel(channel); };
-  }, [id]);
+  }, [id, connected, joinAuction, leaveChannel]);
 
   const handlePlaceBid = async () => {
     if (!isAuth) { navigate('/login'); return; }

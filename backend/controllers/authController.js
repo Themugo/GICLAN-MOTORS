@@ -85,7 +85,7 @@ const sendRefreshToken = (res, token) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/api",
+    path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
@@ -100,7 +100,7 @@ const sendAccessToken = (res, token) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/api",
+    path: "/",
     maxAge: ACCESS_COOKIE_MS,
   });
 };
@@ -453,8 +453,8 @@ export const logout = async (req, res) => {
       invalidateUserCache(req.user.id);
     }
 
-    res.clearCookie("refreshToken", { path: "/api" });
-    res.clearCookie("token", { path: "/api" });
+    res.clearCookie("refreshToken", { path: "/" });
+    res.clearCookie("token", { path: "/" });
 
     res.json({
       success: true,

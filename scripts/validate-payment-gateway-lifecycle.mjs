@@ -11,7 +11,7 @@ const service = read('backend/services/paymentService.js');
 const callback = read('backend/services/paymentCallback.service.js');
 const lifecycle = read('backend/services/paymentFinancialLifecycle.service.js');
 const state = read('backend/services/paymentStateMachine.js');
-const migration = read('supabase/migrations/20260907190000_payment_gateway_lifecycle_integrity.sql');
+const migration = read('supabase/migrations/20260907190400_payment_gateway_lifecycle_integrity.sql');
 const schema = read('backend/validation/payment.schema.js');
 
 pass('Payment history uses canonical db adapter', controller.includes('findAll("payments"') && controller.includes('count("payments"'));

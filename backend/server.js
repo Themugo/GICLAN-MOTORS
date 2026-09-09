@@ -542,12 +542,14 @@ setIO(io);
 // Socket JWT auth — reject unauthenticated users for sensitive rooms
 io.use((socket, next) => {
   try {
-    const token = socket.handshake.auth?.token;
+    const authToken = socket.handshake.auth?.token;
+    const cookieHeader = socket.handshake.headers?.cookie || "";
+    const cookieToken = cookieHeader.split(";").map((part) => part.trim()).find((part) => part.startsWith("token="))?.slice("token=".length);
+    const token = authToken || cookieToken;
     if (token) {
-      socket.user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] });
+      socket.user = jwt.verify(decodeURIComponent(token), process.env.JWT_SECRET, { algorithms: ["HS256"] });
       return next();
     }
-    // Allow unauthenticated viewers for public auction watching only
     socket.user = null;
     next();
   } catch {
@@ -611,6 +613,10 @@ io.on("connection", (socket) => {
       // Never grant room access when the authorization lookup fails.
       logWarn("Socket auction room authorization failed", { carId, error: error?.message });
     }
+  });
+
+  socket.on("leaveAuction", (carId) => {
+    if (!isRateLimited("leaveAuction") && isValidId(carId)) socket.leave(`car_${carId}`);
   });
 
   socket.on("joinChat", async (chatId) => {

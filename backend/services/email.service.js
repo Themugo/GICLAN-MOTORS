@@ -468,3 +468,5 @@ export const sendSavedSearchAlertEmail = (user, search, matchedCars, totalCount)
     ),
   });
 };
+
+export const sendEmail = sendRawEmail;

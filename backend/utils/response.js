@@ -53,3 +53,8 @@ export const unauthorized = (res, message = "Unauthorized") => {
     message,
   });
 };
+
+// Compatibility facade for controllers migrated to the canonical response contract.
+export const created = (res, data = null, message = "Created", meta = {}) => res.status(201).json({ success: true, message, data, ...(Object.keys(meta).length ? { meta } : {}) });
+export const badRequest = (res, message = "Bad request", details = null) => error(res, message, 400, details);
+export const response = { success, error, validationError, notFound, unauthorized, created, badRequest };

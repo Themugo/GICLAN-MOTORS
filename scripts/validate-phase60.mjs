@@ -21,7 +21,7 @@ check('package identity remains KAYAD', pkg.name === 'kayad');
 check('package-lock identity remains synchronized', lock.name === 'kayad' && lock.packages?.['']?.name === 'kayad');
 check('Phase 60 validator is exposed as an npm script', pkg.scripts?.['validate:phase60'] === 'node scripts/validate-phase60.mjs');
 check('frontend contract uses actual Vite API variable', env.includes('VITE_API_URL=/api'));
-check('frontend contract documents Supabase browser settings', env.includes('VITE_SUPABASE_URL') && env.includes('VITE_SUPABASE_ANON_KEY'));
+check('frontend contract documents Socket.IO browser settings', env.includes('VITE_SOCKET_URL=https://api.kayad.space')); 
 check('deployment validator does not require stale frontend scaffold variables', !deployment.includes('VITE_PLATFORM_NAME') && !deployment.includes('VITE_DOMAIN') && !deployment.includes('VITE_APP_NAME') && !deployment.includes('VITE_APP_VERSION'));
 check('deployment validator reads frontend contract from .env.example', deployment.includes("fs.readFileSync('.env.example'"));
 check('deployment validator treats relative browser API URL as non-probeable', deployment.includes('Relative API URL cannot be probed from Node'));

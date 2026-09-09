@@ -11,7 +11,7 @@ const bids=read('src/services/bidApi.ts');
 check('central marketplace read service exists', fs.existsSync(path.join(root,'src/services/marketplaceCore.ts')));
 check('marketplace vehicle reads use canonical GET /api/cars', vehicle.includes("/api/cars"));
 check('marketplace mapper is the canonical vehicle mapper', core.includes('mapBackendCarToVehicle'));
-check('live auctions use canonical auction API', core.includes('auctionAPI.active'));
+check('live auctions use canonical auction API', core.includes('fetchActiveAuctions'));
 check('my bids use canonical backend API', core.includes('bidsAPI.myBids'));
 check('authenticated bid history is loaded from server', ctx.includes('bidsAPI.myBids()'));
 check('logout clears prior user bid read model', ctx.includes('if (!auth?.user?.id)') && ctx.includes('setBids([])'));

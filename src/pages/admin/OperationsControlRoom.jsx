@@ -44,44 +44,13 @@ export default function OperationsControlRoom() {
     loadMetrics();
   }, [loadMetrics]);
 
-  // Real-time updates via Socket.io
+  // Operations metrics are API-authoritative. The backend does not emit
+  // operations:* Socket.IO events, so poll the canonical endpoint instead of
+  // registering listeners that can never fire.
   useEffect(() => {
-    if (!socket?.connected) return;
-
-    const handleMetricUpdate = (data) => {
-      setMetrics(prev => ({
-        ...prev,
-        [data.key]: data.value,
-        ...data.metrics,
-      }));
-      setLastUpdate(new Date());
-    };
-
-    const handleAlert = (data) => {
-      setAlerts(prev => [{ ...data, timestamp: new Date(), id: `alert-${Date.now()}` }, ...prev.slice(0, 19)]);
-      if (data.severity === 'critical') {
-        toast.error(data.message);
-      } else if (data.severity === 'warning') {
-        toast.warning(data.message);
-      } else {
-        toast.info(data.message);
-      }
-    };
-
-    const handleActivity = (data) => {
-      setActivity(prev => [{ ...data, timestamp: new Date(), id: `activity-${Date.now()}` }, ...prev.slice(0, 49)]);
-    };
-
-    socket.on('operations:metrics', handleMetricUpdate);
-    socket.on('operations:alert', handleAlert);
-    socket.on('operations:activity', handleActivity);
-
-    return () => {
-      socket.off('operations:metrics', handleMetricUpdate);
-      socket.off('operations:alert', handleAlert);
-      socket.off('operations:activity', handleActivity);
-    };
-  }, [socket, toast]);
+    const timer = window.setInterval(() => { void loadMetrics(); }, 10000);
+    return () => window.clearInterval(timer);
+  }, [loadMetrics]);
 
   const formatTime = (date) => {
     if (!date) return '';

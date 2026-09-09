@@ -3,7 +3,7 @@ import assert from 'assert';
 const controller=fs.readFileSync('backend/controllers/eipController.js','utf8');
 const routes=fs.readFileSync('backend/routes/eipRoutes.js','utf8');
 const service=fs.readFileSync('backend/partnerPlatform/services/partnerPlatformService.js','utf8');
-const migration=fs.readFileSync('supabase/migrations/20260907240000_integration_partner_webhook_domain.sql','utf8');
+const migration=fs.readFileSync('supabase/migrations/20260907240100_integration_partner_webhook_domain.sql','utf8');
 const ui=fs.readFileSync('src/pages/admin/integration/IntegrationStudio.jsx','utf8');
 const checks=[
  ['EIP no longer fails closed', !controller.includes('INTEGRATION_NOT_CONFIGURED')],

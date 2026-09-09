@@ -94,20 +94,21 @@ export default function EscrowPage() {
     };
 
     // Join user's personal room for real-time updates
-    socket.emit('join', { room: `user_${user.id}`, type: 'user' });
-
-    // Subscribe to events
-    socket.on('payment:success', handlePaymentSuccess);
-    socket.on('payment:failed', handlePaymentFailed);
-    socket.on('escrow:updated', handleEscrowUpdate);
-    socket.on('escrow:released', handleFundsReleased);
+    // Authenticated sockets are automatically joined to their user room by the backend.
+    // Subscribe to canonical backend event names.
+    socket.on('paymentSuccess', handlePaymentSuccess);
+    socket.on('paymentFailed', handlePaymentFailed);
+    socket.on('escrowDisputed', handleEscrowUpdate);
+    socket.on('escrowRefunded', handleEscrowUpdate);
+    socket.on('escrowReleased', handleFundsReleased);
 
     // Cleanup
     return () => {
-      socket.off('payment:success', handlePaymentSuccess);
-      socket.off('payment:failed', handlePaymentFailed);
-      socket.off('escrow:updated', handleEscrowUpdate);
-      socket.off('escrow:released', handleFundsReleased);
+      socket.off('paymentSuccess', handlePaymentSuccess);
+      socket.off('paymentFailed', handlePaymentFailed);
+      socket.off('escrowDisputed', handleEscrowUpdate);
+      socket.off('escrowRefunded', handleEscrowUpdate);
+      socket.off('escrowReleased', handleFundsReleased);
     };
   }, [socket, user?.id, toast, reloadEscrows]);
 

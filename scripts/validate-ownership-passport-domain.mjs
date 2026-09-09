@@ -16,11 +16,11 @@ const checks = [
   ['ghost checker passport no longer returns demo data', /vehiclePassportService\.findPassport/.test(read('backend/controllers/ghostCheckersController.js'))],
   ['server mounts ownership API', /app\.use\("\/api\/ownership", ownershipRoutes\)/.test(read('backend/server.js'))],
   ['frontend uses real ownership API', /getOwnershipDashboard/.test(read('src/features/OwnershipPlatform/pages/BuyerPlatform.tsx'))],
-  ['migration creates ownership vehicles', /create table if not exists public\.owner_vehicles/.test(read('supabase/migrations/20260907190000_ownership_passport_domain.sql'))],
-  ['migration creates vehicle passports', /create table if not exists public\.vehicle_passports/.test(read('supabase/migrations/20260907190000_ownership_passport_domain.sql'))],
-  ['migration enables RLS', /enable row level security/.test(read('supabase/migrations/20260907190000_ownership_passport_domain.sql'))],
-  ['migration denies direct anon/authenticated access', /revoke all on table public\.%I from anon, authenticated/.test(read('supabase/migrations/20260907190000_ownership_passport_domain.sql'))],
-  ['migration preserves passport audit trail', /create table if not exists public\.passport_audit_log/.test(read('supabase/migrations/20260907190000_ownership_passport_domain.sql'))],
+  ['migration creates ownership vehicles', /create table if not exists public\.owner_vehicles/.test(read('supabase/migrations/20260907190300_ownership_passport_domain.sql'))],
+  ['migration creates vehicle passports', /create table if not exists public\.vehicle_passports/.test(read('supabase/migrations/20260907190300_ownership_passport_domain.sql'))],
+  ['migration enables RLS', /enable row level security/.test(read('supabase/migrations/20260907190300_ownership_passport_domain.sql'))],
+  ['migration denies direct anon/authenticated access', /revoke all on table public\.%I from anon, authenticated/.test(read('supabase/migrations/20260907190300_ownership_passport_domain.sql'))],
+  ['migration preserves passport audit trail', /create table if not exists public\.passport_audit_log/.test(read('supabase/migrations/20260907190300_ownership_passport_domain.sql'))],
   ['ownership frontend transport exists', exists('src/services/ownershipApi.ts')],
 ];
 let failed = 0;

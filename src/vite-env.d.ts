@@ -8,12 +8,11 @@ declare module 'virtual:pwa-register/react' {
 }
 
 interface ImportMetaEnv {
+  readonly VITE_SOCKET_URL?: string
   readonly VITE_API_URL: string
   readonly VITE_POSTHOG_API_KEY?: string
   readonly VITE_POSTHOG_HOST?: string
   readonly VITE_SOCKET_URL?: string
-  readonly VITE_SUPABASE_URL?: string
-  readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string
 }
 
 interface ImportMeta {

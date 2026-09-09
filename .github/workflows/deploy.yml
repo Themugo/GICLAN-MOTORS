@@ -12,56 +12,25 @@ jobs:
   validate:
     name: Pre-deployment Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.22.2'
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci
-
-      - name: Check if secrets are configured
-        id: secrets-check
-        run: |
-          if [ -n "${{ secrets.VITE_SUPABASE_URL }}" ] && [ -n "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
-            echo "secrets_status=configured" >> $GITHUB_OUTPUT
-          else
-            echo "secrets_status=missing" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build for production (with secrets)
-        if: steps.secrets-check.outputs.secrets_status == 'configured'
+      - name: Validate frontend runtime contracts
+        run: npm run validate:frontend-runtime-contracts
+      - name: Validate deployment readiness
+        run: npm run validate:deployment-readiness
+      - name: Build production frontend
         run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-
-      - name: Require production frontend secrets
-        if: steps.secrets-check.outputs.secrets_status != 'configured'
-        run: |
-          echo "ERROR: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required for a production build."
-          echo "Configure both GitHub Actions secrets before merging/deploying to main."
-          exit 1
-
       - name: Validate dist output
-        run: |
-          if [ ! -f "dist/index.html" ]; then
-            echo "ERROR: dist/index.html not found"
-            exit 1
-          fi
-          if [ ! -d "dist/assets" ]; then
-            echo "ERROR: dist/assets not found"
-            exit 1
-          fi
-          echo "Build output validated"
-
+        run: test -f dist/index.html && test -d dist/assets
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
         with:
@@ -70,99 +39,50 @@ jobs:
           retention-days: 30
 
   smoke-test:
-    name: Smoke Test
+    name: Artifact Smoke Test
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: production-build
           path: dist/
-
       - name: Check critical files
-        run: |
-          echo "Checking critical files..."
-          ls -la dist/
-          ls -la dist/assets/
-          grep -l "react" dist/assets/*.js || true
-          echo "Critical file check passed"
+        run: test -s dist/index.html && find dist/assets -type f -name '*.js' | grep -q .
 
   deploy-vercel:
     name: Deploy to Vercel
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      # Fixed: this job previously ran vercel pull/build/deploy
-      # unconditionally on every push to main, with no check for
-      # whether VERCEL_TOKEN is actually set. When it isn't (confirmed
-      # directly against this project's own, real, live deployment -
-      # PRODUCTION_DEPLOYMENT_CERTIFICATION.md found Vercel returning
-      # DEPLOYMENT_NOT_FOUND), `vercel pull --token=` fails immediately
-      # with an authentication error, failing this job on every single
-      # push. This does not fix the underlying problem - a real,
-      # valid VERCEL_TOKEN still needs to be set as a GitHub secret by
-      # the repository owner, which no code change can do - but it
-      # stops every push to main from reporting a hard failure for a
-      # credential gap the workflow already knows how to detect, and
-      # gives a clear, actionable message instead of a Vercel CLI
-      # authentication error.
-      - name: Check if Vercel token is configured
-        id: vercel-check
+      - name: Check Vercel token
+        id: vercel
         run: |
-          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then
-            echo "configured=true" >> $GITHUB_OUTPUT
-          else
-            echo "configured=false" >> $GITHUB_OUTPUT
-            echo "::warning::VERCEL_TOKEN is not set as a repository secret - skipping the Vercel deploy step. Set it under Settings > Secrets and variables > Actions to enable automatic deployment."
-          fi
-
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then echo "configured=true" >> "$GITHUB_OUTPUT"; else echo "configured=false" >> "$GITHUB_OUTPUT"; echo "::warning::VERCEL_TOKEN is not configured; Vercel CLI deployment is skipped. Configure it to enable this workflow's CLI deployment."; fi
       - name: Setup Node.js
-        if: steps.vercel-check.outputs.configured == 'true'
+        if: steps.vercel.outputs.configured == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22.22.2'
           cache: 'npm'
-
       - name: Install Vercel CLI
-        if: steps.vercel-check.outputs.configured == 'true'
+        if: steps.vercel.outputs.configured == 'true'
         run: npm install -g vercel
-
-      - name: Pull Vercel Project Information
-        if: steps.vercel-check.outputs.configured == 'true'
+      - name: Pull Vercel project
+        if: steps.vercel.outputs.configured == 'true'
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Check if secrets are configured
-        if: steps.vercel-check.outputs.configured == 'true'
-        id: secrets-check
-        run: |
-          if [ -n "${{ secrets.VITE_SUPABASE_URL }}" ] && [ -n "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
-            echo "secrets_status=configured" >> $GITHUB_OUTPUT
-          else
-            echo "secrets_status=missing" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build Project for Production (with secrets)
-        if: steps.vercel-check.outputs.configured == 'true' && steps.secrets-check.outputs.secrets_status == 'configured'
+      - name: Build with Vercel
+        if: steps.vercel.outputs.configured == 'true'
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy production artifact
+        if: steps.vercel.outputs.configured == 'true'
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Verify deployed production
+        if: steps.vercel.outputs.configured == 'true' && env.DEPLOYMENT_URL != ''
+        run: npm run verify:production
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-
-      - name: Require production frontend secrets
-        if: steps.vercel-check.outputs.configured == 'true' && steps.secrets-check.outputs.secrets_status != 'configured'
-        run: |
-          echo "ERROR: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required for a production Vercel build."
-          echo "Configure both GitHub Actions secrets before enabling automatic production deployment."
-          exit 1
-
-      - name: Deploy to Vercel (Production)
-        if: steps.vercel-check.outputs.configured == 'true'
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+          DEPLOYMENT_URL: ${{ secrets.DEPLOYMENT_URL }}

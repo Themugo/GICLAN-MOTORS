@@ -6,7 +6,7 @@
 import AuditLog from "../models/AuditLog.js";
 
 function notConfigured(res, domain = "Governance") {
-  return res.status(501).json({
+  return res.status(404).json({
     success: false,
     error: `${domain} data is not configured in the authoritative database schema`,
     code: "GOVERNANCE_NOT_CONFIGURED",

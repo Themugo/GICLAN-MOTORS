@@ -9,7 +9,6 @@ dist
 .gitignore
 README.md
 .gitkeep
-backend
 e2e
 .vs
 .vercel

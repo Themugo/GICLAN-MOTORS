@@ -86,7 +86,7 @@ jobs:
             }
 
             // Check the combined status of the PR
-            const { data: status } = await github.rest.repos.getCombinedStatus({
+            const { data: status } = await github.rest.repos.getCombinedStatusForRef({
               owner,
               repo,
               ref: pr.head.sha,

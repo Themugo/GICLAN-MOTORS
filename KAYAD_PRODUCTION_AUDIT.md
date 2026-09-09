@@ -1,0 +1,62 @@
+# KAYAD Production Integration Audit
+
+Date: 2026-09-09
+
+## Completed repair scope
+
+- Vercel routing now proxies `/api/:path*` to `https://api.kayad.space/api/:path*` before the SPA fallback.
+- Browser authentication/data transport remains on the KAYAD Express API with HttpOnly JWT cookies.
+- Browser Supabase JS/Realtme client duplicates were removed. Supabase remains a backend data/storage dependency only.
+- Browser realtime now uses the existing backend Socket.IO server, with credentials enabled and automatic reconnect.
+- Socket.IO authentication accepts the backend HttpOnly `token` cookie.
+- Auction room joins are validated against real cars and map to the `car_<id>` rooms used by backend auction emitters.
+- Private chat room joins require authenticated participation in the requested chat.
+- Showroom room join/leave and auction leave contracts are explicit.
+- Authentication cookie path covers both `/api` and Socket.IO handshakes.
+- Docker context no longer excludes `backend`; the stale `COPY backend/realtime` instruction was removed.
+- Backend compatibility facades and atomic auction adapters were restored and verified.
+- Legacy duplicate PaymentModal/InternalNotes/chat surfaces were removed in favor of canonical implementations.
+- Deployment validators were aligned with the actual architecture instead of stale Supabase-browser assumptions.
+- Dependabot auto-merge workflow API call was corrected from the unavailable `getCombinedStatus` method to `getCombinedStatusForRef`.
+- Supabase production received additive security/runtime hardening migrations for the car-view RPC and SECURITY DEFINER helper search paths/execute privileges.
+
+## Verification
+
+Targeted static/integration gates passed 15/15:
+
+1. Phase 34 API governance
+2. Phase 59 environment contract
+3. Phase 60 deployment contract
+4. Deployment readiness
+5. Frontend runtime contracts
+6. Backend runtime contracts
+7. Production backend contracts
+8. Socket.IO contract
+9. Communications initiative
+10. Chat convergence
+11. UI surface convergence
+12. Dispute integrity
+13. Subscription domain E2E static gate
+14. Supabase migration preflight
+15. Marketplace core
+
+Additional backend JavaScript syntax checking passed for the complete backend tree.
+
+## Supabase production verification
+
+The live Supabase project was checked after the hardening migrations. The four targeted helper RPC privilege checks now report:
+
+- `increment_car_views`: anon=false, authenticated=false, service_role=true
+- `rls_auto_enable`: anon=false, authenticated=false, service_role=false
+- `sync_profile_from_user`: anon=false, authenticated=false, service_role=false
+- `update_car_bid_stats`: anon=false, authenticated=false, service_role=false
+
+The ten previously flagged mutable-search-path functions were also verified in PostgreSQL with `search_path=public, pg_temp`.
+
+Supabase still reports informational `RLS enabled, no policy` findings on many tables. Those tables are intentionally backend/service-role mediated in the current architecture; the finding does not mean RLS is disabled.
+
+## Runtime limits of this audit
+
+The execution environment is Node 22.16.0, while the repository deliberately requires Node >=22.22.2. A strict `npm ci` therefore correctly refused to install. A dry-run with engine checking disabled resolved the lockfile successfully, but a full dependency installation timed out in the sandbox. Consequently, a local Vite build/Vitest run was not falsely marked as passed.
+
+Likewise, no Vercel/Render production deployment credentials were available to this working environment, so live deployment smoke tests were not represented as successful. The repository is prepared for the actual CI/deployment environment, which uses Node 22.22.2.

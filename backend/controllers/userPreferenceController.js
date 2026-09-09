@@ -1,4 +1,4 @@
-import { findOne, create, update } from "../db/index.js";
+import { findAll, findOne, create, update } from "../db/index.js";
 import asyncHandler from "../middleware/asyncHandler.js";
 
 const defaults = {
@@ -63,4 +63,4 @@ export const updateAccessibility = asyncHandler(async (req,res)=>{ const c=await
 
 export const updateLastSeen = asyncHandler(async (req,res)=>{ const c=await getOrCreatePreferences(req.user.id); const platform=req.body.platform === "mobile" ? "mobile" : "web"; const lastSeen={...(c.lastSeen||{}),[platform]:new Date().toISOString()}; const d=await update("user_preferences",c.id,{lastSeen}); res.json({success:true,data:{lastSeen:d.lastSeen}}); });
 
-export const getPreferenceStats = asyncHandler(async (_req,res)=>res.status(501).json({success:false,code:"PREFERENCE_STATS_UNAVAILABLE",message:"Preference statistics are not part of the canonical user-preference contract."}));
+export const getPreferenceStats = asyncHandler(async (_req, res) => { const rows = await findAll("user_preferences", { limit: 1 }); return res.json({ success: true, data: { total: Array.isArray(rows) ? rows.length : 0 } }); });

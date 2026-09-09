@@ -307,3 +307,16 @@ export const optionalAuth = async (req, res, next) => {
     next(); // 🔥 ignore errors (public route)
   }
 };
+
+
+// Compatibility aliases used by canonical route modules.
+export const requireAuth = protect;
+export const requireRole = (...roles) => {
+  const allowed = roles.flat().filter(Boolean);
+  return (req, res, next) => {
+    if (!req.user) return res.status(401).json({ success: false, message: "Authentication required" });
+    const role = req.user.effectiveRole || req.user.role;
+    if (allowed.length && !allowed.includes(role)) return res.status(403).json({ success: false, message: "Insufficient permissions" });
+    return next();
+  };
+};

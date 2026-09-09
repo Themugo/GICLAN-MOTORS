@@ -40,11 +40,16 @@
     "bootstrap:supabase:production": "node scripts/bootstrap-supabase-production.mjs",
     "validate:cms-schema": "node scripts/validate-cms-schema.mjs",
     "validate:frontend-runtime-contracts": "node scripts/validate-frontend-runtime-contracts.mjs",
-    "validate:dependency-security": "node scripts/validate-dependency-security.mjs"
+    "validate:dependency-security": "node scripts/validate-dependency-security.mjs",
+    "verify:production": "node scripts/verify-production-deployment.mjs",
+    "validate:socket-contract": "node scripts/validate-socket-contract.mjs",
+    "validate:deployment-readiness": "node scripts/validate-deployment-readiness.mjs",
+    "validate:backend-runtime-contracts": "node scripts/validate-backend-runtime-contracts.mjs",
+    "validate:production-backend": "node scripts/validate-production-backend.mjs",
+    "validate:runtime-integrity": "node scripts/validate-runtime-integrity.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",
-    "@supabase/supabase-js": "2.111.0",
     "@tailwindcss/vite": "4.3.3",
     "@vitejs/plugin-react": "6.0.5",
     "axios": "1.19.0",
@@ -82,7 +87,7 @@
     "vitest": "4.1.11"
   },
   "engines": {
-    "node": "22.22.2"
+    "node": ">=22.22.2"
   },
   "overrides": {
     "undici": "8.10.2"

@@ -1,33 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-
 const root = process.cwd();
-const checks = [];
-const pass = (name) => checks.push({ name, ok: true });
-const fail = (name, detail) => checks.push({ name, ok: false, detail });
-
-const jsSupabase = path.join(root, 'src/lib/supabaseClient.js');
-if (fs.existsSync(jsSupabase)) fail('obsolete Supabase JS client removed', 'src/lib/supabaseClient.js still exists and can shadow supabaseClient.ts');
-else pass('obsolete Supabase JS client removed');
-
-const socket = fs.readFileSync(path.join(root, 'src/context/SocketContext.tsx'), 'utf8');
-if (/from ['"]\.\.\/lib\/supabaseClient['"]/.test(socket)) pass('SocketContext uses canonical Supabase client module');
-else fail('SocketContext Supabase import intact', 'canonical client import not found');
-
-const http = fs.readFileSync(path.join(root, 'src/api/httpClient.ts'), 'utf8');
-if (http.includes("https://api.kayad.space") && http.includes('import.meta.env.PROD')) pass('production API fallback is explicit');
-else fail('production API fallback is explicit', 'production fallback missing');
-
-const prefs = fs.readFileSync(path.join(root, 'backend/controllers/userPreferenceController.js'), 'utf8');
-if (!/status\(501\)/.test(prefs)) pass('user preference stats no longer returns 501');
-else fail('user preference stats no longer returns 501', '501 placeholder remains');
-
-for (const file of ['src/main.tsx', 'src/App.tsx', 'src/api/httpRequest.ts']) {
-  if (fs.existsSync(path.join(root, file))) pass(`${file} exists`);
-  else fail(`${file} exists`, 'missing runtime entry');
-}
-
-const failures = checks.filter((c) => !c.ok);
-for (const c of checks) console.log(`${c.ok ? 'PASS' : 'FAIL'} ${c.name}${c.detail ? ` — ${c.detail}` : ''}`);
-if (failures.length) process.exit(1);
-console.log(`Runtime integrity validation passed: ${checks.length}/${checks.length}`);
+const read = (p) => fs.readFileSync(path.join(root,p),'utf8');
+const checks=[]; const check=(name,ok)=>{checks.push(ok);console.log(`${ok?'PASS':'FAIL'} ${name}`)};
+check('obsolete browser Supabase clients removed', !fs.existsSync(path.join(root,'src/lib/supabaseClient.js')) && !fs.existsSync(path.join(root,'src/lib/supabaseClient.ts')));
+const socket=read('src/context/SocketContext.tsx');
+check('SocketContext uses canonical backend Socket.IO transport', socket.includes('/socket.io/socket.io.js') && socket.includes('withCredentials:true'));
+const http=read('src/api/httpClient.ts');
+check('production API fallback is same-origin', http.includes('configuredApiUrl') && http.includes(": '/api'"));
+check('user preference stats no longer returns 501', !/status\(501\)/.test(read('backend/controllers/userPreferenceController.js')));
+for(const f of ['src/main.tsx','src/App.tsx','src/api/httpRequest.ts'])check(`${f} exists`,fs.existsSync(path.join(root,f)));
+if(checks.some(x=>!x))process.exit(1); console.log(`Runtime integrity validation passed: ${checks.length}/${checks.length}`);

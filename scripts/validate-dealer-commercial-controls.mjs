@@ -7,7 +7,7 @@ const checks = [
   ['subscription routes', 'backend/routes/subscriptionRoutes.js', ['/plans','/my-subscription','/upgrade','/cancel','/reactivate','/usage-limits']],
   ['atomic callback activation', 'backend/services/paymentCallback.service.js', ['activateDealerSubscriptionFromPayment']],
   ['commercial migration', 'supabase/migrations/20260907230000_dealer_subscription_commercial_controls.sql', ['dealer_subscriptions','kayad_activate_dealer_subscription_atomic']],
-  ['lifecycle migration', 'supabase/migrations/20260907233000_subscription_entitlement_lifecycle.sql', ['kayad_cancel_dealer_subscription_atomic','kayad_reactivate_dealer_subscription_atomic','kayad_grant_dealer_subscription_atomic','kayad_revoke_dealer_subscription_atomic']],
+  ['lifecycle migration', 'supabase/migrations/20260907233100_subscription_entitlement_lifecycle.sql', ['kayad_cancel_dealer_subscription_atomic','kayad_reactivate_dealer_subscription_atomic','kayad_grant_dealer_subscription_atomic','kayad_revoke_dealer_subscription_atomic']],
   ['frontend transport', 'src/api/api.exports.ts', ['getSubscription','getSubscriptionPlans','getUsageLimits','cancelSubscription','reactivateSubscription']],
   ['package UI uses server plans', 'src/pages/dealer/components/DealerPackageTab.jsx', ['dealerAPI.getSubscriptionPlans','dealerAPI.getSubscription','plans.map']],
   ['dealer upgrade has no duplicate plan catalogue', 'backend/routes/dealerRoutes.js', ['initiateDealerUpgrade']],
