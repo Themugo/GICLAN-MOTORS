@@ -38,7 +38,9 @@
     "normalize:supabase-migrations": "node scripts/normalize-supabase-migrations.mjs --write",
     "validate:supabase-migrations": "node scripts/validate-supabase-migrations.mjs",
     "bootstrap:supabase:production": "node scripts/bootstrap-supabase-production.mjs",
-    "validate:cms-schema": "node scripts/validate-cms-schema.mjs"
+    "validate:cms-schema": "node scripts/validate-cms-schema.mjs",
+    "validate:frontend-runtime-contracts": "node scripts/validate-frontend-runtime-contracts.mjs",
+    "validate:dependency-security": "node scripts/validate-dependency-security.mjs"
   },
   "dependencies": {
     "@sentry/react": "10.69.0",
@@ -68,7 +70,7 @@
     "@types/react-dom": "19.2.4",
     "@typescript-eslint/eslint-plugin": "8.65.0",
     "@typescript-eslint/parser": "8.65.0",
-    "@vitest/coverage-v8": "4.1.10",
+    "@vitest/coverage-v8": "4.1.11",
     "esbuild": "0.28.1",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
@@ -77,9 +79,12 @@
     "tsx": "4.23.1",
     "typescript": "5.8.3",
     "vite": "8.2.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   },
   "engines": {
     "node": ">=22.22.2"
+  },
+  "overrides": {
+    "undici": "8.10.2"
   }
 }
